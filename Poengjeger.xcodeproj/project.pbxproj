@@ -1,0 +1,569 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		001 /* PoengjegerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101 /* PoengjegerApp.swift */; };
+		002 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102 /* AppEnvironment.swift */; };
+		003 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103 /* RootView.swift */; };
+		004 /* PoengjegerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104 /* PoengjegerTheme.swift */; };
+		005 /* BonusProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105 /* BonusProgram.swift */; };
+		006 /* Campaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106 /* Campaign.swift */; };
+		007 /* UserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107 /* UserSession.swift */; };
+		008 /* CampaignRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108 /* CampaignRepository.swift */; };
+		009 /* FeedUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109 /* FeedUseCase.swift */; };
+		010 /* MockCampaignRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110 /* MockCampaignRepository.swift */; };
+		011 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111 /* MainTabView.swift */; };
+		012 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* OnboardingView.swift */; };
+		013 /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113 /* FeedView.swift */; };
+		014 /* CampaignDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114 /* CampaignDetailView.swift */; };
+		015 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115 /* FavoritesView.swift */; };
+		016 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* SettingsView.swift */; };
+		017 /* FeedUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* FeedUseCaseTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		201 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 300 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 401;
+			remoteInfo = Poengjeger;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		100 /* Poengjeger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Poengjeger.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		101 /* PoengjegerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoengjegerApp.swift; sourceTree = "<group>"; };
+		102 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		103 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		104 /* PoengjegerTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoengjegerTheme.swift; sourceTree = "<group>"; };
+		105 /* BonusProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BonusProgram.swift; sourceTree = "<group>"; };
+		106 /* Campaign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Campaign.swift; sourceTree = "<group>"; };
+		107 /* UserSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSession.swift; sourceTree = "<group>"; };
+		108 /* CampaignRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignRepository.swift; sourceTree = "<group>"; };
+		109 /* FeedUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedUseCase.swift; sourceTree = "<group>"; };
+		110 /* MockCampaignRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockCampaignRepository.swift; sourceTree = "<group>"; };
+		111 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		112 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		113 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
+		114 /* CampaignDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignDetailView.swift; sourceTree = "<group>"; };
+		115 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
+		116 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		117 /* FeedUseCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedUseCaseTests.swift; sourceTree = "<group>"; };
+		118 /* PoengjegerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PoengjegerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		500 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		501 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		600 = {
+			isa = PBXGroup;
+			children = (
+				601 /* Poengjeger */,
+				700 /* PoengjegerTests */,
+				118 /* PoengjegerTests.xctest */,
+				100 /* Poengjeger.app */,
+			);
+			sourceTree = "<group>";
+		};
+		601 /* Poengjeger */ = {
+			isa = PBXGroup;
+			children = (
+				602 /* App */,
+				603 /* Core */,
+				604 /* Domain */,
+				605 /* Data */,
+				606 /* Features */,
+			);
+			path = Poengjeger;
+			sourceTree = "<group>";
+		};
+		602 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				101 /* PoengjegerApp.swift */,
+				102 /* AppEnvironment.swift */,
+				103 /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		603 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				607 /* DesignSystem */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		604 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				608 /* Models */,
+				609 /*  */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		605 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				615 /* Repositories */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		606 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				610 /* Shared */,
+				611 /* Onboarding */,
+				612 /* Feed */,
+				613 /*  */,
+				614 /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		607 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				104 /* PoengjegerTheme.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		608 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				105 /* BonusProgram.swift */,
+				106 /* Campaign.swift */,
+				107 /* UserSession.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		609 /*  */ = {
+			isa = PBXGroup;
+			children = (
+				616 /* Services */,
+				617 /* UseCases */,
+			);
+			name = "";
+			sourceTree = "<group>";
+		};
+		610 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				111 /* MainTabView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		611 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				112 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		612 /* Feed */ = {
+			isa = PBXGroup;
+			children = (
+				113 /* FeedView.swift */,
+			);
+			path = Feed;
+			sourceTree = "<group>";
+		};
+		613 /*  */ = {
+			isa = PBXGroup;
+			children = (
+				618 /* CampaignDetail */,
+				619 /* Favorites */,
+			);
+			name = "";
+			sourceTree = "<group>";
+		};
+		614 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				116 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		615 /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				110 /* MockCampaignRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		616 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				108 /* CampaignRepository.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		617 /* UseCases */ = {
+			isa = PBXGroup;
+			children = (
+				109 /* FeedUseCase.swift */,
+			);
+			path = UseCases;
+			sourceTree = "<group>";
+		};
+		618 /* CampaignDetail */ = {
+			isa = PBXGroup;
+			children = (
+				114 /* CampaignDetailView.swift */,
+			);
+			path = CampaignDetail;
+			sourceTree = "<group>";
+		};
+		619 /* Favorites */ = {
+			isa = PBXGroup;
+			children = (
+				115 /* FavoritesView.swift */,
+			);
+			path = Favorites;
+			sourceTree = "<group>";
+		};
+		700 /* PoengjegerTests */ = {
+			isa = PBXGroup;
+			children = (
+				701 /*  */,
+			);
+			path = PoengjegerTests;
+			sourceTree = "<group>";
+		};
+		701 /*  */ = {
+			isa = PBXGroup;
+			children = (
+				117 /* FeedUseCaseTests.swift */,
+			);
+			name = "";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		401 /* Poengjeger */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 900 /* Build configuration list for PBXNativeTarget "Poengjeger" */;
+			buildPhases = (
+				800 /* Sources */,
+				500 /* Frameworks */,
+				801 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Poengjeger;
+			productName = Poengjeger;
+			productReference = 100 /* Poengjeger.app */;
+			productType = "com.apple.product-type.application";
+		};
+		402 /* PoengjegerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 901 /* Build configuration list for PBXNativeTarget "PoengjegerTests" */;
+			buildPhases = (
+				802 /* Sources */,
+				501 /* Frameworks */,
+				803 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				202 /* PBXTargetDependency */,
+			);
+			name = PoengjegerTests;
+			productName = PoengjegerTests;
+			productReference = 118 /* PoengjegerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		300 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					401 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					402 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 401;
+					};
+				};
+			};
+			buildConfigurationList = 902 /* Build configuration list for PBXProject "Poengjeger" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 600;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 600;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				401 /* Poengjeger */,
+				402 /* PoengjegerTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		801 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		803 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		800 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				001 /* PoengjegerApp.swift in Sources */,
+				002 /* AppEnvironment.swift in Sources */,
+				003 /* RootView.swift in Sources */,
+				004 /* PoengjegerTheme.swift in Sources */,
+				005 /* BonusProgram.swift in Sources */,
+				006 /* Campaign.swift in Sources */,
+				007 /* UserSession.swift in Sources */,
+				008 /* CampaignRepository.swift in Sources */,
+				009 /* FeedUseCase.swift in Sources */,
+				010 /* MockCampaignRepository.swift in Sources */,
+				011 /* MainTabView.swift in Sources */,
+				012 /* OnboardingView.swift in Sources */,
+				013 /* FeedView.swift in Sources */,
+				014 /* CampaignDetailView.swift in Sources */,
+				015 /* FavoritesView.swift in Sources */,
+				016 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		802 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				017 /* FeedUseCaseTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		202 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 401 /* Poengjeger */;
+			targetProxy = 201 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K392629S8S;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		1003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K392629S8S;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		1004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Poengjeger.app/Poengjeger";
+			};
+			name = Debug;
+		};
+		1005 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Poengjeger.app/Poengjeger";
+			};
+			name = Release;
+		};
+		1006 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+			};
+			name = Debug;
+		};
+		1007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		900 /* Build configuration list for PBXNativeTarget "Poengjeger" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1002 /* Debug */,
+				1003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		901 /* Build configuration list for PBXNativeTarget "PoengjegerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1004 /* Debug */,
+				1005 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		902 /* Build configuration list for PBXProject "Poengjeger" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1006 /* Debug */,
+				1007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 300 /* Project object */;
+}
