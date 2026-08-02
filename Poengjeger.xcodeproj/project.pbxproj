@@ -436,8 +436,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPABASE_ANON_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ieWF1ZXZhbmplYndsdXR1ZXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2ODQ1MTQsImV4cCI6MjEwMTI2MDUxNH0.ZRNXS2YNRAuIw27JNW6KeJMlrVZo-6QzPfcCFgEWBMs";
+				SUPABASE_URL = "https://mbyauevanjebwlutueyw.supabase.co";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -471,8 +471,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPABASE_ANON_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ieWF1ZXZhbmplYndsdXR1ZXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2ODQ1MTQsImV4cCI6MjEwMTI2MDUxNH0.ZRNXS2YNRAuIw27JNW6KeJMlrVZo-6QzPfcCFgEWBMs";
+				SUPABASE_URL = "https://mbyauevanjebwlutueyw.supabase.co";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
