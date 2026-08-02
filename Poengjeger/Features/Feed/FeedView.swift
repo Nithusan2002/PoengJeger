@@ -4,30 +4,57 @@ struct FeedView: View {
     @Environment(AppEnvironment.self) private var environment
 
     private var campaigns: [Campaign] {
-        FeedUseCase(repository: environment.campaignRepository)
-            .makeFeed(selectedProgramIDs: environment.userSession.selectedProgramIDs)
+        FeedUseCase()
+            .makeFeed(
+                campaigns: environment.campaigns,
+                selectedProgramIDs: environment.userSession.selectedProgramIDs
+            )
     }
 
     var body: some View {
-        List(campaigns) { campaign in
-            NavigationLink(value: campaign) {
-                CampaignCardView(
-                    campaign: campaign,
-                    isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
-                )
+        List {
+            if let dataSource = environment.dataSource, dataSource.isFallback {
+                Section {
+                    Label(dataSource.label, systemImage: "exclamationmark.bubble")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            ForEach(campaigns) { campaign in
+                NavigationLink(value: campaign) {
+                    CampaignCardView(
+                        campaign: campaign,
+                        isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
+                    )
+                }
             }
         }
         .navigationTitle("Aktive kampanjer")
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
         }
+        .refreshable {
+            await environment.refresh()
+        }
         .overlay {
-            if campaigns.isEmpty {
+            switch environment.loadState {
+            case .loading where campaigns.isEmpty:
+                ProgressView("Laster feed")
+            case let .failed(message) where campaigns.isEmpty:
+                ContentUnavailableView(
+                    "Kunne ikke hente kampanjer",
+                    systemImage: "wifi.exclamationmark",
+                    description: Text(message)
+                )
+            case _ where campaigns.isEmpty:
                 ContentUnavailableView(
                     "Ingen kampanjer ennå",
                     systemImage: "tray",
                     description: Text("Velg flere bonusprogrammer eller legg inn redaksjonelt innhold i backend.")
                 )
+            default:
+                EmptyView()
             }
         }
     }

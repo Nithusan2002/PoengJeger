@@ -1,10 +1,8 @@
 import Foundation
 
 struct FeedUseCase {
-    let repository: CampaignRepository
-
-    func makeFeed(selectedProgramIDs: Set<UUID>) -> [Campaign] {
-        repository.fetchActiveCampaigns()
+    func makeFeed(campaigns: [Campaign], selectedProgramIDs: Set<UUID>) -> [Campaign] {
+        campaigns
             .filter { $0.matchesSelectedPrograms(selectedProgramIDs) }
             .sorted { lhs, rhs in
                 switch (lhs.editorialScore, rhs.editorialScore) {

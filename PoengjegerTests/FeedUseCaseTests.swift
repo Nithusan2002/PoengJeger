@@ -4,9 +4,11 @@ import Testing
 struct FeedUseCaseTests {
     @Test
     func feedOnlyIncludesCampaignsForSelectedPrograms() {
-        let repository = MockCampaignRepository()
         let selectedProgramIDs = [SampleData.trumf.id]
-        let campaigns = FeedUseCase(repository: repository).makeFeed(selectedProgramIDs: Set(selectedProgramIDs))
+        let campaigns = FeedUseCase().makeFeed(
+            campaigns: SampleData.campaigns,
+            selectedProgramIDs: Set(selectedProgramIDs)
+        )
 
         #expect(campaigns.count == 1)
         #expect(campaigns.first?.primaryProgramID == SampleData.trumf.id)
@@ -14,9 +16,11 @@ struct FeedUseCaseTests {
 
     @Test
     func feedSortsByEditorialScoreDescending() {
-        let repository = MockCampaignRepository()
         let selectedProgramIDs = Set(SampleData.programs.map(\.id))
-        let campaigns = FeedUseCase(repository: repository).makeFeed(selectedProgramIDs: selectedProgramIDs)
+        let campaigns = FeedUseCase().makeFeed(
+            campaigns: SampleData.campaigns,
+            selectedProgramIDs: selectedProgramIDs
+        )
 
         #expect(campaigns.map(\.editorialScore) == [82, 76, 71])
     }

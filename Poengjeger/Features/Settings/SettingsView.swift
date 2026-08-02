@@ -12,7 +12,7 @@ struct SettingsView: View {
             }
 
             Section("Valgte programmer") {
-                ForEach(environment.campaignRepository.fetchPrograms()) { program in
+                ForEach(environment.programs) { program in
                     HStack {
                         Text(program.name)
                         Spacer()
@@ -21,6 +21,12 @@ struct SettingsView: View {
                                 .foregroundStyle(PoengjegerTheme.accent)
                         }
                     }
+                }
+            }
+
+            if let dataSource = environment.dataSource {
+                Section("Datakilde") {
+                    Text(dataSource.label)
                 }
             }
         }

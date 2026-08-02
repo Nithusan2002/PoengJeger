@@ -4,7 +4,7 @@ struct FavoritesView: View {
     @Environment(AppEnvironment.self) private var environment
 
     private var favorites: [Campaign] {
-        environment.campaignRepository.fetchFavorites(for: environment.userSession.favoriteCampaignIDs)
+        environment.favoriteCampaigns
     }
 
     var body: some View {
@@ -23,6 +23,9 @@ struct FavoritesView: View {
         .navigationTitle("Favoritter")
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
+        }
+        .refreshable {
+            await environment.refresh()
         }
         .overlay {
             if favorites.isEmpty {

@@ -15,7 +15,7 @@ struct OnboardingView: View {
                 }
 
                 Section("Bonusprogrammer") {
-                    ForEach(environment.campaignRepository.fetchPrograms()) { program in
+                    ForEach(environment.programs) { program in
                         Toggle(
                             isOn: Binding(
                                 get: { environment.userSession.selectedProgramIDs.contains(program.id) },
@@ -37,8 +37,24 @@ struct OnboardingView: View {
                         }
                     }
                 }
+
+                if let dataSource = environment.dataSource, dataSource.isFallback {
+                    Section {
+                        Text("Viser \(dataSource.label.lowercased()) til Supabase-konfigurasjon er på plass.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             .navigationTitle("Dine programmer")
+            .overlay {
+                if case .loading = environment.loadState, environment.programs.isEmpty {
+                    ProgressView()
+                }
+            }
+            .refreshable {
+                await environment.refresh()
+            }
         }
     }
 }

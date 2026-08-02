@@ -12,16 +12,12 @@ struct MockCampaignRepository: CampaignRepository {
         self.campaigns = campaigns
     }
 
-    func fetchPrograms() -> [BonusProgram] {
-        programs.filter(\.isActive).sorted { $0.name < $1.name }
-    }
-
-    func fetchActiveCampaigns() -> [Campaign] {
-        campaigns.filter(\.isActive)
-    }
-
-    func fetchFavorites(for favoriteIDs: Set<UUID>) -> [Campaign] {
-        campaigns.filter { favoriteIDs.contains($0.id) }
+    func fetchBootstrapData() async throws -> CampaignBootstrapData {
+        CampaignBootstrapData(
+            programs: programs.filter(\.isActive).sorted { $0.name < $1.name },
+            campaigns: campaigns.filter(\.isActive),
+            dataSource: .mock(reason: nil)
+        )
     }
 }
 

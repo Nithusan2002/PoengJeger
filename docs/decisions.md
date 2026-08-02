@@ -35,3 +35,9 @@
 - Bakgrunn: Produktbriefen sier at rangering må være forståelig og ikke oppleves vilkårlig.
 - Beslutning: MVP bruker enkel redaksjonell score og tekstlig begrunnelse, ikke kompleks algoritmisk ranking.
 - Konsekvens: Høyere forklarbarhet og enklere vedlikehold, men mindre automatisering.
+
+## ADR-007: iOS-klienten integreres først mot Supabase REST via URLSession
+- Status: Foreslått
+- Bakgrunn: MVP-en trenger ekte backend-data raskt, men prosjektet skal unngå nye avhengigheter uten tydelig behov.
+- Beslutning: Første iOS-integrasjon mot Supabase bygges med `URLSession` og PostgREST-endepunkter, med `SUPABASE_URL` og `SUPABASE_ANON_KEY` lest fra appkonfigurasjon.
+- Konsekvens: Lavere avhengighetsrisiko og full kontroll over datamapping, men mer manuell API-kode enn ved bruk av et dedikert Supabase-SDK.
