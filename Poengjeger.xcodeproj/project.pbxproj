@@ -59,6 +59,8 @@
 		118 /* PoengjegerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PoengjegerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		119 /* SupabaseCampaignRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseCampaignRepository.swift; sourceTree = "<group>"; };
 		120 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		121 /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppConfig.xcconfig; sourceTree = "<group>"; };
+		122 /* AppSecrets.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppSecrets.example.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				602 /* App */,
+				620 /* Config */,
 				603 /* Core */,
 				604 /* Domain */,
 				605 /* Data */,
@@ -256,6 +259,15 @@
 			path = Favorites;
 			sourceTree = "<group>";
 		};
+		620 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				121 /* AppConfig.xcconfig */,
+				122 /* AppSecrets.example.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		700 /* PoengjegerTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -411,6 +423,7 @@
 /* Begin XCBuildConfiguration section */
 		1002 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 121 /* AppConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -431,8 +444,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ieWF1ZXZhbmplYndsdXR1ZXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2ODQ1MTQsImV4cCI6MjEwMTI2MDUxNH0.ZRNXS2YNRAuIw27JNW6KeJMlrVZo-6QzPfcCFgEWBMs";
-				SUPABASE_URL = "https://mbyauevanjebwlutueyw.supabase.co";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -443,6 +454,7 @@
 		};
 		1003 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 121 /* AppConfig.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -462,8 +474,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = no.poengjeger.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ieWF1ZXZhbmplYndsdXR1ZXl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2ODQ1MTQsImV4cCI6MjEwMTI2MDUxNH0.ZRNXS2YNRAuIw27JNW6KeJMlrVZo-6QzPfcCFgEWBMs";
-				SUPABASE_URL = "https://mbyauevanjebwlutueyw.supabase.co";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;

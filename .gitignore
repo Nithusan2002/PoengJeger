@@ -1,0 +1,8 @@
+.DS_Store
+
+# Local Xcode state
+*.xcuserstate
+xcuserdata/
+
+# Local app secrets
+Poengjeger/Config/AppSecrets.local.xcconfig

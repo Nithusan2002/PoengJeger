@@ -2,20 +2,25 @@ import Foundation
 
 struct SupabaseConfiguration {
     let url: URL
-    let anonKey: String
+    let publishableKey: String
 
     static func fromBundle(bundle: Bundle = .main) -> SupabaseConfiguration? {
+        let host = bundle.object(forInfoDictionaryKey: "SUPABASE_HOST") as? String
+        let publishableKey = bundle.object(forInfoDictionaryKey: "SUPABASE_PUBLISHABLE_KEY") as? String
+
         guard
-            let urlString = bundle.object(forInfoDictionaryKey: "SUPABASE_URL") as? String,
-            let anonKey = bundle.object(forInfoDictionaryKey: "SUPABASE_ANON_KEY") as? String,
-            !urlString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            !anonKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            let url = URL(string: urlString)
+            let host,
+            let apiKey = publishableKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            !apiKey.isEmpty,
+            !host.contains("$("),
+            !apiKey.contains("$("),
+            let url = URL(string: "https://\(host)")
         else {
             return nil
         }
 
-        return SupabaseConfiguration(url: url, anonKey: anonKey)
+        return SupabaseConfiguration(url: url, publishableKey: apiKey)
     }
 }
 
@@ -120,8 +125,8 @@ struct SupabaseCampaignRepository: CampaignRepository {
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue(configuration.anonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(configuration.anonKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(configuration.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(configuration.publishableKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         let (data, response) = try await session.data(for: request)
