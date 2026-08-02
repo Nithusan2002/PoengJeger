@@ -23,25 +23,20 @@ final class AppEnvironment {
         self.userSession = userSession
     }
 
-    static func bootstrap() -> AppEnvironment {
+    static func live() -> AppEnvironment {
         let repository: CampaignRepository
 
         if let configuration = SupabaseConfiguration.fromBundle() {
-            repository = FallbackCampaignRepository(
-                primary: SupabaseCampaignRepository(configuration: configuration),
-                fallback: MockCampaignRepository()
-            )
+            repository = SupabaseCampaignRepository(configuration: configuration)
         } else {
-            repository = MockCampaignRepository()
+            repository = MissingSupabaseConfigurationRepository()
         }
 
-        return AppEnvironment(
-            campaignRepository: repository,
-            userSession: UserSession(
-                selectedProgramIDs: [],
-                favoriteCampaignIDs: []
-            )
-        )
+        return AppEnvironment(campaignRepository: repository, userSession: .empty)
+    }
+
+    static func mock() -> AppEnvironment {
+        AppEnvironment(campaignRepository: MockCampaignRepository(), userSession: .empty)
     }
 
     func loadIfNeeded() async {
@@ -61,11 +56,28 @@ final class AppEnvironment {
             userSession.selectedProgramIDs.formIntersection(Set(programs.map(\.id)))
             loadState = .loaded
         } catch {
-            loadState = .failed("Kunne ikke hente kampanjedata akkurat nå.")
+            let message = (error as? LocalizedError)?.errorDescription ?? "Kunne ikke hente kampanjedata akkurat nå."
+            loadState = .failed(message)
         }
     }
 
     var favoriteCampaigns: [Campaign] {
         campaigns.filter { userSession.favoriteCampaignIDs.contains($0.id) }
     }
+}
+
+private struct MissingSupabaseConfigurationRepository: CampaignRepository {
+    func fetchBootstrapData() async throws -> CampaignBootstrapData {
+        throw MissingSupabaseConfigurationError()
+    }
+}
+
+private struct MissingSupabaseConfigurationError: LocalizedError {
+    var errorDescription: String? {
+        "SUPABASE_URL eller SUPABASE_ANON_KEY mangler i appkonfigurasjonen."
+    }
+}
+
+private extension UserSession {
+    static let empty = UserSession(selectedProgramIDs: [], favoriteCampaignIDs: [])
 }

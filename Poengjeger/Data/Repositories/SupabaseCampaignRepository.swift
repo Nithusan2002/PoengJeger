@@ -216,6 +216,29 @@ private struct CampaignDTO: Decodable {
         case campaignPrograms = "campaign_programs"
     }
 
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        summary = try container.decode(String.self, forKey: .summary)
+        details = try container.decode(String.self, forKey: .details)
+        status = try container.decode(String.self, forKey: .status)
+        startDate = try container.decodeIfPresent(Date.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+        lastVerifiedAt = try container.decode(Date.self, forKey: .lastVerifiedAt)
+        primaryProgramID = try container.decodeIfPresent(UUID.self, forKey: .primaryProgramID)
+        editorialScore = try container.decodeIfPresent(Double.self, forKey: .editorialScore)
+        editorialSummary = try container.decodeIfPresent(String.self, forKey: .editorialSummary)
+        isFeatured = try container.decode(Bool.self, forKey: .isFeatured)
+        category = try container.decodeIfPresent(CampaignCategoryDTO.self, forKey: .category)
+        requirements = try container.decodeIfPresent([CampaignRequirementDTO].self, forKey: .requirements) ?? []
+        sourceReferences = try container.decodeIfPresent([CampaignSourceReferenceDTO].self, forKey: .sourceReferences) ?? []
+        editorialAssessments = try Self.decodeOneOrMany(EditorialAssessmentDTO.self, forKey: .editorialAssessments, from: container)
+        geoRestrictions = try container.decodeIfPresent([GeoRestrictionDTO].self, forKey: .geoRestrictions) ?? []
+        campaignPrograms = try container.decodeIfPresent([CampaignProgramLinkDTO].self, forKey: .campaignPrograms) ?? []
+    }
+
     var domainModel: Campaign? {
         guard let campaignStatus = Campaign.Status(rawValue: status) else {
             return nil
@@ -246,6 +269,22 @@ private struct CampaignDTO: Decodable {
             geoRestrictions: geoRestrictions.map(\.domainModel),
             linkedProgramIDs: normalizedLinkedProgramIDs
         )
+    }
+
+    private static func decodeOneOrMany<Value: Decodable>(
+        _ type: Value.Type,
+        forKey key: CodingKeys,
+        from container: KeyedDecodingContainer<CodingKeys>
+    ) throws -> [Value] {
+        if let values = try? container.decode([Value].self, forKey: key) {
+            return values
+        }
+
+        if let value = try? container.decode(Value.self, forKey: key) {
+            return [value]
+        }
+
+        return []
     }
 }
 

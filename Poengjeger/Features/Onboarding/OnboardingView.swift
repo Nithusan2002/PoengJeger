@@ -9,32 +9,55 @@ struct OnboardingView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Velg bonusprogrammene du vil følge. Feed og varsler skal bare vise kampanjer som er relevante for disse valgene.")
+                    Text("Velg ett eller flere bonusprogrammer du vil følge. Feed og varsler skal bare vise kampanjer som er relevante for disse valgene.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
+                Section {
+                    HStack {
+                        Text("Valgt nå")
+                        Spacer()
+                        Text("\(environment.userSession.selectedProgramIDs.count) av \(environment.programs.count)")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button("Velg alle") {
+                        environment.userSession.selectedProgramIDs = Set(environment.programs.map(\.id))
+                    }
+                    .disabled(environment.programs.isEmpty)
+
+                    Button("Tøm valg", role: .destructive) {
+                        environment.userSession.selectedProgramIDs.removeAll()
+                    }
+                    .disabled(environment.userSession.selectedProgramIDs.isEmpty)
+                }
+
                 Section("Bonusprogrammer") {
                     ForEach(environment.programs) { program in
-                        Toggle(
-                            isOn: Binding(
-                                get: { environment.userSession.selectedProgramIDs.contains(program.id) },
-                                set: { isSelected in
-                                    if isSelected {
-                                        environment.userSession.selectedProgramIDs.insert(program.id)
-                                    } else {
-                                        environment.userSession.selectedProgramIDs.remove(program.id)
-                                    }
+                        Button {
+                            toggleProgramSelection(program.id, in: &environment.userSession.selectedProgramIDs)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: environment.userSession.selectedProgramIDs.contains(program.id) ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(
+                                        environment.userSession.selectedProgramIDs.contains(program.id)
+                                        ? AnyShapeStyle(PoengjegerTheme.accent)
+                                        : AnyShapeStyle(.tertiary)
+                                    )
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(program.name)
+                                        .foregroundStyle(.primary)
+                                    Text(program.issuerName)
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
                                 }
-                            )
-                        ) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(program.name)
-                                Text(program.issuerName)
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+
+                                Spacer()
                             }
                         }
+                        .buttonStyle(.plain)
                     }
                 }
 
@@ -57,9 +80,17 @@ struct OnboardingView: View {
             }
         }
     }
+
+    private func toggleProgramSelection(_ programID: UUID, in selectedProgramIDs: inout Set<UUID>) {
+        if selectedProgramIDs.contains(programID) {
+            selectedProgramIDs.remove(programID)
+        } else {
+            selectedProgramIDs.insert(programID)
+        }
+    }
 }
 
 #Preview {
     OnboardingView()
-        .environment(AppEnvironment.bootstrap())
+        .environment(AppEnvironment.mock())
 }

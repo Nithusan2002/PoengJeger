@@ -32,5 +32,5 @@ struct RootView: View {
 
 #Preview {
     RootView()
-        .environment(AppEnvironment.bootstrap())
+        .environment(AppEnvironment.mock())
 }

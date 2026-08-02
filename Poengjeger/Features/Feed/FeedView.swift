@@ -25,6 +25,7 @@ struct FeedView: View {
                 NavigationLink(value: campaign) {
                     CampaignCardView(
                         campaign: campaign,
+                        primaryProgramName: programName(for: campaign),
                         isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
                     )
                 }
@@ -58,14 +59,37 @@ struct FeedView: View {
             }
         }
     }
+
+    private func programName(for campaign: Campaign) -> String? {
+        guard let primaryProgramID = campaign.primaryProgramID else {
+            return nil
+        }
+
+        return environment.programs.first(where: { $0.id == primaryProgramID })?.name
+    }
 }
 
 private struct CampaignCardView: View {
     let campaign: Campaign
+    let primaryProgramName: String?
     let isFavorite: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                if let primaryProgramName {
+                    TagView(title: primaryProgramName, tint: PoengjegerTheme.accent)
+                }
+
+                if let categoryName = campaign.category?.name {
+                    TagView(title: categoryName, tint: .secondary)
+                }
+
+                if campaign.isFeatured {
+                    TagView(title: "Fremhevet", tint: PoengjegerTheme.highlight)
+                }
+            }
+
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(campaign.title)
@@ -83,26 +107,35 @@ private struct CampaignCardView: View {
                 }
             }
 
-            if let endDate = campaign.endDate {
-                Label(endDate.formatted(date: .abbreviated, time: .omitted), systemImage: "calendar")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            HStack(alignment: .center, spacing: 12) {
+                MetadataLabel(
+                    title: "Kontrollert",
+                    value: campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted),
+                    systemImage: "checkmark.seal"
+                )
 
-            HStack {
-                if let categoryName = campaign.category?.name {
-                    TagView(title: categoryName)
+                if let endDate = campaign.endDate {
+                    MetadataLabel(
+                        title: "Utløper",
+                        value: endDate.formatted(date: .abbreviated, time: .omitted),
+                        systemImage: "calendar"
+                    )
                 }
 
-                if campaign.isFeatured {
-                    TagView(title: "Fremhevet", tint: PoengjegerTheme.highlight)
+                if let firstSource = campaign.sources.first {
+                    MetadataLabel(
+                        title: "Kilde",
+                        value: firstSource.sourceName,
+                        systemImage: "link"
+                    )
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
 
                 if isFavorite {
                     Image(systemName: "star.fill")
                         .foregroundStyle(PoengjegerTheme.highlight)
+                        .accessibilityLabel("Lagret som favoritt")
                 }
             }
         }
@@ -144,9 +177,32 @@ private struct TagView: View {
     }
 }
 
+private struct MetadataLabel: View {
+    let title: String
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.caption)
+                    .foregroundStyle(.primary)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(.secondary)
+        }
+        .labelStyle(.titleAndIcon)
+    }
+}
+
 #Preview {
     NavigationStack {
         FeedView()
-            .environment(AppEnvironment.bootstrap())
+            .environment(AppEnvironment.mock())
     }
 }
