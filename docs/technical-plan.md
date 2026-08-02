@@ -216,6 +216,23 @@ Supabase-relatert repo-struktur:
 - `campaignCategoryId`
 - `isEnabled`
 
+`IngestionCandidate`
+- `id`
+- `sourceId`
+- `sourceUrl`
+- `detectedAt`
+- `title`
+- `summary`
+- `rawContent`
+- `normalizedHash`
+- `suggestedProgramId`
+- `suggestedCategoryId`
+- `status`
+- `reviewedBy`
+- `reviewedAt`
+- `reviewNote`
+- `promotedCampaignId`
+
 ### Domeneregler
 
 Bekreftede eller anbefalte regler:
@@ -225,6 +242,8 @@ Bekreftede eller anbefalte regler:
 - Kampanjer kan være knyttet til flere bonusprogrammer.
 - Feed skal vise bare publiserte, aktive og ikke-arkiverte kampanjer.
 - Utløpte kampanjer skal ikke vises i standardfeed.
+- Automatisert eller halvautomatisert kildeinnhenting skal aldri publisere direkte til `campaigns` i MVP.
+- Alle maskinelt oppdagede kampanjespor skal gjennom en kandidatstatus før redaksjonell godkjenning.
 
 ## 7. Forslag til Supabase-datamodell
 
@@ -236,6 +255,9 @@ Anbefaling:
 Foreslåtte tabeller:
 - `bonus_programs`
 - `campaign_categories`
+- `source_registry`
+- `ingestion_runs`
+- `ingestion_candidates`
 - `campaigns`
 - `campaign_programs`
 - `campaign_requirements`
@@ -271,6 +293,8 @@ Viktige kolonner i `campaigns`:
 
 Viktige constraints og indekser:
 - indeks på `campaigns(status, end_date)`
+- indeks på `ingestion_candidates(status, detected_at desc)`
+- unik constraint på `ingestion_candidates(normalized_hash)` når hash finnes
 - indeks på `campaign_programs(program_id, campaign_id)`
 - indeks på `campaign_source_references(campaign_id)`
 - unik constraint på `bonus_programs(slug)`
@@ -283,10 +307,79 @@ RLS-anbefaling:
 - Skrivetilgang til kampanjeinnhold kun for admin/editor-roller.
 - Brukere kan kun lese/skrive egne preferanser, favoritter og varslingsinnstillinger.
 - Ikke stol på klientfiltering for skjerming av upublisert innhold.
+- `source_registry`, `ingestion_runs` og `ingestion_candidates` skal ikke være lesbare for vanlige appbrukere i MVP.
+
+### Minimal ingest-modell for MVP
+
+Bekreftede krav:
+- Kampanjer skal opprettes og kvalitetssikres redaksjonelt.
+- Kilde og kontrolltidspunkt må dokumenteres før publisering.
+
+Antakelser:
+- Første automatisering vil følge et lite antall prioriterte kilder, ikke hele markedet.
+- Første adminflate kan være et enkelt internt webgrensesnitt eller Supabase-basert flyt.
+
+Anbefaling:
+- Legg inn en tydelig mellomstasjon mellom kildefunn og publisert kampanje.
+- Hold ingest-pipelinen enkel, observerbar og lett å overstyre manuelt.
+
+Foreslåtte ingest-tabeller:
+
+`source_registry`
+- definerer hvilke kilder som overvåkes
+- felt:
+  - `id`
+  - `name`
+  - `source_type` med verdier som `api`, `rss`, `newsletter`, `html_page`, `manual`
+  - `base_url`
+  - `poll_interval_minutes`
+  - `parser_key`
+  - `is_active`
+  - `last_checked_at`
+
+`ingestion_runs`
+- én rad per kjøring mot en kilde
+- felt:
+  - `id`
+  - `source_id`
+  - `started_at`
+  - `finished_at`
+  - `status`
+  - `candidate_count`
+  - `error_message`
+
+`ingestion_candidates`
+- rått eller normalisert funn som ennå ikke er publisert
+- felt:
+  - `id`
+  - `source_id`
+  - `source_url`
+  - `detected_at`
+  - `title`
+  - `summary`
+  - `raw_content`
+  - `normalized_hash`
+  - `suggested_program_id`
+  - `suggested_category_id`
+  - `status` med verdier som `new`, `needs_review`, `approved`, `rejected`, `promoted`
+  - `reviewed_by`
+  - `reviewed_at`
+  - `review_note`
+  - `promoted_campaign_id`
+  - `created_at`
+  - `updated_at`
+
+Domeneregler for kandidater:
+- Nye automatiske funn lagres i `ingestion_candidates`, ikke i `campaigns`.
+- `normalized_hash` brukes for enkel deduplisering av samme funn fra samme eller lignende kilder.
+- `promoted` betyr at kandidaten er koblet til en faktisk `campaign`.
+- Avviste kandidater beholdes for sporbarhet og for å redusere gjentatte falske treff.
 
 ## 8. Nødvendig administrasjonsflyt for kampanjeinnhold
 
 MVP trenger ikke et avansert CMS. Følgende flyt er nødvendig:
+
+### Eksisterende kampanjeflyt
 
 1. Opprette kampanjeutkast
 - registrere tittel, sammendrag, detaljer, bonusprogram, kategori og foreløpig gyldighet
@@ -319,6 +412,46 @@ MVP trenger ikke et avansert CMS. Følgende flyt er nødvendig:
 - kampanjer flyttes til `expired` eller `archived`
 - behold historikk i audit-logg
 
+### Minimal review-flyt for `ingestion_candidates`
+
+Bekreftede krav:
+- Redaksjonen må kontrollere innhold før publisering.
+
+Antakelser:
+- Første versjon brukes av et lite internt team.
+- Redaksjonen tåler å promotere kandidat til kampanje manuelt i MVP.
+
+Anbefaling:
+- Bygg en liten review-kø før mer avansert sluttbruker-UI.
+
+Foreslått flyt:
+
+1. Kilde overvåkes
+- en jobb, feed eller manuell import leser en definert kilde
+
+2. Kandidat opprettes
+- relevant innhold lagres i `ingestion_candidates`
+- systemet lagrer råtekst, kilde-URL og oppdaget tidspunkt
+
+3. Review-kø vises for admin
+- admin ser kandidater med status `new` eller `needs_review`
+- listen bør minst vise tittel, kilde, tidspunkt og mulig bonusprogram
+
+4. Kandidat vurderes
+- admin kan:
+  - avvise
+  - markere for videre kontroll
+  - godkjenne som grunnlag for kampanje
+
+5. Kandidat promoteres til kampanje
+- admin oppretter eller oppdaterer en rad i `campaigns`
+- tilhørende `campaign_source_references` opprettes samtidig
+- kandidaten settes til `promoted` og kobles til `promoted_campaign_id`
+
+6. Kampanjen går gjennom vanlig publiseringsflyt
+- status starter som `draft` eller `review`
+- publisering krever fortsatt kildehenvisning og `last_verified_at`
+
 Anbefaling:
 - Adminverktøy kan være en enkel intern webflate eller Supabase-baserte skjemaer.
 - Ikke bygg et fullverdig redaksjonssystem i iOS-appen.
@@ -332,29 +465,36 @@ Anbefaling:
 - Lage grunnleggende design tokens og navigasjon
 
 ### Fase 2 – Innholdsmodell og admin
-- Bygge første migrasjoner for kampanjer, kilder og vurderinger
+- Bygge første migrasjoner for kampanjer, kilder, vurderinger og minimale ingest-tabeller
+- Etablere enkel review-kø for `ingestion_candidates`
 - Etablere enkel administrasjonsflyt for å opprette og publisere kampanjer
 - Legge inn eksempeldata manuelt
 - Verifisere at publiseringsregler faktisk håndheves i databasen
 
-### Fase 3 – Brukergrunnlag i app
+### Fase 3 – Ekte innhold og validering
+- Legge inn 3–5 ekte kampanjer med komplette kilder og vurderinger
+- Verifisere at iOS-appen fungerer mot publiserte Supabase-data
+- Justere feed- og detaljmodellen etter reelle kampanjer
+- Teste manuell promotering fra kandidat til kampanje
+
+### Fase 4 – Brukergrunnlag i app
 - Onboarding for valg av bonusprogrammer
 - Lagre brukerpreferanser
 - Enkel autentisering hvis nødvendig for favoritter og varsler
 
-### Fase 4 – Kjerneopplevelse
+### Fase 5 – Kjerneopplevelse
 - Personlig kampanjefeed
 - Filtrering
 - Kampanjedetaljer
 - Favoritter
 
-### Fase 5 – Varsler og robusthet
+### Fase 6 – Varsler og robusthet
 - Begrensede push-varsler
 - Lokal caching av feed og preferanser
 - Empty/error/loading states
 - Basistester for domene og repository-lag
 
-### Fase 6 – Polering før pilot
+### Fase 7 – Polering før pilot
 - Tilgjengelighet
 - ytelsesjustering
 - redaksjonell arbeidsflytforbedring
@@ -370,6 +510,7 @@ Anbefaling:
 
 ### Vedlikeholdsrisikoer
 - Redaksjonelt arbeid kan bli flaskehals hvis re-verifisering ikke støttes av gode lister og statusfelt.
+- Uten en kandidatkø vil senere automatisering lett skape blanding av råfunn og verifisert innhold.
 - For kompleks rangering vil være vanskelig å forklare og vedlikeholde.
 - For mange bonusprogrammer tidlig øker datakvalitetskostnaden kraftig.
 - For mye fleksibilitet i datamodellen tidlig kan gi svak konsistens.
@@ -382,7 +523,7 @@ Anbefaling:
 
 Bør fjernes fra første MVP:
 - avansert personalisert rangeringsmotor
-- automatisk kampanjeinnhenting fra mange kilder
+- automatisk kampanjeinnhenting fra mange kilder uten manuell review
 - komplekse varslingsregler per bruker
 - sosial deling eller community-funksjoner
 - gamification

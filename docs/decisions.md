@@ -41,3 +41,9 @@
 - Bakgrunn: MVP-en trenger ekte backend-data raskt, men prosjektet skal unngå nye avhengigheter uten tydelig behov.
 - Beslutning: Første iOS-integrasjon mot Supabase bygges med `URLSession` og PostgREST-endepunkter, med `SUPABASE_URL` og `SUPABASE_ANON_KEY` lest fra appkonfigurasjon.
 - Konsekvens: Lavere avhengighetsrisiko og full kontroll over datamapping, men mer manuell API-kode enn ved bruk av et dedikert Supabase-SDK.
+
+## ADR-008: Automatisert innholdsoppdagelse går via kandidatkø før publisering
+- Status: Foreslått
+- Bakgrunn: Poengjeger trenger etter hvert mer effektiv innhenting av kampanjer, men produktet krever tydelig kildeintegritet og redaksjonell kontroll.
+- Beslutning: Alt automatisk eller halvautomatisk oppdaget kampanjeinnhold skal først lagres i en egen kandidatmodell som `ingestion_candidates`, og må gjennom admin-review før det kan bli en publisert `campaign`.
+- Konsekvens: Litt mer backend- og admin-kompleksitet tidlig, men langt lavere risiko for feilpublisering, bedre revisjonsspor og en tryggere vei til senere scraping, feeds eller API-baserte kilder.
