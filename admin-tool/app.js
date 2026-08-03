@@ -72,6 +72,7 @@
     initializeAuthenticatedFlow();
   } else {
     renderUnauthenticated();
+    setMessage(elements.authMessage, "Logg inn med en Supabase-bruker som har admin- eller editorrolle.", "muted");
   }
 
   function hasConfig() {
@@ -840,6 +841,14 @@
         await saveCampaignEditor(form, campaign, targetStatus);
       });
     });
+
+    form.addEventListener("input", function () {
+      updatePublishButtonState(form);
+    });
+    form.addEventListener("change", function () {
+      updatePublishButtonState(form);
+    });
+    updatePublishButtonState(form);
   }
 
   function renderEmptyCampaignDetail(message) {
@@ -958,6 +967,29 @@
     }
 
     return errors;
+  }
+
+  function updatePublishButtonState(form) {
+    const publishButton = form.querySelector('[data-publish-action="publish"]');
+    if (!publishButton) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    const canPublish = Boolean(
+      String(formData.get("title") || "").trim()
+        && String(formData.get("summary") || "").trim()
+        && String(formData.get("details") || "").trim()
+        && String(formData.get("lastVerifiedAt") || "").trim()
+        && String(formData.get("sourceId") || "").trim()
+        && String(formData.get("sourceUrl") || "").trim()
+        && String(formData.get("reasonWhyItMatters") || "").trim()
+    );
+
+    publishButton.disabled = !canPublish;
+    publishButton.title = canPublish
+      ? ""
+      : "Publisering krever tittel, beskrivelse, detaljer, sist verifisert, kilde og redaksjonell begrunnelse.";
   }
 
   async function updateCampaign(payload) {
