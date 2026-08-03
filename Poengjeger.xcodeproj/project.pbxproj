@@ -25,6 +25,10 @@
 		016 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* SettingsView.swift */; };
 		017 /* FeedUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* FeedUseCaseTests.swift */; };
 		018 /* SupabaseCampaignRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119 /* SupabaseCampaignRepository.swift */; };
+		019 /* IngestionCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123 /* IngestionCandidate.swift */; };
+		020 /* AdminRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124 /* AdminRepository.swift */; };
+		021 /* MockAdminRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125 /* MockAdminRepository.swift */; };
+		022 /* AdminQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126 /* AdminQueueView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +65,10 @@
 		120 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		121 /* AppConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppConfig.xcconfig; sourceTree = "<group>"; };
 		122 /* AppSecrets.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppSecrets.example.xcconfig; sourceTree = "<group>"; };
+		123 /* IngestionCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngestionCandidate.swift; sourceTree = "<group>"; };
+		124 /* AdminRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminRepository.swift; sourceTree = "<group>"; };
+		125 /* MockAdminRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAdminRepository.swift; sourceTree = "<group>"; };
+		126 /* AdminQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminQueueView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,6 +174,7 @@
 				105 /* BonusProgram.swift */,
 				106 /* Campaign.swift */,
 				107 /* UserSession.swift */,
+				123 /* IngestionCandidate.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -207,6 +216,7 @@
 			children = (
 				618 /* CampaignDetail */,
 				619 /* Favorites */,
+				621 /* Admin */,
 			);
 			sourceTree = "<group>";
 		};
@@ -222,6 +232,7 @@
 			isa = PBXGroup;
 			children = (
 				110 /* MockCampaignRepository.swift */,
+				125 /* MockAdminRepository.swift */,
 				119 /* SupabaseCampaignRepository.swift */,
 			);
 			path = Repositories;
@@ -231,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				108 /* CampaignRepository.swift */,
+				124 /* AdminRepository.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -266,6 +278,14 @@
 				122 /* AppSecrets.example.xcconfig */,
 			);
 			path = Config;
+			sourceTree = "<group>";
+		};
+		621 /* Admin */ = {
+			isa = PBXGroup;
+			children = (
+				126 /* AdminQueueView.swift */,
+			);
+			path = Admin;
 			sourceTree = "<group>";
 		};
 		700 /* PoengjegerTests */ = {
@@ -389,9 +409,12 @@
 				005 /* BonusProgram.swift in Sources */,
 				006 /* Campaign.swift in Sources */,
 				007 /* UserSession.swift in Sources */,
+				019 /* IngestionCandidate.swift in Sources */,
 				008 /* CampaignRepository.swift in Sources */,
+				020 /* AdminRepository.swift in Sources */,
 				009 /* FeedUseCase.swift in Sources */,
 				010 /* MockCampaignRepository.swift in Sources */,
+				021 /* MockAdminRepository.swift in Sources */,
 				011 /* MainTabView.swift in Sources */,
 				012 /* OnboardingView.swift in Sources */,
 				013 /* FeedView.swift in Sources */,
@@ -399,6 +422,7 @@
 				015 /* FavoritesView.swift in Sources */,
 				016 /* SettingsView.swift in Sources */,
 				018 /* SupabaseCampaignRepository.swift in Sources */,
+				022 /* AdminQueueView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

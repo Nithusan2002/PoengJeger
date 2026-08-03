@@ -63,6 +63,16 @@ struct SettingsView: View {
                     Text(dataSource.label)
                 }
             }
+
+            Section {
+                NavigationLink("Admin-kø") {
+                    AdminQueueView()
+                }
+            } header: {
+                Text("Redaksjon")
+            } footer: {
+                Text("Denne skjermen er for intern review av ingestion-kandidater. Live admin krever egen admin-session.")
+            }
         }
         .navigationTitle("Innstillinger")
     }

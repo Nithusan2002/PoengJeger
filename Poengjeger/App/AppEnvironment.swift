@@ -12,31 +12,53 @@ final class AppEnvironment {
     }
 
     let campaignRepository: CampaignRepository
+    let adminRepository: AdminRepository
     var userSession: UserSession
     var programs: [BonusProgram] = []
     var campaigns: [Campaign] = []
     var loadState: LoadState = .idle
     var dataSource: CampaignDataSource?
+    var adminCandidates: [IngestionCandidate] = []
+    var adminLoadState: LoadState = .idle
+    var adminSourceLabel: String?
+    var adminInfoMessage: String?
+    var isAdminPreview = false
 
-    init(campaignRepository: CampaignRepository, userSession: UserSession) {
+    init(campaignRepository: CampaignRepository, adminRepository: AdminRepository, userSession: UserSession) {
         self.campaignRepository = campaignRepository
+        self.adminRepository = adminRepository
         self.userSession = userSession
     }
 
     static func live() -> AppEnvironment {
         let repository: CampaignRepository
+        let adminRepository: AdminRepository
 
         if let configuration = SupabaseConfiguration.fromBundle() {
             repository = SupabaseCampaignRepository(configuration: configuration)
+            adminRepository = UnavailableAdminRepository(
+                reason: "Live admin krever egen admin-innlogging eller et separat adminverktøy. Denne iOS-klienten bruker bare publiserbar nøkkel."
+            )
         } else {
             repository = MissingSupabaseConfigurationRepository()
+            adminRepository = UnavailableAdminRepository(
+                reason: "Admin-kø er utilgjengelig før appkonfigurasjonen og admin-laget er koblet opp."
+            )
         }
 
-        return AppEnvironment(campaignRepository: repository, userSession: .empty)
+        return AppEnvironment(
+            campaignRepository: repository,
+            adminRepository: adminRepository,
+            userSession: .empty
+        )
     }
 
     static func mock() -> AppEnvironment {
-        AppEnvironment(campaignRepository: MockCampaignRepository(), userSession: .empty)
+        AppEnvironment(
+            campaignRepository: MockCampaignRepository(),
+            adminRepository: MockAdminRepository(),
+            userSession: .empty
+        )
     }
 
     func loadIfNeeded() async {
@@ -64,6 +86,64 @@ final class AppEnvironment {
     var favoriteCampaigns: [Campaign] {
         campaigns.filter { userSession.favoriteCampaignIDs.contains($0.id) }
     }
+
+    func loadAdminQueueIfNeeded() async {
+        guard adminLoadState == .idle else { return }
+        await refreshAdminQueue()
+    }
+
+    func refreshAdminQueue() async {
+        adminLoadState = .loading
+
+        do {
+            let queue = try await adminRepository.fetchQueue()
+            adminCandidates = queue.candidates
+            adminSourceLabel = queue.label
+            adminInfoMessage = queue.isPreview ? "Viser lokal preview-data for admin-flyten. Live admin krever egen admin-session." : nil
+            isAdminPreview = queue.isPreview
+            adminLoadState = .loaded
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? "Kunne ikke laste admin-kø akkurat nå."
+            adminCandidates = []
+            adminSourceLabel = nil
+            adminInfoMessage = nil
+            isAdminPreview = false
+            adminLoadState = .failed(message)
+        }
+    }
+
+    func setAdminCandidateStatus(candidateID: UUID, status: IngestionCandidate.Status, note: String?) async {
+        do {
+            let updated = try await adminRepository.setStatus(
+                candidateID: candidateID,
+                status: status,
+                note: note
+            )
+            replaceAdminCandidate(updated)
+        } catch {
+            adminLoadState = .failed((error as? LocalizedError)?.errorDescription ?? "Kunne ikke oppdatere kandidatstatus.")
+        }
+    }
+
+    func promoteAdminCandidate(candidateID: UUID, note: String?) async {
+        do {
+            let updated = try await adminRepository.promote(candidateID: candidateID, note: note)
+            replaceAdminCandidate(updated)
+        } catch {
+            adminLoadState = .failed((error as? LocalizedError)?.errorDescription ?? "Kunne ikke promotere kandidat til draft.")
+        }
+    }
+
+    private func replaceAdminCandidate(_ candidate: IngestionCandidate) {
+        if let index = adminCandidates.firstIndex(where: { $0.id == candidate.id }) {
+            adminCandidates[index] = candidate
+        } else {
+            adminCandidates.insert(candidate, at: 0)
+        }
+
+        adminCandidates.sort { $0.detectedAt > $1.detectedAt }
+        adminLoadState = .loaded
+    }
 }
 
 private struct MissingSupabaseConfigurationRepository: CampaignRepository {
@@ -72,9 +152,25 @@ private struct MissingSupabaseConfigurationRepository: CampaignRepository {
     }
 }
 
+private struct UnavailableAdminRepository: AdminRepository {
+    let reason: String
+
+    func fetchQueue() async throws -> AdminQueueData {
+        throw AdminRepositoryError.unavailable(reason)
+    }
+
+    func setStatus(candidateID: UUID, status: IngestionCandidate.Status, note: String?) async throws -> IngestionCandidate {
+        throw AdminRepositoryError.unavailable(reason)
+    }
+
+    func promote(candidateID: UUID, note: String?) async throws -> IngestionCandidate {
+        throw AdminRepositoryError.unavailable(reason)
+    }
+}
+
 private struct MissingSupabaseConfigurationError: LocalizedError {
     var errorDescription: String? {
-        "SUPABASE_URL eller SUPABASE_ANON_KEY mangler i appkonfigurasjonen."
+        "SUPABASE_HOST eller SUPABASE_PUBLISHABLE_KEY mangler i appkonfigurasjonen."
     }
 }
 

@@ -6,3 +6,6 @@ xcuserdata/
 
 # Local app secrets
 Poengjeger/Config/AppSecrets.local.xcconfig
+
+# Supabase CLI temp files
+supabase/.temp/

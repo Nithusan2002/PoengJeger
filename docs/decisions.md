@@ -59,3 +59,15 @@
 - Bakgrunn: iOS-appen trenger Supabase-host og klientnøkkel i runtime, men disse skal ikke ligge hardkodet i `project.pbxproj` eller andre committede filer.
 - Beslutning: Xcode-targeten leser `SUPABASE_HOST` og `SUPABASE_PUBLISHABLE_KEY` fra en lokal `AppSecrets.local.xcconfig` som inkluderes via en committet `AppConfig.xcconfig`. Repositoryet inneholder kun en eksempel-fil for oppsett, og legacy `anon`-nøkkel er fjernet fra klientkonfigurasjonen.
 - Konsekvens: Lavere risiko for lekkasje av miljøverdier og enklere rotasjon av nøkler, men utviklere må opprette lokal konfigurasjon før appen kan hente live-data.
+
+## ADR-010: Første admin-flyt bygges som databaseprimitiver, ikke eget UI
+- Status: Foreslått
+- Bakgrunn: Produktet trenger en reell redaksjonell flyt for å vurdere og promotere `ingestion_candidates`, men et fullt admin-UI vil forsinke læring om selve innholdsprosessen.
+- Beslutning: Første admin-MVP bygges som en Supabase-basert kø-visning og eksplisitte review-/promote-funksjoner i databasen. Kandidater kan bare promoteres til `draft`, aldri publiseres direkte.
+- Konsekvens: Raskere vei til testbar innholdsoperasjon og lavere publiseringsrisiko, men redaksjonen må foreløpig bruke Supabase Studio eller SQL frem til et eget admin-UI bygges. Funksjonene må derfor være brukbare både via SQL Editor og senere RPC-kall.
+
+## ADR-012: Første live adminflate bygges som separat internt webverktøy
+- Status: Foreslått
+- Bakgrunn: Den vanlige iOS-klienten bruker publiserbar nøkkel og skal være enkel, rask og trygg for sluttbrukere. Live redaksjonelle handlinger i samme klient vil blande sikkerhetsgrenser, øke appkompleksitet og skape unødvendig MVP-støy.
+- Beslutning: Første faktiske adminflate bygges som et separat internt webverktøy over de eksisterende Supabase-primitivene for kø, review og promotering. iOS-appen kan beholde en preview-only adminskjerm for intern demonstrasjon, men ikke som operativ liveflate.
+- Konsekvens: Bedre sikkerhet og tydeligere rollefordeling mellom sluttbrukerprodukt og redaksjonsdrift. Teamet må bygge og drifte én ekstra intern overflate, men unngår å presse admin-auth og arbeidsflyt inn i forbrukerappen for tidlig.
