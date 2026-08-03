@@ -95,7 +95,7 @@ private struct CampaignCardView: View {
                     Text(campaign.title)
                         .font(.headline)
 
-                    Text(campaign.summary)
+                    Text(!campaign.editorialSummary.isEmpty ? campaign.editorialSummary : campaign.summary)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

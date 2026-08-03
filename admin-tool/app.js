@@ -331,6 +331,7 @@
         "category_id",
         "editorial_summary",
         "updated_at",
+        "campaign_editorial_assessments(id,score,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
         "campaign_source_references(id,source_id,url,title,checked_at,evidence_note)",
         "campaign_requirements(id,text,sort_order)",
         "campaign_programs(program_id)"
@@ -368,6 +369,9 @@
     const requirements = (campaign.campaign_requirements || [])
       .slice()
       .sort((left, right) => left.sort_order - right.sort_order);
+    const editorialAssessment = Array.isArray(campaign.campaign_editorial_assessments)
+      ? campaign.campaign_editorial_assessments[0] || null
+      : campaign.campaign_editorial_assessments || null;
     const sourceReferences = campaign.campaign_source_references || [];
     const programLinks = campaign.campaign_programs || [];
 
@@ -381,6 +385,17 @@
       primaryProgramId: campaign.primary_program_id,
       categoryId: campaign.category_id,
       editorialSummary: campaign.editorial_summary || "",
+      editorialAssessment: editorialAssessment
+        ? {
+            id: editorialAssessment.id,
+            score: editorialAssessment.score,
+            reasonWhyItMatters: editorialAssessment.reason_why_it_matters || "",
+            estimatedValueText: editorialAssessment.estimated_value_text || "",
+            difficultyLevel: editorialAssessment.difficulty_level || "",
+            availabilityScope: editorialAssessment.availability_scope || "",
+            riskNote: editorialAssessment.risk_note || ""
+          }
+        : null,
       updatedAt: campaign.updated_at,
       requirements,
       sourceReferences,
@@ -627,6 +642,7 @@
 
     const primarySource = campaign.sourceReferences[0] || null;
     const sourceId = primarySource ? primarySource.source_id : "";
+    const editorialAssessment = campaign.editorialAssessment;
 
     elements.campaignDetailPanel.classList.remove("empty");
     elements.campaignDetailPanel.innerHTML = `
@@ -695,6 +711,64 @@
             <input name="editorialSummary" type="text" value="${escapeAttribute(campaign.editorialSummary)}" />
           </label>
         </div>
+
+        <section class="section-stack">
+          <h3>Redaksjonell vurdering</h3>
+          <div class="detail-grid">
+            <label class="field">
+              <span>Hvorfor interessant</span>
+              <textarea name="reasonWhyItMatters" rows="4">${escapeHtml(
+                editorialAssessment ? editorialAssessment.reasonWhyItMatters : ""
+              )}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Estimert verdi</span>
+              <textarea name="estimatedValueText" rows="4">${escapeHtml(
+                editorialAssessment ? editorialAssessment.estimatedValueText : ""
+              )}</textarea>
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Friksjon</span>
+              <select name="difficultyLevel">
+                <option value="">Ikke satt</option>
+                ${renderEnumOptions(
+                  [
+                    { value: "low", label: "Lav" },
+                    { value: "medium", label: "Middels" },
+                    { value: "high", label: "Høy" }
+                  ],
+                  editorialAssessment ? editorialAssessment.difficultyLevel : ""
+                )}
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Tilgjengelighet</span>
+              <select name="availabilityScope">
+                <option value="">Ikke satt</option>
+                ${renderEnumOptions(
+                  [
+                    { value: "narrow", label: "Smal" },
+                    { value: "regional", label: "Regional" },
+                    { value: "broad", label: "Bred" }
+                  ],
+                  editorialAssessment ? editorialAssessment.availabilityScope : ""
+                )}
+              </select>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Risiko / forbehold</span>
+            <textarea name="riskNote" rows="4">${escapeHtml(
+              editorialAssessment ? editorialAssessment.riskNote : ""
+            )}</textarea>
+          </label>
+        </section>
 
         <label class="field">
           <span>Krav, ett per linje</span>
@@ -790,6 +864,7 @@
 
     try {
       await updateCampaign(payload);
+      await upsertEditorialAssessment(payload);
       await replaceCampaignProgramLinks(payload);
       await replaceCampaignRequirements(payload);
       await upsertPrimarySource(payload, originalCampaign);
@@ -824,6 +899,12 @@
       primaryProgramId: emptyToNull(formData.get("primaryProgramId")),
       categoryId: emptyToNull(formData.get("categoryId")),
       editorialSummary: emptyToNull(formData.get("editorialSummary")),
+      editorialAssessmentId: originalCampaign.editorialAssessment ? originalCampaign.editorialAssessment.id : null,
+      reasonWhyItMatters: String(formData.get("reasonWhyItMatters") || "").trim(),
+      estimatedValueText: emptyToNull(formData.get("estimatedValueText")),
+      difficultyLevel: emptyToNull(formData.get("difficultyLevel")),
+      availabilityScope: emptyToNull(formData.get("availabilityScope")),
+      riskNote: emptyToNull(formData.get("riskNote")),
       lastVerifiedAt: lastVerifiedAt ? toISOString(lastVerifiedAt) : null,
       requirements,
       sourceId: emptyToNull(formData.get("sourceId")),
@@ -850,6 +931,18 @@
       errors.push("Detaljtekst mangler.");
     }
 
+    if (
+      payload.reasonWhyItMatters ||
+      payload.estimatedValueText ||
+      payload.difficultyLevel ||
+      payload.availabilityScope ||
+      payload.riskNote
+    ) {
+      if (!payload.reasonWhyItMatters) {
+        errors.push("Redaksjonell vurdering krever 'Hvorfor interessant'.");
+      }
+    }
+
     if (payload.status === "published") {
       if (!payload.lastVerifiedAt) {
         errors.push("Publisering krever sist verifisert.");
@@ -857,6 +950,10 @@
 
       if (!payload.sourceUrl || !payload.sourceId) {
         errors.push("Publisering krever minst én gyldig kilde.");
+      }
+
+      if (!payload.reasonWhyItMatters) {
+        errors.push("Publisering krever en redaksjonell begrunnelse.");
       }
     }
 
@@ -921,6 +1018,53 @@
         text,
         sort_order: index
       })),
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
+  async function upsertEditorialAssessment(payload) {
+    const hasAssessmentContent =
+      Boolean(payload.reasonWhyItMatters) ||
+      Boolean(payload.estimatedValueText) ||
+      Boolean(payload.difficultyLevel) ||
+      Boolean(payload.availabilityScope) ||
+      Boolean(payload.riskNote);
+
+    if (!hasAssessmentContent) {
+      if (payload.editorialAssessmentId) {
+        await apiRequest(`/rest/v1/campaign_editorial_assessments?id=eq.${payload.editorialAssessmentId}`, {
+          method: "DELETE"
+        });
+      }
+      return;
+    }
+
+    const body = {
+      campaign_id: payload.id,
+      score: null,
+      reason_why_it_matters: payload.reasonWhyItMatters,
+      estimated_value_text: payload.estimatedValueText,
+      difficulty_level: payload.difficultyLevel,
+      availability_scope: payload.availabilityScope,
+      risk_note: payload.riskNote
+    };
+
+    if (payload.editorialAssessmentId) {
+      await apiRequest(`/rest/v1/campaign_editorial_assessments?id=eq.${payload.editorialAssessmentId}`, {
+        method: "PATCH",
+        body,
+        extraHeaders: {
+          Prefer: "return=minimal"
+        }
+      });
+      return;
+    }
+
+    await apiRequest("/rest/v1/campaign_editorial_assessments", {
+      method: "POST",
+      body: [body],
       extraHeaders: {
         Prefer: "return=minimal"
       }
@@ -1147,6 +1291,15 @@
       .map(([value, label]) => {
         const isSelected = value === selectedStatus ? " selected" : "";
         return `<option value="${escapeAttribute(value)}"${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function renderEnumOptions(options, selectedValue) {
+    return options
+      .map((option) => {
+        const isSelected = option.value === selectedValue ? " selected" : "";
+        return `<option value="${escapeAttribute(option.value)}"${isSelected}>${escapeHtml(option.label)}</option>`;
       })
       .join("");
   }
