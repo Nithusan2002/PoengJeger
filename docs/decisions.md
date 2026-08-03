@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-011: Instruksjoner organiseres i regler, Skills og prosjektdokumentasjon
+- Status: Vedtatt
+- Bakgrunn: Ett omfattende instruksjonsdokument blandet varige regler, prosjektfakta og arbeidsprosedyrer. Det gjør det vanskeligere å finne relevant kontekst og å bruke samme prosess konsekvent.
+- Beslutning: `AGENTS.md` inneholder varige regler og når en arbeidsflyt er obligatorisk. `.agents/skills/` inneholder gjenbrukbare prosedyrer. `docs/` inneholder prosjektfakta, policyer og teknisk referanse.
+- Konsekvens: Instruksjonene blir lettere å vedlikeholde og mer målrettede. Nye Skills må holdes korte og peke til dokumentasjonen fremfor å duplisere den.
+
 ## ADR-001: SwiftUI-app med feature-orientert, lagdelt arkitektur
 - Status: Foreslått
 - Bakgrunn: MVP-en trenger rask utvikling, enkel navigasjon og god separasjon mellom UI, domene og data.

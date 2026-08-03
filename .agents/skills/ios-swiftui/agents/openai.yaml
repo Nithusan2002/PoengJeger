@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS og SwiftUI"
+  short_description: "Bygg iOS-endringer for Poengjeger"
+  default_prompt: "Vurder eller implementer denne SwiftUI-endringen for Poengjeger."

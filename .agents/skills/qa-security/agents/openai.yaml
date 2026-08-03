@@ -1,0 +1,4 @@
+interface:
+  display_name: "QA og sikkerhet"
+  short_description: "Kvalitetssikre Poengjeger-endringer"
+  default_prompt: "Kvalitetssikre denne Poengjeger-endringen."

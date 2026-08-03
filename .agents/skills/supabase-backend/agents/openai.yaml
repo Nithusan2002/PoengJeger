@@ -1,0 +1,4 @@
+interface:
+  display_name: "Supabase-backend"
+  short_description: "Vurder backendendringer for Poengjeger"
+  default_prompt: "Vurder eller implementer denne Supabase-endringen for Poengjeger."

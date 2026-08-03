@@ -1,0 +1,4 @@
+interface:
+  display_name: "Produktvurdering"
+  short_description: "Vurder produktendringer for Poengjeger"
+  default_prompt: "Vurder denne Poengjeger-endringen før implementering."

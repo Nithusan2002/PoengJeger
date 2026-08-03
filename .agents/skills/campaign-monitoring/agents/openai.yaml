@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kampanjeovervåking"
+  short_description: "Vurder godkjente kampanjekilder"
+  default_prompt: "Vurder denne kampanjekilden eller innhentingsendringen for Poengjeger."

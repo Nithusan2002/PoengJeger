@@ -1,0 +1,4 @@
+interface:
+  display_name: "Innholdskvalitet"
+  short_description: "Kvalitetssikre kampanjeinnhold"
+  default_prompt: "Vurder dette kampanjeinnholdet og kildegrunnlaget."
