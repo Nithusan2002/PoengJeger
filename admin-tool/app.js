@@ -1,0 +1,1181 @@
+(function () {
+  "use strict";
+
+  const CONFIG = window.ADMIN_TOOL_CONFIG || {};
+  const STORAGE_KEY = "poengjeger_admin_session";
+  const CAMPAIGN_STATUS_LABELS = {
+    draft: "Draft",
+    published: "Published",
+    archived: "Archived",
+    review: "Review",
+    expired: "Expired"
+  };
+  const STATUS_LABELS = {
+    new: "Ny",
+    needs_review: "Trenger review",
+    approved: "Godkjent",
+    rejected: "Avvist",
+    promoted: "Promotert"
+  };
+
+  const state = {
+    session: loadSession(),
+    role: null,
+    candidates: [],
+    campaigns: [],
+    categories: [],
+    programs: [],
+    sources: [],
+    selectedCandidateId: null,
+    selectedCampaignId: null,
+    loading: false
+  };
+
+  const elements = {
+    authPanel: document.querySelector("#auth-panel"),
+    authMessage: document.querySelector("#auth-message"),
+    campaignDetailPanel: document.querySelector("#campaign-detail-panel"),
+    campaignList: document.querySelector("#campaign-list"),
+    campaignMessage: document.querySelector("#campaign-message"),
+    campaignPanel: document.querySelector("#campaign-panel"),
+    campaignRefreshButton: document.querySelector("#campaign-refresh-button"),
+    campaignStatusFilter: document.querySelector("#campaign-status-filter"),
+    detailPanel: document.querySelector("#detail-panel"),
+    emailInput: document.querySelector("#email-input"),
+    loginButton: document.querySelector("#login-button"),
+    loginForm: document.querySelector("#login-form"),
+    passwordInput: document.querySelector("#password-input"),
+    queueList: document.querySelector("#queue-list"),
+    queueMessage: document.querySelector("#queue-message"),
+    queuePanel: document.querySelector("#queue-panel"),
+    refreshButton: document.querySelector("#refresh-button"),
+    sessionPill: document.querySelector("#session-pill"),
+    signOutButton: document.querySelector("#sign-out-button"),
+    statusFilter: document.querySelector("#status-filter")
+  };
+
+  elements.loginForm.addEventListener("submit", onLoginSubmit);
+  elements.refreshButton.addEventListener("click", refreshQueue);
+  elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
+  elements.signOutButton.addEventListener("click", signOut);
+  elements.statusFilter.addEventListener("change", refreshQueue);
+  elements.campaignStatusFilter.addEventListener("change", refreshCampaigns);
+
+  if (!hasConfig()) {
+    setMessage(
+      elements.authMessage,
+      "Mangler lokal konfigurasjon. Opprett admin-tool/config.local.js fra config.example.js og sett SUPABASE-data.",
+      "error"
+    );
+    elements.loginButton.disabled = true;
+  } else if (state.session) {
+    initializeAuthenticatedFlow();
+  } else {
+    renderUnauthenticated();
+  }
+
+  function hasConfig() {
+    return Boolean(CONFIG.supabaseUrl && CONFIG.supabasePublishableKey);
+  }
+
+  async function onLoginSubmit(event) {
+    event.preventDefault();
+
+    if (!hasConfig()) {
+      return;
+    }
+
+    const email = elements.emailInput.value.trim();
+    const password = elements.passwordInput.value;
+
+    if (!email || !password) {
+      setMessage(elements.authMessage, "E-post og passord må fylles ut.", "error");
+      return;
+    }
+
+    setAuthLoading(true);
+    setMessage(elements.authMessage, "Logger inn...", "muted");
+
+    try {
+      const session = await authRequest("/auth/v1/token?grant_type=password", {
+        method: "POST",
+        body: {
+          email,
+          password
+        }
+      });
+
+      state.session = {
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token,
+        expiresAt: session.expires_at,
+        userEmail: session.user && session.user.email ? session.user.email : email
+      };
+      persistSession();
+
+      elements.passwordInput.value = "";
+      await initializeAuthenticatedFlow();
+    } catch (error) {
+      clearSession();
+      renderUnauthenticated();
+      setMessage(elements.authMessage, error.message, "error");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function initializeAuthenticatedFlow() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    renderAuthenticatedShell();
+    setMessage(elements.queueMessage, "Laster rolle og kandidater...", "muted");
+
+    try {
+      state.role = await fetchRole();
+
+      if (!state.role || (state.role !== "admin" && state.role !== "editor")) {
+        throw new Error("Brukeren mangler intern admin- eller editorrolle.");
+      }
+
+      renderSessionPill();
+      await fetchReferenceData();
+      await Promise.all([refreshQueue(), refreshCampaigns()]);
+    } catch (error) {
+      clearSession();
+      renderUnauthenticated();
+      setMessage(elements.authMessage, error.message, "error");
+    }
+  }
+
+  async function fetchReferenceData() {
+    const [programs, categories, sources] = await Promise.all([
+      fetchPrograms(),
+      fetchCategories(),
+      fetchSources()
+    ]);
+
+    state.programs = programs;
+    state.categories = categories;
+    state.sources = sources;
+  }
+
+  async function refreshQueue() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    state.loading = true;
+    elements.refreshButton.disabled = true;
+    setMessage(elements.queueMessage, "Laster kandidatkø...", "muted");
+
+    try {
+      const status = elements.statusFilter.value;
+      state.candidates = await fetchQueue(status);
+
+      if (!state.candidates.length) {
+        state.selectedCandidateId = null;
+        renderQueue();
+        renderEmptyDetail("Ingen kandidater matcher filteret akkurat nå.");
+        setMessage(elements.queueMessage, "Ingen kandidater i valgt filter.", "muted");
+        return;
+      }
+
+      if (!state.candidates.some((candidate) => candidate.id === state.selectedCandidateId)) {
+        state.selectedCandidateId = state.candidates[0].id;
+      }
+
+      renderQueue();
+      renderDetail();
+      setMessage(
+        elements.queueMessage,
+        `Viser ${state.candidates.length} kandidat${state.candidates.length === 1 ? "" : "er"}.`,
+        "success"
+      );
+    } catch (error) {
+      setMessage(elements.queueMessage, error.message, "error");
+      renderEmptyDetail("Kunne ikke laste kandidatdetaljer.");
+    } finally {
+      state.loading = false;
+      elements.refreshButton.disabled = false;
+    }
+  }
+
+  async function refreshCampaigns() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    elements.campaignRefreshButton.disabled = true;
+    setMessage(elements.campaignMessage, "Laster kampanjer...", "muted");
+
+    try {
+      const status = elements.campaignStatusFilter.value;
+      state.campaigns = await fetchCampaigns(status);
+
+      if (!state.campaigns.length) {
+        state.selectedCampaignId = null;
+        renderCampaignList();
+        renderEmptyCampaignDetail("Ingen kampanjer matcher filteret ennå.");
+        setMessage(elements.campaignMessage, "Ingen kampanjer i valgt filter.", "muted");
+        return;
+      }
+
+      if (!state.campaigns.some((campaign) => campaign.id === state.selectedCampaignId)) {
+        state.selectedCampaignId = state.campaigns[0].id;
+      }
+
+      renderCampaignList();
+      renderCampaignDetail();
+      setMessage(
+        elements.campaignMessage,
+        `Viser ${state.campaigns.length} kampanje${state.campaigns.length === 1 ? "" : "r"}.`,
+        "success"
+      );
+    } catch (error) {
+      setMessage(elements.campaignMessage, error.message, "error");
+      renderEmptyCampaignDetail("Kunne ikke laste kampanjer.");
+    } finally {
+      elements.campaignRefreshButton.disabled = false;
+    }
+  }
+
+  async function fetchQueue(status) {
+    const params = new URLSearchParams();
+    params.set(
+      "select",
+      [
+        "id",
+        "status",
+        "detected_at",
+        "source_url",
+        "title",
+        "summary",
+        "reviewed_at",
+        "review_note",
+        "promoted_campaign_id",
+        "ingest_kind",
+        "source_name",
+        "suggested_program_name",
+        "suggested_category_name"
+      ].join(",")
+    );
+    params.set("order", "detected_at.desc");
+
+    if (status) {
+      params.set("status", `eq.${status}`);
+    }
+
+    const response = await apiRequest(`/rest/v1/admin_ingestion_candidate_queue?${params.toString()}`);
+
+    return response.map(normalizeCandidate);
+  }
+
+  async function fetchRole() {
+    const response = await apiRequest("/rest/v1/rpc/current_editorial_role", {
+      method: "POST",
+      body: {}
+    });
+
+    if (typeof response === "string") {
+      return response;
+    }
+
+    if (response && typeof response === "object" && typeof response.current_editorial_role === "string") {
+      return response.current_editorial_role;
+    }
+
+    return null;
+  }
+
+  async function fetchPrograms() {
+    const params = new URLSearchParams();
+    params.set("select", "id,name,slug");
+    params.set("order", "name.asc");
+
+    return apiRequest(`/rest/v1/bonus_programs?${params.toString()}`);
+  }
+
+  async function fetchCategories() {
+    const params = new URLSearchParams();
+    params.set("select", "id,name,slug");
+    params.set("order", "name.asc");
+
+    return apiRequest(`/rest/v1/campaign_categories?${params.toString()}`);
+  }
+
+  async function fetchSources() {
+    const params = new URLSearchParams();
+    params.set("select", "id,name");
+    params.set("order", "name.asc");
+
+    return apiRequest(`/rest/v1/campaign_sources?${params.toString()}`);
+  }
+
+  async function fetchCampaigns(status) {
+    const params = new URLSearchParams();
+    params.set(
+      "select",
+      [
+        "id",
+        "title",
+        "summary",
+        "details",
+        "status",
+        "last_verified_at",
+        "primary_program_id",
+        "category_id",
+        "editorial_summary",
+        "updated_at",
+        "campaign_source_references(id,source_id,url,title,checked_at,evidence_note)",
+        "campaign_requirements(id,text,sort_order)",
+        "campaign_programs(program_id)"
+      ].join(",")
+    );
+    params.set("order", "updated_at.desc");
+
+    if (status) {
+      params.set("status", `eq.${status}`);
+    }
+
+    const response = await apiRequest(`/rest/v1/campaigns?${params.toString()}`);
+    return response.map(normalizeCampaign);
+  }
+
+  function normalizeCandidate(candidate) {
+    return {
+      id: candidate.id,
+      status: candidate.status,
+      detectedAt: candidate.detected_at,
+      sourceUrl: candidate.source_url,
+      title: candidate.title,
+      summary: candidate.summary || "Ingen oppsummering ennå.",
+      reviewedAt: candidate.reviewed_at,
+      reviewNote: candidate.review_note || "",
+      promotedCampaignId: candidate.promoted_campaign_id,
+      ingestKind: candidate.ingest_kind,
+      sourceName: candidate.source_name,
+      suggestedProgramName: candidate.suggested_program_name,
+      suggestedCategoryName: candidate.suggested_category_name
+    };
+  }
+
+  function normalizeCampaign(campaign) {
+    const requirements = (campaign.campaign_requirements || [])
+      .slice()
+      .sort((left, right) => left.sort_order - right.sort_order);
+    const sourceReferences = campaign.campaign_source_references || [];
+    const programLinks = campaign.campaign_programs || [];
+
+    return {
+      id: campaign.id,
+      title: campaign.title || "",
+      summary: campaign.summary || "",
+      details: campaign.details || "",
+      status: campaign.status,
+      lastVerifiedAt: campaign.last_verified_at,
+      primaryProgramId: campaign.primary_program_id,
+      categoryId: campaign.category_id,
+      editorialSummary: campaign.editorial_summary || "",
+      updatedAt: campaign.updated_at,
+      requirements,
+      sourceReferences,
+      programLinks
+    };
+  }
+
+  function renderUnauthenticated() {
+    elements.authPanel.classList.remove("hidden");
+    elements.queuePanel.classList.add("hidden");
+    elements.campaignPanel.classList.add("hidden");
+    elements.signOutButton.classList.add("hidden");
+    elements.sessionPill.classList.add("hidden");
+  }
+
+  function renderAuthenticatedShell() {
+    elements.authPanel.classList.add("hidden");
+    elements.queuePanel.classList.remove("hidden");
+    elements.campaignPanel.classList.remove("hidden");
+    elements.signOutButton.classList.remove("hidden");
+    elements.sessionPill.classList.remove("hidden");
+  }
+
+  function renderSessionPill() {
+    const email = state.session ? state.session.userEmail : "ukjent";
+    const role = state.role ? state.role.toUpperCase() : "UKJENT";
+    elements.sessionPill.textContent = `${email} · ${role}`;
+  }
+
+  function renderQueue() {
+    elements.queueList.innerHTML = "";
+
+    if (!state.candidates.length) {
+      return;
+    }
+
+    state.candidates.forEach((candidate) => {
+      const item = document.createElement("li");
+      item.className = "queue-item";
+      if (candidate.id === state.selectedCandidateId) {
+        item.classList.add("selected");
+      }
+
+      item.innerHTML = `
+        <div class="badge-row">
+          ${renderBadge(candidate.status)}
+          ${candidate.suggestedProgramName ? renderMetaBadge(candidate.suggestedProgramName) : ""}
+          ${candidate.suggestedCategoryName ? renderMetaBadge(candidate.suggestedCategoryName) : ""}
+        </div>
+        <h3>${escapeHtml(candidate.title)}</h3>
+        <p>${escapeHtml(candidate.summary)}</p>
+        <div class="candidate-meta">
+          <span>${escapeHtml(candidate.sourceName)}</span>
+          <span>•</span>
+          <span>${escapeHtml(candidate.ingestKind)}</span>
+          <span>•</span>
+          <span>${formatDateTime(candidate.detectedAt)}</span>
+        </div>
+      `;
+
+      item.addEventListener("click", function () {
+        state.selectedCandidateId = candidate.id;
+        renderQueue();
+        renderDetail();
+      });
+
+      elements.queueList.appendChild(item);
+    });
+  }
+
+  function renderCampaignList() {
+    elements.campaignList.innerHTML = "";
+
+    if (!state.campaigns.length) {
+      return;
+    }
+
+    state.campaigns.forEach((campaign) => {
+      const item = document.createElement("li");
+      item.className = "queue-item";
+
+      if (campaign.id === state.selectedCampaignId) {
+        item.classList.add("selected");
+      }
+
+      item.innerHTML = `
+        <div class="badge-row">
+          ${renderCampaignBadge(campaign.status)}
+          ${campaign.primaryProgramId ? renderMetaBadge(programName(campaign.primaryProgramId)) : ""}
+          ${campaign.categoryId ? renderMetaBadge(categoryName(campaign.categoryId)) : ""}
+        </div>
+        <h3>${escapeHtml(campaign.title || "Uten tittel")}</h3>
+        <p>${escapeHtml(campaign.summary || "Ingen oppsummering ennå.")}</p>
+        <div class="candidate-meta">
+          <span>Sist oppdatert ${formatDateTime(campaign.updatedAt)}</span>
+          <span>•</span>
+          <span>${campaign.requirements.length} krav</span>
+          <span>•</span>
+          <span>${campaign.sourceReferences.length} kilder</span>
+        </div>
+      `;
+
+      item.addEventListener("click", function () {
+        state.selectedCampaignId = campaign.id;
+        renderCampaignList();
+        renderCampaignDetail();
+      });
+
+      elements.campaignList.appendChild(item);
+    });
+  }
+
+  function renderDetail() {
+    const candidate = state.candidates.find((entry) => entry.id === state.selectedCandidateId);
+
+    if (!candidate) {
+      renderEmptyDetail("Velg en kandidat for detaljer.");
+      return;
+    }
+
+    elements.detailPanel.classList.remove("empty");
+    elements.detailPanel.innerHTML = `
+      <div class="detail-copy">
+        <div class="badge-row">
+          ${renderBadge(candidate.status)}
+          ${candidate.suggestedProgramName ? renderMetaBadge(candidate.suggestedProgramName) : ""}
+          ${candidate.suggestedCategoryName ? renderMetaBadge(candidate.suggestedCategoryName) : ""}
+        </div>
+
+        <div>
+          <h2>${escapeHtml(candidate.title)}</h2>
+          <p>${escapeHtml(candidate.summary)}</p>
+        </div>
+
+        <section>
+          <h3>Metadata</h3>
+          <div class="detail-meta">
+            <span>Kilde: ${escapeHtml(candidate.sourceName)}</span>
+            <span>•</span>
+            <span>Ingest: ${escapeHtml(candidate.ingestKind)}</span>
+            <span>•</span>
+            <span>Oppdaget: ${formatDateTime(candidate.detectedAt)}</span>
+          </div>
+        </section>
+
+        <section>
+          <h3>Kildelenke</h3>
+          <a href="${escapeAttribute(candidate.sourceUrl)}" target="_blank" rel="noreferrer">
+            ${escapeHtml(candidate.sourceUrl)}
+          </a>
+        </section>
+
+        <section>
+          <h3>Review-notat</h3>
+          <textarea id="review-note-input" rows="5" placeholder="Kort note til intern vurdering...">${escapeHtml(
+            candidate.reviewNote
+          )}</textarea>
+        </section>
+
+        ${
+          candidate.promotedCampaignId
+            ? `<section><h3>Promotert kampanje</h3><p><code>${escapeHtml(candidate.promotedCampaignId)}</code></p><button type="button" class="secondary" data-open-campaign="${escapeAttribute(candidate.promotedCampaignId)}">Åpne draft-editor</button></section>`
+            : ""
+        }
+
+        <div class="detail-actions">
+          <div class="action-row">
+            <button type="button" data-action="needs_review">Sett til needs_review</button>
+            <button type="button" data-action="approved">Godkjenn</button>
+            <button type="button" class="danger" data-action="rejected">Avvis</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="secondary" data-action="promote">Promoter til draft</button>
+          </div>
+          <span class="help">Publisering skjer fortsatt separat på kampanjeutkastet.</span>
+        </div>
+      </div>
+    `;
+
+    elements.detailPanel.querySelectorAll("button[data-action]").forEach((button) => {
+      button.addEventListener("click", async function () {
+        const note = elements.detailPanel.querySelector("#review-note-input").value.trim();
+        const action = button.getAttribute("data-action");
+        const originalLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "Jobber...";
+
+        try {
+          if (action === "promote") {
+            const campaignId = await apiRequest("/rest/v1/rpc/promote_ingestion_candidate_to_campaign", {
+              method: "POST",
+              body: {
+                p_candidate_id: candidate.id,
+                p_review_note: note || null
+              }
+            });
+
+            state.selectedCampaignId = campaignId;
+            await refreshCampaigns();
+          } else {
+            await apiRequest("/rest/v1/rpc/set_ingestion_candidate_status", {
+              method: "POST",
+              body: {
+                p_candidate_id: candidate.id,
+                p_status: action,
+                p_review_note: note || null
+              }
+            });
+          }
+
+          setMessage(elements.queueMessage, "Kandidaten ble oppdatert.", "success");
+          await refreshQueue();
+        } catch (error) {
+          setMessage(elements.queueMessage, error.message, "error");
+          button.disabled = false;
+          button.textContent = originalLabel;
+        }
+      });
+    });
+
+    const openCampaignButton = elements.detailPanel.querySelector("[data-open-campaign]");
+    if (openCampaignButton) {
+      openCampaignButton.addEventListener("click", function () {
+        state.selectedCampaignId = openCampaignButton.getAttribute("data-open-campaign");
+        renderCampaignList();
+        renderCampaignDetail();
+        elements.campaignPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
+  function renderEmptyDetail(message) {
+    elements.detailPanel.classList.add("empty");
+    elements.detailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
+  }
+
+  function renderCampaignDetail() {
+    const campaign = state.campaigns.find((entry) => entry.id === state.selectedCampaignId);
+
+    if (!campaign) {
+      renderEmptyCampaignDetail("Velg en kampanje for å redigere draften.");
+      return;
+    }
+
+    const primarySource = campaign.sourceReferences[0] || null;
+    const sourceId = primarySource ? primarySource.source_id : "";
+
+    elements.campaignDetailPanel.classList.remove("empty");
+    elements.campaignDetailPanel.innerHTML = `
+      <form id="campaign-editor-form" class="detail-form">
+        <div class="badge-row">
+          ${renderCampaignBadge(campaign.status)}
+          ${campaign.primaryProgramId ? renderMetaBadge(programName(campaign.primaryProgramId)) : ""}
+          ${campaign.categoryId ? renderMetaBadge(categoryName(campaign.categoryId)) : ""}
+        </div>
+
+        <div class="detail-grid">
+          <label class="field">
+            <span>Tittel</span>
+            <input name="title" type="text" value="${escapeAttribute(campaign.title)}" required />
+          </label>
+
+          <label class="field">
+            <span>Status</span>
+            <select name="status">
+              ${renderCampaignStatusOptions(campaign.status)}
+            </select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Kort beskrivelse</span>
+          <textarea name="summary" rows="3">${escapeHtml(campaign.summary)}</textarea>
+        </label>
+
+        <label class="field">
+          <span>Detaljer</span>
+          <textarea name="details" rows="7">${escapeHtml(campaign.details)}</textarea>
+        </label>
+
+        <div class="detail-grid">
+          <label class="field">
+            <span>Primærprogram</span>
+            <select name="primaryProgramId">
+              <option value="">Ingen valgt</option>
+              ${renderSelectOptions(state.programs, campaign.primaryProgramId)}
+            </select>
+            <span class="hint">Første versjon støtter ett primærprogram i editoren.</span>
+          </label>
+
+          <label class="field">
+            <span>Kategori</span>
+            <select name="categoryId">
+              <option value="">Ingen valgt</option>
+              ${renderSelectOptions(state.categories, campaign.categoryId)}
+            </select>
+          </label>
+        </div>
+
+        <div class="detail-grid">
+          <label class="field">
+            <span>Sist verifisert</span>
+            <input
+              name="lastVerifiedAt"
+              type="datetime-local"
+              value="${escapeAttribute(toDateTimeLocalValue(campaign.lastVerifiedAt))}"
+            />
+          </label>
+
+          <label class="field">
+            <span>Redaksjonell kortvurdering</span>
+            <input name="editorialSummary" type="text" value="${escapeAttribute(campaign.editorialSummary)}" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Krav, ett per linje</span>
+          <textarea name="requirements" rows="6">${escapeHtml(
+            campaign.requirements.map((requirement) => requirement.text).join("\n")
+          )}</textarea>
+        </label>
+
+        <section class="section-stack">
+          <h3>Primær kilde</h3>
+          <div class="source-card">
+            <div class="detail-grid">
+              <label class="field">
+                <span>Kilde</span>
+                <select name="sourceId">
+                  <option value="">Velg kilde</option>
+                  ${renderSelectOptions(state.sources, sourceId)}
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Kontrolltidspunkt</span>
+                <input
+                  name="sourceCheckedAt"
+                  type="datetime-local"
+                  value="${escapeAttribute(toDateTimeLocalValue(primarySource ? primarySource.checked_at : campaign.lastVerifiedAt))}"
+                />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Kildetittel</span>
+              <input name="sourceTitle" type="text" value="${escapeAttribute(primarySource ? primarySource.title || "" : campaign.title)}" />
+            </label>
+
+            <label class="field">
+              <span>Kildelenke</span>
+              <input name="sourceUrl" type="url" value="${escapeAttribute(primarySource ? primarySource.url || "" : "")}" />
+            </label>
+
+            <label class="field">
+              <span>Bevisnotat</span>
+              <textarea name="sourceEvidenceNote" rows="3">${escapeHtml(primarySource ? primarySource.evidence_note || "" : "")}</textarea>
+            </label>
+          </div>
+        </section>
+
+        <div class="detail-actions">
+          <div class="action-row">
+            <button type="submit">Lagre endringer</button>
+            <button type="button" class="success" data-publish-action="publish">Lagre og publiser</button>
+            <button type="button" class="secondary" data-publish-action="archive">Arkiver</button>
+          </div>
+          <span class="help">Publisering krever minst én kilde, tittel, beskrivelse og <code>last_verified_at</code>.</span>
+        </div>
+      </form>
+    `;
+
+    const form = elements.campaignDetailPanel.querySelector("#campaign-editor-form");
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      await saveCampaignEditor(form, campaign, null);
+    });
+
+    elements.campaignDetailPanel.querySelectorAll("[data-publish-action]").forEach((button) => {
+      button.addEventListener("click", async function () {
+        const action = button.getAttribute("data-publish-action");
+        const targetStatus = action === "publish" ? "published" : "archived";
+        await saveCampaignEditor(form, campaign, targetStatus);
+      });
+    });
+  }
+
+  function renderEmptyCampaignDetail(message) {
+    elements.campaignDetailPanel.classList.add("empty");
+    elements.campaignDetailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
+  }
+
+  async function saveCampaignEditor(form, originalCampaign, overrideStatus) {
+    const formData = new FormData(form);
+    const payload = collectCampaignFormData(formData, originalCampaign, overrideStatus);
+    const validationErrors = validateCampaignPayload(payload);
+
+    if (validationErrors.length) {
+      setMessage(elements.campaignMessage, validationErrors.join(" "), "error");
+      return;
+    }
+
+    const submitButtons = form.querySelectorAll("button");
+    submitButtons.forEach((button) => {
+      button.disabled = true;
+    });
+
+    try {
+      await updateCampaign(payload);
+      await replaceCampaignProgramLinks(payload);
+      await replaceCampaignRequirements(payload);
+      await upsertPrimarySource(payload, originalCampaign);
+
+      setMessage(elements.campaignMessage, "Kampanjen ble lagret.", "success");
+      await refreshCampaigns();
+    } catch (error) {
+      setMessage(elements.campaignMessage, error.message, "error");
+    } finally {
+      submitButtons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
+  }
+
+  function collectCampaignFormData(formData, originalCampaign, overrideStatus) {
+    const requirements = String(formData.get("requirements") || "")
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const sourceUrl = String(formData.get("sourceUrl") || "").trim();
+    const sourceTitle = String(formData.get("sourceTitle") || "").trim();
+    const sourceCheckedAt = String(formData.get("sourceCheckedAt") || "").trim();
+    const lastVerifiedAt = String(formData.get("lastVerifiedAt") || "").trim();
+
+    return {
+      id: originalCampaign.id,
+      title: String(formData.get("title") || "").trim(),
+      summary: String(formData.get("summary") || "").trim(),
+      details: String(formData.get("details") || "").trim(),
+      status: overrideStatus || String(formData.get("status") || "draft"),
+      primaryProgramId: emptyToNull(formData.get("primaryProgramId")),
+      categoryId: emptyToNull(formData.get("categoryId")),
+      editorialSummary: emptyToNull(formData.get("editorialSummary")),
+      lastVerifiedAt: lastVerifiedAt ? toISOString(lastVerifiedAt) : null,
+      requirements,
+      sourceId: emptyToNull(formData.get("sourceId")),
+      sourceTitle: sourceTitle || null,
+      sourceUrl: sourceUrl || null,
+      sourceCheckedAt: sourceCheckedAt ? toISOString(sourceCheckedAt) : null,
+      sourceEvidenceNote: emptyToNull(formData.get("sourceEvidenceNote")),
+      existingSourceReferenceId: originalCampaign.sourceReferences[0] ? originalCampaign.sourceReferences[0].id : null
+    };
+  }
+
+  function validateCampaignPayload(payload) {
+    const errors = [];
+
+    if (!payload.title) {
+      errors.push("Tittel mangler.");
+    }
+
+    if (!payload.summary) {
+      errors.push("Kort beskrivelse mangler.");
+    }
+
+    if (!payload.details) {
+      errors.push("Detaljtekst mangler.");
+    }
+
+    if (payload.status === "published") {
+      if (!payload.lastVerifiedAt) {
+        errors.push("Publisering krever sist verifisert.");
+      }
+
+      if (!payload.sourceUrl || !payload.sourceId) {
+        errors.push("Publisering krever minst én gyldig kilde.");
+      }
+    }
+
+    return errors;
+  }
+
+  async function updateCampaign(payload) {
+    await apiRequest(`/rest/v1/campaigns?id=eq.${payload.id}`, {
+      method: "PATCH",
+      body: {
+        title: payload.title,
+        summary: payload.summary,
+        details: payload.details,
+        status: payload.status,
+        primary_program_id: payload.primaryProgramId,
+        category_id: payload.categoryId,
+        editorial_summary: payload.editorialSummary,
+        last_verified_at: payload.lastVerifiedAt
+      },
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
+  async function replaceCampaignProgramLinks(payload) {
+    await apiRequest(`/rest/v1/campaign_programs?campaign_id=eq.${payload.id}`, {
+      method: "DELETE"
+    });
+
+    if (!payload.primaryProgramId) {
+      return;
+    }
+
+    await apiRequest("/rest/v1/campaign_programs", {
+      method: "POST",
+      body: [
+        {
+          campaign_id: payload.id,
+          program_id: payload.primaryProgramId
+        }
+      ],
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
+  async function replaceCampaignRequirements(payload) {
+    await apiRequest(`/rest/v1/campaign_requirements?campaign_id=eq.${payload.id}`, {
+      method: "DELETE"
+    });
+
+    if (!payload.requirements.length) {
+      return;
+    }
+
+    await apiRequest("/rest/v1/campaign_requirements", {
+      method: "POST",
+      body: payload.requirements.map((text, index) => ({
+        campaign_id: payload.id,
+        text,
+        sort_order: index
+      })),
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
+  async function upsertPrimarySource(payload, originalCampaign) {
+    const body = {
+      campaign_id: payload.id,
+      source_id: payload.sourceId,
+      url: payload.sourceUrl,
+      title: payload.sourceTitle || payload.title,
+      checked_at: payload.sourceCheckedAt || payload.lastVerifiedAt || new Date().toISOString(),
+      evidence_note: payload.sourceEvidenceNote
+    };
+
+    if (!payload.sourceUrl || !payload.sourceId) {
+      if (payload.existingSourceReferenceId) {
+        return;
+      }
+
+      return;
+    }
+
+    if (payload.existingSourceReferenceId) {
+      await apiRequest(`/rest/v1/campaign_source_references?id=eq.${payload.existingSourceReferenceId}`, {
+        method: "PATCH",
+        body,
+        extraHeaders: {
+          Prefer: "return=minimal"
+        }
+      });
+      return;
+    }
+
+    await apiRequest("/rest/v1/campaign_source_references", {
+      method: "POST",
+      body: [body],
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
+  async function signOut() {
+    if (state.session) {
+      try {
+        await apiRequest("/auth/v1/logout", {
+          method: "POST",
+          useSession: true
+        });
+      } catch (_error) {
+        // Logout should still clear the local session even if the remote token is already gone.
+      }
+    }
+
+    clearSession();
+    state.role = null;
+    state.candidates = [];
+    state.campaigns = [];
+    state.selectedCandidateId = null;
+    state.selectedCampaignId = null;
+    elements.loginForm.reset();
+    renderEmptyDetail("Velg en kandidat for detaljer.");
+    renderEmptyCampaignDetail("Velg en kampanje for å redigere draften.");
+    renderUnauthenticated();
+    setMessage(elements.authMessage, "Du er logget ut.", "success");
+  }
+
+  async function apiRequest(path, options) {
+    if (!hasConfig()) {
+      throw new Error("Adminverktøyet mangler lokal konfigurasjon.");
+    }
+
+    const requestOptions = options || {};
+    const useSession = requestOptions.useSession !== false;
+    const headers = {
+      apikey: CONFIG.supabasePublishableKey,
+      Accept: "application/json"
+    };
+
+    if (useSession && state.session && state.session.accessToken) {
+      headers.Authorization = `Bearer ${state.session.accessToken}`;
+    } else if (requestOptions.method !== "POST" || !path.startsWith("/auth/")) {
+      headers.Authorization = `Bearer ${CONFIG.supabasePublishableKey}`;
+    }
+
+    if (requestOptions.body) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    if (requestOptions.extraHeaders) {
+      Object.assign(headers, requestOptions.extraHeaders);
+    }
+
+    const response = await fetch(`${CONFIG.supabaseUrl}${path}`, {
+      method: requestOptions.method || "GET",
+      headers,
+      body: requestOptions.body ? JSON.stringify(requestOptions.body) : undefined
+    });
+
+    const isJson = (response.headers.get("content-type") || "").includes("application/json");
+    const payload = isJson ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      const message =
+        payload && typeof payload === "object" && payload.msg
+          ? payload.msg
+          : payload && typeof payload === "object" && payload.message
+            ? payload.message
+            : typeof payload === "string" && payload
+              ? payload
+              : "Ukjent feil fra Supabase.";
+
+      throw new Error(message);
+    }
+
+    return payload;
+  }
+
+  function authRequest(path, options) {
+    return apiRequest(path, {
+      method: options.method,
+      body: options.body,
+      useSession: false
+    });
+  }
+
+  function setAuthLoading(isLoading) {
+    elements.loginButton.disabled = isLoading;
+    elements.emailInput.disabled = isLoading;
+    elements.passwordInput.disabled = isLoading;
+  }
+
+  function setMessage(element, message, kind) {
+    element.textContent = message;
+    element.className = `message ${kind || "muted"}`;
+  }
+
+  function loadSession() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function persistSession() {
+    if (!state.session) {
+      return;
+    }
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.session));
+  }
+
+  function clearSession() {
+    state.session = null;
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+
+  function formatDateTime(value) {
+    if (!value) {
+      return "Ukjent";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat("nb-NO", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }).format(date);
+  }
+
+  function toDateTimeLocalValue(value) {
+    if (!value) {
+      return "";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function toISOString(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+
+  function renderBadge(status) {
+    const label = STATUS_LABELS[status] || status;
+    return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(label)}</span>`;
+  }
+
+  function renderCampaignBadge(status) {
+    const label = CAMPAIGN_STATUS_LABELS[status] || status;
+    return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(label)}</span>`;
+  }
+
+  function renderMetaBadge(value) {
+    return value ? `<span class="badge">${escapeHtml(value)}</span>` : "";
+  }
+
+  function renderSelectOptions(options, selectedValue) {
+    return options
+      .map((option) => {
+        const label = option.name || option.slug || option.id;
+        const isSelected = option.id === selectedValue ? " selected" : "";
+        return `<option value="${escapeAttribute(option.id)}"${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function renderCampaignStatusOptions(selectedStatus) {
+    return Object.entries(CAMPAIGN_STATUS_LABELS)
+      .map(([value, label]) => {
+        const isSelected = value === selectedStatus ? " selected" : "";
+        return `<option value="${escapeAttribute(value)}"${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function programName(programId) {
+    const program = state.programs.find((item) => item.id === programId);
+    return program ? program.name : "";
+  }
+
+  function categoryName(categoryId) {
+    const category = state.categories.find((item) => item.id === categoryId);
+    return category ? category.name : "";
+  }
+
+  function emptyToNull(value) {
+    const normalized = String(value || "").trim();
+    return normalized || null;
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replaceAll("`", "&#96;");
+  }
+})();

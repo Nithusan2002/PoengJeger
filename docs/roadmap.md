@@ -13,11 +13,10 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 
 ## Neste valideringer
 
-1. Verifiser den komplette redaksjonelle arbeidsflyten med representative kampanjer.
-2. Definer og implementer minste live admin-auth og RLS for et separat internt adminverktøy.
-3. Bygg første operative adminflate for kandidat-review, promotering til draft og enkel publiseringskontroll.
-4. Ferdigstill iOS-flytens loading-, empty- og error-tilstander mot backenddata.
-5. Velg og analyser minst tre eksplisitt godkjente kilder før automatisert overvåking bygges.
+1. Verifiser den komplette redaksjonelle arbeidsflyten med representative kampanjer, inkludert draft-redigering og publisering.
+2. Ferdigstill iOS-flytens loading-, empty- og error-tilstander mot backenddata.
+3. Velg og analyser minst tre eksplisitt godkjente kilder før automatisert overvåking bygges.
+4. Stram inn adminverktøyet med bedre session-håndtering, rolleadministrasjon og QA før bredere intern bruk.
 
 ## Ikke i MVP uten ny beslutning
 

@@ -71,3 +71,9 @@
 - Bakgrunn: Den vanlige iOS-klienten bruker publiserbar nøkkel og skal være enkel, rask og trygg for sluttbrukere. Live redaksjonelle handlinger i samme klient vil blande sikkerhetsgrenser, øke appkompleksitet og skape unødvendig MVP-støy.
 - Beslutning: Første faktiske adminflate bygges som et separat internt webverktøy over de eksisterende Supabase-primitivene for kø, review og promotering. iOS-appen kan beholde en preview-only adminskjerm for intern demonstrasjon, men ikke som operativ liveflate.
 - Konsekvens: Bedre sikkerhet og tydeligere rollefordeling mellom sluttbrukerprodukt og redaksjonsdrift. Teamet må bygge og drifte én ekstra intern overflate, men unngår å presse admin-auth og arbeidsflyt inn i forbrukerappen for tidlig.
+
+## ADR-013: Adminautorisasjon forankres i databasebaserte roller
+- Status: Foreslått
+- Bakgrunn: Eksisterende `is_admin()` baserte seg kun på JWT `app_metadata`. Det er upraktisk for et lite internt team fordi rolleendringer da krever auth-adminoperasjoner utenfor den vanlige datamodellen.
+- Beslutning: Poengjeger innfører `editorial_user_roles` i PostgreSQL som primær sannhetskilde for interne roller. `public.current_editorial_role()` og `public.is_admin()` leser først aktiv rolle fra databasen og faller bare tilbake til eldre JWT-metadata for bakoverkompatibilitet.
+- Konsekvens: RLS og RPC-er kan styres med vanlig migrasjonsdrevet datamodell, og interne rolleendringer blir enklere å auditere. Samtidig må admin bootstrap håndteres forsvarlig, fordi bare eksisterende `admin`-rolle kan tildele nye roller etter oppstart.

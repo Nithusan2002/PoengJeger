@@ -151,10 +151,21 @@ Anbefalt første oppsett:
 
 Anbefalt minste modell:
 
-- Egen `profiles`- eller rolle-tabell knyttet til `auth.users`
-- Funksjon som `public.is_admin()` brukes i RLS og RPC-er
+- Egen rolle-tabell `editorial_user_roles` knyttet til `auth.users`
+- `public.current_editorial_role()` og `public.is_admin()` brukes i RLS og RPC-er
 - Alle admintabeller og admin-RPC-er krever innlogget admin
 - iOS-appen fortsetter å bruke publiserbar nøkkel og kun publisert lesetilgang
+
+Foreslått første rolleoppsett:
+
+- `editor`: kan jobbe operativt med kandidat-review og draft-arbeid
+- `admin`: kan i tillegg gi og trekke tilbake interne roller
+
+Bootstrap og drift:
+
+- første admin kan tildeles via SQL Editor med `postgres`/`service_role`
+- videre rolleendringer bør gå via `grant_editorial_role(...)` og `revoke_editorial_role(...)`
+- vanlige `editor`-brukere skal ikke kunne gi roller videre
 
 ## Valideringsregler
 

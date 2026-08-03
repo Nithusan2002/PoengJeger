@@ -19,6 +19,7 @@ En publisert kampanje krever minst én kildehenvisning og `last_verified_at`. De
 ## Brukerdata
 
 - `user_profiles`: språk og varslingsvalg.
+- `editorial_user_roles`: interne roller for adminverktøyet (`editor`, `admin`).
 - `user_program_preferences`: valgte bonusprogrammer.
 - `user_favorite_campaigns`: lagrede kampanjer.
 - `notification_subscriptions`: valgfrie program- eller kategoriabonnementer.
@@ -32,6 +33,8 @@ Brukerdata er knyttet til Supabase Auth og omfattes av RLS. Appen lagrer ikke bo
 - `ingestion_candidates`: maskinelt eller halvautomatisk oppdagede kandidater.
 
 En kandidat går fra `new` via redaksjonell vurdering til enten `rejected` eller `promoted`. Promotering oppretter kun en `draft`-kampanje; publisering er et separat redaksjonelt steg.
+
+Adminverktøyet autoriseres via Supabase Auth og databasebaserte roller i `editorial_user_roles`. Eksisterende admin-RLS og RPC-er bruker `public.is_admin()`, som nå kan lese aktiv rolle fra databasen. Rolleendringer kan gå via dedikerte funksjoner for granting og revoking.
 
 ## Endringsregler
 
