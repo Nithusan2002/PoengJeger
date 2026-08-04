@@ -92,18 +92,21 @@ alter table public.source_registry enable row level security;
 alter table public.ingestion_runs enable row level security;
 alter table public.ingestion_candidates enable row level security;
 
+drop policy if exists "admins manage source registry" on public.source_registry;
 create policy "admins manage source registry"
 on public.source_registry
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "admins manage ingestion runs" on public.ingestion_runs;
 create policy "admins manage ingestion runs"
 on public.ingestion_runs
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "admins manage ingestion candidates" on public.ingestion_candidates;
 create policy "admins manage ingestion candidates"
 on public.ingestion_candidates
 for all

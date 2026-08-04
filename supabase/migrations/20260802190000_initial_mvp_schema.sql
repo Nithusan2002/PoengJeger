@@ -324,28 +324,33 @@ alter table public.user_favorite_campaigns enable row level security;
 alter table public.notification_subscriptions enable row level security;
 alter table public.campaign_audit_log enable row level security;
 
+drop policy if exists "published bonus programs are readable" on public.bonus_programs;
 create policy "published bonus programs are readable"
 on public.bonus_programs
 for select
 using (is_active or public.is_admin());
 
+drop policy if exists "admins manage bonus programs" on public.bonus_programs;
 create policy "admins manage bonus programs"
 on public.bonus_programs
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign categories are readable" on public.campaign_categories;
 create policy "campaign categories are readable"
 on public.campaign_categories
 for select
 using (true);
 
+drop policy if exists "admins manage campaign categories" on public.campaign_categories;
 create policy "admins manage campaign categories"
 on public.campaign_categories
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign sources readable for published content" on public.campaign_sources;
 create policy "campaign sources readable for published content"
 on public.campaign_sources
 for select
@@ -361,33 +366,39 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaign sources" on public.campaign_sources;
 create policy "admins manage campaign sources"
 on public.campaign_sources
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "users read own profile" on public.user_profiles;
 create policy "users read own profile"
 on public.user_profiles
 for select
 using (auth.uid() = id);
 
+drop policy if exists "users insert own profile" on public.user_profiles;
 create policy "users insert own profile"
 on public.user_profiles
 for insert
 with check (auth.uid() = id);
 
+drop policy if exists "users update own profile" on public.user_profiles;
 create policy "users update own profile"
 on public.user_profiles
 for update
 using (auth.uid() = id)
 with check (auth.uid() = id);
 
+drop policy if exists "admins read all profiles" on public.user_profiles;
 create policy "admins read all profiles"
 on public.user_profiles
 for select
 using (public.is_admin());
 
+drop policy if exists "published campaigns are readable" on public.campaigns;
 create policy "published campaigns are readable"
 on public.campaigns
 for select
@@ -400,12 +411,14 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaigns" on public.campaigns;
 create policy "admins manage campaigns"
 on public.campaigns
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign program links for readable campaigns" on public.campaign_programs;
 create policy "campaign program links for readable campaigns"
 on public.campaign_programs
 for select
@@ -421,12 +434,14 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaign program links" on public.campaign_programs;
 create policy "admins manage campaign program links"
 on public.campaign_programs
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign requirements for readable campaigns" on public.campaign_requirements;
 create policy "campaign requirements for readable campaigns"
 on public.campaign_requirements
 for select
@@ -442,12 +457,14 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaign requirements" on public.campaign_requirements;
 create policy "admins manage campaign requirements"
 on public.campaign_requirements
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign source references for readable campaigns" on public.campaign_source_references;
 create policy "campaign source references for readable campaigns"
 on public.campaign_source_references
 for select
@@ -463,12 +480,14 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaign source references" on public.campaign_source_references;
 create policy "admins manage campaign source references"
 on public.campaign_source_references
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign editorial assessments for readable campaigns" on public.campaign_editorial_assessments;
 create policy "campaign editorial assessments for readable campaigns"
 on public.campaign_editorial_assessments
 for select
@@ -484,12 +503,14 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaign editorial assessments" on public.campaign_editorial_assessments;
 create policy "admins manage campaign editorial assessments"
 on public.campaign_editorial_assessments
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "campaign geo restrictions for readable campaigns" on public.campaign_geo_restrictions;
 create policy "campaign geo restrictions for readable campaigns"
 on public.campaign_geo_restrictions
 for select
@@ -505,50 +526,59 @@ using (
   )
 );
 
+drop policy if exists "admins manage campaign geo restrictions" on public.campaign_geo_restrictions;
 create policy "admins manage campaign geo restrictions"
 on public.campaign_geo_restrictions
 for all
 using (public.is_admin())
 with check (public.is_admin());
 
+drop policy if exists "users read own program preferences" on public.user_program_preferences;
 create policy "users read own program preferences"
 on public.user_program_preferences
 for select
 using (auth.uid() = user_id);
 
+drop policy if exists "users manage own program preferences" on public.user_program_preferences;
 create policy "users manage own program preferences"
 on public.user_program_preferences
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+drop policy if exists "users read own favorites" on public.user_favorite_campaigns;
 create policy "users read own favorites"
 on public.user_favorite_campaigns
 for select
 using (auth.uid() = user_id);
 
+drop policy if exists "users manage own favorites" on public.user_favorite_campaigns;
 create policy "users manage own favorites"
 on public.user_favorite_campaigns
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+drop policy if exists "users read own notification subscriptions" on public.notification_subscriptions;
 create policy "users read own notification subscriptions"
 on public.notification_subscriptions
 for select
 using (auth.uid() = user_id);
 
+drop policy if exists "users manage own notification subscriptions" on public.notification_subscriptions;
 create policy "users manage own notification subscriptions"
 on public.notification_subscriptions
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+drop policy if exists "admins read campaign audit log" on public.campaign_audit_log;
 create policy "admins read campaign audit log"
 on public.campaign_audit_log
 for select
 using (public.is_admin());
 
+drop policy if exists "admins insert campaign audit log" on public.campaign_audit_log;
 create policy "admins insert campaign audit log"
 on public.campaign_audit_log
 for insert
