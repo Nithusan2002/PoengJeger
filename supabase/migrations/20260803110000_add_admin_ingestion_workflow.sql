@@ -27,9 +27,6 @@ alter table public.ingestion_candidates
 drop constraint if exists ingestion_candidates_review_pair;
 
 alter table public.ingestion_candidates
-drop constraint if exists ingestion_candidates_review_state;
-
-alter table public.ingestion_candidates
 add constraint ingestion_candidates_review_state check (
   (status = 'new' and reviewed_at is null and promoted_campaign_id is null)
   or (status in ('needs_review', 'approved', 'rejected') and reviewed_at is not null and promoted_campaign_id is null)

@@ -150,13 +150,11 @@ $$;
 
 alter table public.editorial_user_roles enable row level security;
 
-drop policy if exists "admins read editorial roles" on public.editorial_user_roles;
 create policy "admins read editorial roles"
 on public.editorial_user_roles
 for select
 using (public.is_admin());
 
-drop policy if exists "admins manage editorial roles" on public.editorial_user_roles;
 create policy "admins manage editorial roles"
 on public.editorial_user_roles
 for all
