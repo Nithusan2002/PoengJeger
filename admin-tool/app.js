@@ -42,6 +42,9 @@
     campaignStatusFilter: document.querySelector("#campaign-status-filter"),
     detailPanel: document.querySelector("#detail-panel"),
     emailInput: document.querySelector("#email-input"),
+    ingestButton: document.querySelector("#ingest-button"),
+    ingestLimitInput: document.querySelector("#ingest-limit-input"),
+    ingestSourceSelect: document.querySelector("#ingest-source-select"),
     loginButton: document.querySelector("#login-button"),
     loginForm: document.querySelector("#login-form"),
     passwordInput: document.querySelector("#password-input"),
@@ -55,6 +58,7 @@
   };
 
   elements.loginForm.addEventListener("submit", onLoginSubmit);
+  elements.ingestButton.addEventListener("click", runIngestionFromAdmin);
   elements.refreshButton.addEventListener("click", refreshQueue);
   elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
   elements.signOutButton.addEventListener("click", signOut);
@@ -242,6 +246,40 @@
       renderEmptyCampaignDetail("Kunne ikke laste kampanjer.");
     } finally {
       elements.campaignRefreshButton.disabled = false;
+    }
+  }
+
+  async function runIngestionFromAdmin() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    const source = elements.ingestSourceSelect.value;
+    const limit = clampIngestionLimit(elements.ingestLimitInput.value);
+    const originalLabel = elements.ingestButton.textContent;
+
+    elements.ingestLimitInput.value = String(limit);
+    elements.ingestButton.disabled = true;
+    elements.ingestButton.textContent = "Henter...";
+    setMessage(elements.queueMessage, `Henter nye kandidater fra ${ingestSourceLabel(source)}...`, "muted");
+
+    try {
+      const params = new URLSearchParams({
+        source,
+        limit: String(limit)
+      });
+      const result = await functionRequest(`/ingest-campaign-candidates?${params.toString()}`, {
+        method: "POST"
+      });
+
+      await refreshQueue();
+      setMessage(elements.queueMessage, summarizeIngestionResult(result, source), "success");
+    } catch (error) {
+      setMessage(elements.queueMessage, error.message, "error");
+    } finally {
+      elements.ingestButton.disabled = false;
+      elements.ingestButton.textContent = originalLabel;
     }
   }
 
@@ -1291,7 +1329,7 @@
     }
 
     if (!state.session || !state.session.accessToken) {
-      throw new Error("Du må være logget inn for å bruke AI-forslag.");
+      throw new Error("Du må være logget inn for å bruke denne handlingen.");
     }
 
     const functionsUrl = CONFIG.supabaseUrl.replace(".supabase.co", ".functions.supabase.co");
@@ -1329,6 +1367,47 @@
     }
 
     return payload;
+  }
+
+  function clampIngestionLimit(value) {
+    const parsed = Number.parseInt(String(value || ""), 10);
+    if (!Number.isFinite(parsed)) {
+      return 10;
+    }
+
+    return Math.min(Math.max(parsed, 1), 50);
+  }
+
+  function ingestSourceLabel(source) {
+    const labels = {
+      trumf_netthandel: "Trumf Netthandel",
+      sas_eurobonus_shopping: "SAS EuroBonus Shopping"
+    };
+
+    return labels[source] || source;
+  }
+
+  function summarizeIngestionResult(result, requestedSource) {
+    if (!result || typeof result !== "object") {
+      return "Connectoren svarte uten detaljert resultat.";
+    }
+
+    const results = Array.isArray(result.results) ? result.results : [];
+
+    if (Number(result.checked_source_count || 0) === 0 || !results.length) {
+      return `${ingestSourceLabel(requestedSource)} er ikke aktivert som kilde ennå. Ingen kandidater ble hentet.`;
+    }
+
+    const found = results.reduce((sum, item) => sum + Number(item.found_count || 0), 0);
+    const inserted = results.reduce((sum, item) => sum + Number(item.inserted_count || 0), 0);
+    const skipped = results.reduce((sum, item) => sum + Number(item.skipped_duplicate_count || 0), 0);
+    const failed = results.filter((item) => item.status === "failed");
+
+    if (failed.length) {
+      return `Connectoren feilet for ${failed.length} kilde(r): ${failed.map((item) => item.error || item.parser_key).join("; ")}`;
+    }
+
+    return `Connectoren fant ${found} kandidat${found === 1 ? "" : "er"}, la inn ${inserted} ny${inserted === 1 ? "" : "e"} og hoppet over ${skipped} duplikat${skipped === 1 ? "" : "er"}.`;
   }
 
   function authRequest(path, options) {

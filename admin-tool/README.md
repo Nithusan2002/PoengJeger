@@ -46,6 +46,7 @@ select public.grant_editorial_role(
 - logger inn med Supabase Auth
 - leser `current_editorial_role()`
 - henter `admin_ingestion_candidate_queue`
+- kjører `ingest-campaign-candidates` manuelt for valgte kilder med innlogget admin/editor-token
 - filtrerer på status
 - setter review-status via `set_ingestion_candidate_status(...)`
 - promoterer kandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
@@ -64,6 +65,12 @@ lagre og publisere manuelt.
 For ekte AI-forslag må Supabase-miljøet ha `OPENAI_API_KEY` som secret.
 Uten nøkkel returnerer funksjonen en enkel fallback-tekst, slik at UI-flyten kan
 testes uten å legge hemmeligheter lokalt.
+
+## Manuell henting
+
+Knappen `Hent nye kandidater` kaller Edge Function `ingest-campaign-candidates`
+med brukerens Supabase-session. `INGESTION_RUN_SECRET` brukes fortsatt for
+server/cron-kjøring, men legges ikke i adminverktøyet eller browseren.
 
 ## Bevisst ikke med ennå
 

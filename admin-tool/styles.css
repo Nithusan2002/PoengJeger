@@ -177,6 +177,10 @@ button:disabled {
   gap: 6px;
 }
 
+.field.narrow-field {
+  width: 112px;
+}
+
 .field input,
 .field select,
 .field textarea,

@@ -77,20 +77,36 @@ const REMEMBER_URL = "https://www.remember.no/reward/rabatt";
 const DEFAULT_LIMIT_PER_SOURCE = 50;
 const REQUEST_TIMEOUT_MS = 15_000;
 
+const corsHeaders = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-headers": "authorization, apikey, content-type",
+  "access-control-allow-methods": "POST, OPTIONS",
+};
+
 const jsonHeaders = {
+  ...corsHeaders,
   "content-type": "application/json; charset=utf-8",
 };
 
 Deno.serve(async (request) => {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   if (request.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
   const authHeader = request.headers.get("authorization") ?? "";
-  if (
-    !INGESTION_RUN_SECRET || authHeader !== `Bearer ${INGESTION_RUN_SECRET}`
-  ) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
+  const apiKey = request.headers.get("apikey") ?? "";
+  const hasSecretAuth = Boolean(INGESTION_RUN_SECRET) &&
+    authHeader === `Bearer ${INGESTION_RUN_SECRET}`;
+
+  if (!hasSecretAuth) {
+    const role = await fetchRequesterRole(authHeader, apiKey);
+    if (role !== "admin" && role !== "editor") {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
   }
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
@@ -124,6 +140,47 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: summarizeError(error) }, 500);
   }
 });
+
+async function fetchRequesterRole(
+  authHeader: string,
+  apiKey: string,
+): Promise<string | null> {
+  if (!authHeader.startsWith("Bearer ") || !apiKey) {
+    return null;
+  }
+
+  const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      authorization: authHeader,
+      apikey: apiKey,
+    },
+  });
+
+  if (userResponse.ok) {
+    const user = await userResponse.json();
+    const metadataRole = user?.app_metadata?.poengjeger_role;
+    if (metadataRole === "admin" || metadataRole === "editor") {
+      return metadataRole;
+    }
+  }
+
+  const roleResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/current_editorial_role`, {
+    method: "POST",
+    headers: {
+      authorization: authHeader,
+      apikey: apiKey,
+      "content-type": "application/json",
+    },
+    body: "{}",
+  });
+
+  if (!roleResponse.ok) {
+    return null;
+  }
+
+  const role = await roleResponse.json();
+  return typeof role === "string" ? role : null;
+}
 
 async function runSource(
   source: SourceRegistryRow,
