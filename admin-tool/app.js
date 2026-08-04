@@ -714,7 +714,12 @@
         </div>
 
         <section class="section-stack">
-          <h3>Redaksjonell vurdering</h3>
+          <div class="section-heading-row">
+            <h3>Redaksjonell vurdering</h3>
+            <button type="button" class="secondary compact-button" data-ai-action="suggest-editorial">
+              Foreslå med AI
+            </button>
+          </div>
           <div class="detail-grid">
             <label class="field">
               <span>Hvorfor interessant</span>
@@ -842,6 +847,13 @@
       });
     });
 
+    const aiButton = elements.campaignDetailPanel.querySelector('[data-ai-action="suggest-editorial"]');
+    if (aiButton) {
+      aiButton.addEventListener("click", async function () {
+        await suggestEditorialAssessment(form, campaign, aiButton);
+      });
+    }
+
     form.addEventListener("input", function () {
       updatePublishButtonState(form);
     });
@@ -967,6 +979,62 @@
     }
 
     return errors;
+  }
+
+  async function suggestEditorialAssessment(form, campaign, button) {
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Foreslår...";
+    setMessage(elements.campaignMessage, "Lager AI-forslag til redaksjonell vurdering...", "muted");
+
+    try {
+      const formData = new FormData(form);
+      const suggestion = await functionRequest("/suggest-editorial-assessment", {
+        method: "POST",
+        body: {
+          title: String(formData.get("title") || "").trim(),
+          summary: String(formData.get("summary") || "").trim(),
+          details: String(formData.get("details") || "").trim(),
+          sourceUrl: String(formData.get("sourceUrl") || "").trim(),
+          sourceTitle: String(formData.get("sourceTitle") || "").trim(),
+          sourceEvidenceNote: String(formData.get("sourceEvidenceNote") || "").trim(),
+          programName: programName(String(formData.get("primaryProgramId") || "")),
+          categoryName: categoryName(String(formData.get("categoryId") || ""))
+        }
+      });
+
+      applyEditorialSuggestion(form, suggestion);
+      updatePublishButtonState(form);
+      setMessage(
+        elements.campaignMessage,
+        suggestion.generatedBy === "openai"
+          ? "AI-forslag er fylt inn. Kontroller teksten før lagring."
+          : "Forslag er fylt inn med lokal fallback. Sett OPENAI_API_KEY for ekte AI-forslag.",
+        "success"
+      );
+    } catch (error) {
+      setMessage(elements.campaignMessage, error.message, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  function applyEditorialSuggestion(form, suggestion) {
+    setFieldValue(form, "editorialSummary", suggestion.editorialSummary);
+    setFieldValue(form, "reasonWhyItMatters", suggestion.reasonWhyItMatters);
+    setFieldValue(form, "estimatedValueText", suggestion.estimatedValueText);
+    setFieldValue(form, "difficultyLevel", suggestion.difficultyLevel);
+    setFieldValue(form, "availabilityScope", suggestion.availabilityScope);
+    setFieldValue(form, "riskNote", suggestion.riskNote);
+  }
+
+  function setFieldValue(form, name, value) {
+    const field = form.elements[name];
+    if (field && value) {
+      field.value = value;
+      field.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   }
 
   function updatePublishButtonState(form) {
@@ -1210,6 +1278,52 @@
             : typeof payload === "string" && payload
               ? payload
               : "Ukjent feil fra Supabase.";
+
+      throw new Error(message);
+    }
+
+    return payload;
+  }
+
+  async function functionRequest(path, options) {
+    if (!hasConfig()) {
+      throw new Error("Adminverktøyet mangler lokal konfigurasjon.");
+    }
+
+    if (!state.session || !state.session.accessToken) {
+      throw new Error("Du må være logget inn for å bruke AI-forslag.");
+    }
+
+    const functionsUrl = CONFIG.supabaseUrl.replace(".supabase.co", ".functions.supabase.co");
+    const requestOptions = options || {};
+    const headers = {
+      apikey: CONFIG.supabasePublishableKey,
+      authorization: `Bearer ${state.session.accessToken}`,
+      Accept: "application/json"
+    };
+
+    if (requestOptions.body) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(`${functionsUrl}${path}`, {
+      method: requestOptions.method || "GET",
+      headers,
+      body: requestOptions.body ? JSON.stringify(requestOptions.body) : undefined
+    });
+
+    const isJson = (response.headers.get("content-type") || "").includes("application/json");
+    const payload = isJson ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      const message =
+        payload && typeof payload === "object" && payload.error
+          ? payload.error
+          : payload && typeof payload === "object" && payload.message
+            ? payload.message
+            : typeof payload === "string" && payload
+              ? payload
+              : "Ukjent feil fra Edge Function.";
 
       throw new Error(message);
     }
