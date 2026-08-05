@@ -60,6 +60,21 @@
 
             <div class="toolbar">
               <label class="field compact">
+                <span>Kilde</span>
+                <select id="ingest-source-select">
+                  <option value="trumf_netthandel">Trumf Netthandel</option>
+                  <option value="sas_eurobonus_shopping">SAS EuroBonus Shopping</option>
+                </select>
+              </label>
+
+              <label class="field compact narrow-field">
+                <span>Limit</span>
+                <input id="ingest-limit-input" type="number" min="1" max="50" step="1" value="10" />
+              </label>
+
+              <button id="ingest-button" class="secondary" type="button">Hent nye kandidater</button>
+
+              <label class="field compact">
                 <span>Status</span>
                 <select id="status-filter">
                   <option value="">Alle</option>
@@ -127,7 +142,7 @@
       </main>
     </div>
 
-    <script src="./config.local.js"></script>
-    <script src="./app.js"></script>
+    <script src="./config.local.js?v=202608041945"></script>
+    <script src="./app.js?v=202608041945"></script>
   </body>
 </html>

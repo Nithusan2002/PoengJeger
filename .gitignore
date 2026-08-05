@@ -5,6 +5,8 @@
 xcuserdata/
 
 # Local app secrets
+.env
+.env.*
 Poengjeger/Config/AppSecrets.local.xcconfig
 admin-tool/config.local.js
 

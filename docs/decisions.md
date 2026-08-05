@@ -77,3 +77,9 @@
 - Bakgrunn: Eksisterende `is_admin()` baserte seg kun på JWT `app_metadata`. Det er upraktisk for et lite internt team fordi rolleendringer da krever auth-adminoperasjoner utenfor den vanlige datamodellen.
 - Beslutning: Poengjeger innfører `editorial_user_roles` i PostgreSQL som primær sannhetskilde for interne roller. `public.current_editorial_role()` og `public.is_admin()` leser først aktiv rolle fra databasen og faller bare tilbake til eldre JWT-metadata for bakoverkompatibilitet.
 - Konsekvens: RLS og RPC-er kan styres med vanlig migrasjonsdrevet datamodell, og interne rolleendringer blir enklere å auditere. Samtidig må admin bootstrap håndteres forsvarlig, fordi bare eksisterende `admin`-rolle kan tildele nye roller etter oppstart.
+
+## ADR-014: Første automatiske connectorer kjører som Edge Function til kandidatkø
+- Status: Foreslått
+- Bakgrunn: Poengjeger trenger å redusere manuelt arbeid med innholdsoppdagelse, men produktet krever kildeintegritet og redaksjonell kontroll før publisering.
+- Beslutning: Første connector-spike bygges som Supabase Edge Function som leser aktive kilder fra `source_registry`, henter offentlig API/HTML uten innlogging, og skriver kun til `ingestion_candidates` og `ingestion_runs`. Trumf Netthandel er aktiv først. SAS EuroBonus Shopping er prioritert som neste kilde, men holdes inaktiv til robots/vilkår er eksplisitt avklart. re:member-parseren finnes fra spike, men kilden er parkert og skal ikke kjøres i første operative fase.
+- Konsekvens: Vi får en trygg test av innhentingsløpet uten å blande det inn i iOS-klienten eller automatisk publisering. Til gjengjeld produserer første versjon primært butikk-/partnerkandidater, ikke komplette kampanjer, og krever redaksjonell sortering.

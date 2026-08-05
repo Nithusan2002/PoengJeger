@@ -42,6 +42,9 @@
     campaignStatusFilter: document.querySelector("#campaign-status-filter"),
     detailPanel: document.querySelector("#detail-panel"),
     emailInput: document.querySelector("#email-input"),
+    ingestButton: document.querySelector("#ingest-button"),
+    ingestLimitInput: document.querySelector("#ingest-limit-input"),
+    ingestSourceSelect: document.querySelector("#ingest-source-select"),
     loginButton: document.querySelector("#login-button"),
     loginForm: document.querySelector("#login-form"),
     passwordInput: document.querySelector("#password-input"),
@@ -55,6 +58,7 @@
   };
 
   elements.loginForm.addEventListener("submit", onLoginSubmit);
+  elements.ingestButton.addEventListener("click", runIngestionFromAdmin);
   elements.refreshButton.addEventListener("click", refreshQueue);
   elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
   elements.signOutButton.addEventListener("click", signOut);
@@ -72,6 +76,7 @@
     initializeAuthenticatedFlow();
   } else {
     renderUnauthenticated();
+    setMessage(elements.authMessage, "Logg inn med en Supabase-bruker som har admin- eller editorrolle.", "muted");
   }
 
   function hasConfig() {
@@ -241,6 +246,40 @@
       renderEmptyCampaignDetail("Kunne ikke laste kampanjer.");
     } finally {
       elements.campaignRefreshButton.disabled = false;
+    }
+  }
+
+  async function runIngestionFromAdmin() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    const source = elements.ingestSourceSelect.value;
+    const limit = clampIngestionLimit(elements.ingestLimitInput.value);
+    const originalLabel = elements.ingestButton.textContent;
+
+    elements.ingestLimitInput.value = String(limit);
+    elements.ingestButton.disabled = true;
+    elements.ingestButton.textContent = "Henter...";
+    setMessage(elements.queueMessage, `Henter nye kandidater fra ${ingestSourceLabel(source)}...`, "muted");
+
+    try {
+      const params = new URLSearchParams({
+        source,
+        limit: String(limit)
+      });
+      const result = await functionRequest(`/ingest-campaign-candidates?${params.toString()}`, {
+        method: "POST"
+      });
+
+      await refreshQueue();
+      setMessage(elements.queueMessage, summarizeIngestionResult(result, source), "success");
+    } catch (error) {
+      setMessage(elements.queueMessage, error.message, "error");
+    } finally {
+      elements.ingestButton.disabled = false;
+      elements.ingestButton.textContent = originalLabel;
     }
   }
 
@@ -713,7 +752,12 @@
         </div>
 
         <section class="section-stack">
-          <h3>Redaksjonell vurdering</h3>
+          <div class="section-heading-row">
+            <h3>Redaksjonell vurdering</h3>
+            <button type="button" class="secondary compact-button" data-ai-action="suggest-editorial">
+              Foreslå med AI
+            </button>
+          </div>
           <div class="detail-grid">
             <label class="field">
               <span>Hvorfor interessant</span>
@@ -840,6 +884,21 @@
         await saveCampaignEditor(form, campaign, targetStatus);
       });
     });
+
+    const aiButton = elements.campaignDetailPanel.querySelector('[data-ai-action="suggest-editorial"]');
+    if (aiButton) {
+      aiButton.addEventListener("click", async function () {
+        await suggestEditorialAssessment(form, campaign, aiButton);
+      });
+    }
+
+    form.addEventListener("input", function () {
+      updatePublishButtonState(form);
+    });
+    form.addEventListener("change", function () {
+      updatePublishButtonState(form);
+    });
+    updatePublishButtonState(form);
   }
 
   function renderEmptyCampaignDetail(message) {
@@ -958,6 +1017,85 @@
     }
 
     return errors;
+  }
+
+  async function suggestEditorialAssessment(form, campaign, button) {
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Foreslår...";
+    setMessage(elements.campaignMessage, "Lager AI-forslag til redaksjonell vurdering...", "muted");
+
+    try {
+      const formData = new FormData(form);
+      const suggestion = await functionRequest("/suggest-editorial-assessment", {
+        method: "POST",
+        body: {
+          title: String(formData.get("title") || "").trim(),
+          summary: String(formData.get("summary") || "").trim(),
+          details: String(formData.get("details") || "").trim(),
+          sourceUrl: String(formData.get("sourceUrl") || "").trim(),
+          sourceTitle: String(formData.get("sourceTitle") || "").trim(),
+          sourceEvidenceNote: String(formData.get("sourceEvidenceNote") || "").trim(),
+          programName: programName(String(formData.get("primaryProgramId") || "")),
+          categoryName: categoryName(String(formData.get("categoryId") || ""))
+        }
+      });
+
+      applyEditorialSuggestion(form, suggestion);
+      updatePublishButtonState(form);
+      setMessage(
+        elements.campaignMessage,
+        suggestion.generatedBy === "openai"
+          ? "AI-forslag er fylt inn. Kontroller teksten før lagring."
+          : "Forslag er fylt inn med lokal fallback. Sett OPENAI_API_KEY for ekte AI-forslag.",
+        "success"
+      );
+    } catch (error) {
+      setMessage(elements.campaignMessage, error.message, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  function applyEditorialSuggestion(form, suggestion) {
+    setFieldValue(form, "editorialSummary", suggestion.editorialSummary);
+    setFieldValue(form, "reasonWhyItMatters", suggestion.reasonWhyItMatters);
+    setFieldValue(form, "estimatedValueText", suggestion.estimatedValueText);
+    setFieldValue(form, "difficultyLevel", suggestion.difficultyLevel);
+    setFieldValue(form, "availabilityScope", suggestion.availabilityScope);
+    setFieldValue(form, "riskNote", suggestion.riskNote);
+  }
+
+  function setFieldValue(form, name, value) {
+    const field = form.elements[name];
+    if (field && value) {
+      field.value = value;
+      field.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+
+  function updatePublishButtonState(form) {
+    const publishButton = form.querySelector('[data-publish-action="publish"]');
+    if (!publishButton) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    const canPublish = Boolean(
+      String(formData.get("title") || "").trim()
+        && String(formData.get("summary") || "").trim()
+        && String(formData.get("details") || "").trim()
+        && String(formData.get("lastVerifiedAt") || "").trim()
+        && String(formData.get("sourceId") || "").trim()
+        && String(formData.get("sourceUrl") || "").trim()
+        && String(formData.get("reasonWhyItMatters") || "").trim()
+    );
+
+    publishButton.disabled = !canPublish;
+    publishButton.title = canPublish
+      ? ""
+      : "Publisering krever tittel, beskrivelse, detaljer, sist verifisert, kilde og redaksjonell begrunnelse.";
   }
 
   async function updateCampaign(payload) {
@@ -1183,6 +1321,93 @@
     }
 
     return payload;
+  }
+
+  async function functionRequest(path, options) {
+    if (!hasConfig()) {
+      throw new Error("Adminverktøyet mangler lokal konfigurasjon.");
+    }
+
+    if (!state.session || !state.session.accessToken) {
+      throw new Error("Du må være logget inn for å bruke denne handlingen.");
+    }
+
+    const functionsUrl = CONFIG.supabaseUrl.replace(".supabase.co", ".functions.supabase.co");
+    const requestOptions = options || {};
+    const headers = {
+      apikey: CONFIG.supabasePublishableKey,
+      authorization: `Bearer ${state.session.accessToken}`,
+      Accept: "application/json"
+    };
+
+    if (requestOptions.body) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(`${functionsUrl}${path}`, {
+      method: requestOptions.method || "GET",
+      headers,
+      body: requestOptions.body ? JSON.stringify(requestOptions.body) : undefined
+    });
+
+    const isJson = (response.headers.get("content-type") || "").includes("application/json");
+    const payload = isJson ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      const message =
+        payload && typeof payload === "object" && payload.error
+          ? payload.error
+          : payload && typeof payload === "object" && payload.message
+            ? payload.message
+            : typeof payload === "string" && payload
+              ? payload
+              : "Ukjent feil fra Edge Function.";
+
+      throw new Error(message);
+    }
+
+    return payload;
+  }
+
+  function clampIngestionLimit(value) {
+    const parsed = Number.parseInt(String(value || ""), 10);
+    if (!Number.isFinite(parsed)) {
+      return 10;
+    }
+
+    return Math.min(Math.max(parsed, 1), 50);
+  }
+
+  function ingestSourceLabel(source) {
+    const labels = {
+      trumf_netthandel: "Trumf Netthandel",
+      sas_eurobonus_shopping: "SAS EuroBonus Shopping"
+    };
+
+    return labels[source] || source;
+  }
+
+  function summarizeIngestionResult(result, requestedSource) {
+    if (!result || typeof result !== "object") {
+      return "Connectoren svarte uten detaljert resultat.";
+    }
+
+    const results = Array.isArray(result.results) ? result.results : [];
+
+    if (Number(result.checked_source_count || 0) === 0 || !results.length) {
+      return `${ingestSourceLabel(requestedSource)} er ikke aktivert som kilde ennå. Ingen kandidater ble hentet.`;
+    }
+
+    const found = results.reduce((sum, item) => sum + Number(item.found_count || 0), 0);
+    const inserted = results.reduce((sum, item) => sum + Number(item.inserted_count || 0), 0);
+    const skipped = results.reduce((sum, item) => sum + Number(item.skipped_duplicate_count || 0), 0);
+    const failed = results.filter((item) => item.status === "failed");
+
+    if (failed.length) {
+      return `Connectoren feilet for ${failed.length} kilde(r): ${failed.map((item) => item.error || item.parser_key).join("; ")}`;
+    }
+
+    return `Connectoren fant ${found} kandidat${found === 1 ? "" : "er"}, la inn ${inserted} ny${inserted === 1 ? "" : "e"} og hoppet over ${skipped} duplikat${skipped === 1 ? "" : "er"}.`;
   }
 
   function authRequest(path, options) {

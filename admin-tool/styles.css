@@ -177,6 +177,10 @@ button:disabled {
   gap: 6px;
 }
 
+.field.narrow-field {
+  width: 112px;
+}
+
 .field input,
 .field select,
 .field textarea,
@@ -363,6 +367,21 @@ button:disabled {
 .section-stack {
   display: grid;
   gap: 14px;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-heading-row h3 {
+  margin: 0;
+}
+
+button.compact-button {
+  padding: 0.62rem 0.86rem;
 }
 
 .detail-copy p,
