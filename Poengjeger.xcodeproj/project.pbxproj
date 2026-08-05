@@ -29,6 +29,9 @@
 		020 /* AdminRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124 /* AdminRepository.swift */; };
 		021 /* MockAdminRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125 /* MockAdminRepository.swift */; };
 		022 /* AdminQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126 /* AdminQueueView.swift */; };
+		023 /* UserSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127 /* UserSessionStore.swift */; };
+		024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128 /* Assets.xcassets */; };
+		025 /* CampaignCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129 /* CampaignCardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +72,9 @@
 		124 /* AdminRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminRepository.swift; sourceTree = "<group>"; };
 		125 /* MockAdminRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAdminRepository.swift; sourceTree = "<group>"; };
 		126 /* AdminQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminQueueView.swift; sourceTree = "<group>"; };
+		127 /* UserSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSessionStore.swift; sourceTree = "<group>"; };
+		128 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		129 /* CampaignCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignCardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +111,7 @@
 				602 /* App */,
 				620 /* Config */,
 				603 /* Core */,
+				623 /* Resources */,
 				604 /* Domain */,
 				605 /* Data */,
 				606 /* Features */,
@@ -127,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				607 /* DesignSystem */,
+				622 /* Persistence */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -191,6 +199,7 @@
 			isa = PBXGroup;
 			children = (
 				111 /* MainTabView.swift */,
+				129 /* CampaignCardView.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -286,6 +295,22 @@
 				126 /* AdminQueueView.swift */,
 			);
 			path = Admin;
+			sourceTree = "<group>";
+		};
+		622 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				127 /* UserSessionStore.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		623 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				128 /* Assets.xcassets */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		700 /* PoengjegerTests */ = {
@@ -385,6 +410,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				024 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -423,6 +449,8 @@
 				016 /* SettingsView.swift in Sources */,
 				018 /* SupabaseCampaignRepository.swift in Sources */,
 				022 /* AdminQueueView.swift in Sources */,
+				023 /* UserSessionStore.swift in Sources */,
+				025 /* CampaignCardView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

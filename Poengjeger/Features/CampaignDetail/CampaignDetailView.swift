@@ -14,7 +14,9 @@ struct CampaignDetailView: View {
                     campaign: campaign,
                     primaryProgramName: primaryProgramName,
                     isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
-                )
+                ) {
+                    toggleFavorite(in: &environment.userSession.favoriteCampaignIDs)
+                }
 
                 DetailCard(title: "Hva får du?", systemImage: "gift") {
                     DetailTextBlock(text: campaign.summary, prominence: .lead)
@@ -24,7 +26,7 @@ struct CampaignDetailView: View {
                 if !campaign.requirements.isEmpty {
                     DetailCard(title: "Viktigste krav", systemImage: "checklist") {
                         VStack(alignment: .leading, spacing: 10) {
-                            ForEach(campaign.requirements.sorted(by: { $0.sortOrder < $1.sortOrder })) { requirement in
+                            ForEach(campaign.sortedRequirements) { requirement in
                                 DetailRequirementRow(text: requirement.text)
                             }
                         }
@@ -55,7 +57,8 @@ struct CampaignDetailView: View {
                                     }
                                 }
                             } else if let score = campaign.editorialScore {
-                                DetailMetricRow(title: "Poengjeger-score", value: "\(score)/100")
+                                DetailMetricRow(title: "Redaksjonell vurdering", value: campaign.editorialTierLabel)
+                                DetailMetricRow(title: "Scoregrunnlag", value: "\(score)/100")
                             }
                         }
                     }
@@ -101,18 +104,6 @@ struct CampaignDetailView: View {
                     }
                 }
 
-                Button {
-                    toggleFavorite(in: &environment.userSession.favoriteCampaignIDs)
-                } label: {
-                    Label(
-                        environment.userSession.favoriteCampaignIDs.contains(campaign.id) ? "Fjern favoritt" : "Lagre favoritt",
-                        systemImage: environment.userSession.favoriteCampaignIDs.contains(campaign.id) ? "star.slash" : "star"
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(PoengjegerTheme.accent)
-                .controlSize(.large)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 18)
@@ -120,6 +111,15 @@ struct CampaignDetailView: View {
         .background(PoengjegerTheme.background)
         .navigationTitle(campaign.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                FavoriteToolbarButton(
+                    isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
+                ) {
+                    toggleFavorite(in: &environment.userSession.favoriteCampaignIDs)
+                }
+            }
+        }
     }
 
     private var primaryProgramName: String? {
@@ -141,15 +141,16 @@ struct CampaignDetailView: View {
     @ViewBuilder
     private var editorialMetrics: some View {
         if let score = campaign.editorialScore {
-            DetailMetricRow(title: "Score", value: "\(score)/100")
+            DetailMetricRow(title: "Vurdering", value: campaign.editorialTierLabel)
+            DetailMetricRow(title: "Scoregrunnlag", value: "\(score)/100")
         }
 
         if let difficultyLevel = campaign.editorialAssessment?.difficultyLevel {
-            DetailMetricRow(title: "Friksjon", value: difficultyLabel(for: difficultyLevel))
+            DetailMetricRow(title: "Friksjon", value: difficultyLevel.displayName)
         }
 
         if let availabilityScope = campaign.editorialAssessment?.availabilityScope {
-            DetailMetricRow(title: "Tilgjengelighet", value: availabilityLabel(for: availabilityScope))
+            DetailMetricRow(title: "Tilgjengelighet", value: availabilityScope.displayName)
         }
     }
 
@@ -161,33 +162,13 @@ struct CampaignDetailView: View {
         }
     }
 
-    private func difficultyLabel(for difficultyLevel: DifficultyLevel) -> String {
-        switch difficultyLevel {
-        case .low:
-            return "Lav"
-        case .medium:
-            return "Middels"
-        case .high:
-            return "Høy"
-        }
-    }
-
-    private func availabilityLabel(for availabilityScope: AvailabilityScope) -> String {
-        switch availabilityScope {
-        case .narrow:
-            return "Smal"
-        case .regional:
-            return "Regional"
-        case .broad:
-            return "Bred"
-        }
-    }
 }
 
 private struct DetailHero: View {
     let campaign: Campaign
     let primaryProgramName: String?
     let isFavorite: Bool
+    let onToggleFavorite: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -207,13 +188,6 @@ private struct DetailHero: View {
                 }
 
                 Spacer(minLength: 8)
-
-                if isFavorite {
-                    Image(systemName: "star.fill")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.highlight)
-                        .accessibilityLabel("Lagret som favoritt")
-                }
             }
 
             ViewThatFits(in: .horizontal) {
@@ -225,6 +199,20 @@ private struct DetailHero: View {
                     heroFacts
                 }
             }
+
+            Button {
+                onToggleFavorite()
+            } label: {
+                Label(
+                    isFavorite ? "Lagret som favoritt" : "Lagre favoritt",
+                    systemImage: isFavorite ? "star.fill" : "star"
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(isFavorite ? PoengjegerTheme.highlight : PoengjegerTheme.accent)
+            .controlSize(.large)
+            .accessibilityHint(isFavorite ? "Fjerner kampanjen fra favoritter." : "Legger kampanjen i favoritter.")
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -235,13 +223,12 @@ private struct DetailHero: View {
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 5)
-        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
     private var heroFacts: some View {
-        if let score = campaign.editorialScore {
-            DetailMetricRow(title: "Score", value: "\(score)/100")
+        if campaign.editorialScore != nil {
+            DetailMetricRow(title: "Vurdering", value: campaign.editorialTierLabel)
         }
 
         if let endDate = campaign.endDate {
@@ -255,6 +242,20 @@ private struct DetailHero: View {
             title: "Kontrollert",
             value: campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted)
         )
+    }
+}
+
+private struct FavoriteToolbarButton: View {
+    let isFavorite: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: isFavorite ? "star.fill" : "star")
+        }
+        .foregroundStyle(isFavorite ? PoengjegerTheme.highlight : PoengjegerTheme.accent)
+        .accessibilityLabel(isFavorite ? "Fjern favoritt" : "Lagre favoritt")
+        .accessibilityValue(isFavorite ? "Lagret" : "Ikke lagret")
     }
 }
 

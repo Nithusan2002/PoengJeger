@@ -2,74 +2,45 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var draftSelectedProgramIDs: Set<UUID> = []
 
     var body: some View {
         @Bindable var environment = environment
 
         NavigationStack {
-            List {
-                Section {
-                    Text("Velg ett eller flere bonusprogrammer du vil følge. Feed og varsler skal bare vise kampanjer som er relevante for disse valgene.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 16) {
+                    OnboardingHeader(
+                        selectedCount: draftSelectedProgramIDs.count,
+                        programCount: environment.programs.count
+                    )
 
-                Section {
-                    HStack {
-                        Text("Valgt nå")
-                        Spacer()
-                        Text("\(environment.userSession.selectedProgramIDs.count) av \(environment.programs.count)")
-                            .foregroundStyle(.secondary)
+                    OnboardingProgramControls(
+                        programs: environment.programs,
+                        selectedProgramIDs: $draftSelectedProgramIDs
+                    )
+
+                    OnboardingProgramList(
+                        programs: environment.programs,
+                        selectedProgramIDs: $draftSelectedProgramIDs
+                    )
+
+                    if let dataSource = environment.dataSource, dataSource.isFallback {
+                        FeedStatusBanner(text: "Viser \(dataSource.label.lowercased()) til Supabase-konfigurasjon er på plass.")
                     }
 
-                    Button("Velg alle") {
-                        environment.userSession.selectedProgramIDs = Set(environment.programs.map(\.id))
-                    }
-                    .disabled(environment.programs.isEmpty)
-
-                    Button("Tøm valg", role: .destructive) {
-                        environment.userSession.selectedProgramIDs.removeAll()
-                    }
-                    .disabled(environment.userSession.selectedProgramIDs.isEmpty)
-                }
-
-                Section("Bonusprogrammer") {
-                    ForEach(environment.programs) { program in
-                        Button {
-                            toggleProgramSelection(program.id, in: &environment.userSession.selectedProgramIDs)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: environment.userSession.selectedProgramIDs.contains(program.id) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(
-                                        environment.userSession.selectedProgramIDs.contains(program.id)
-                                        ? AnyShapeStyle(PoengjegerTheme.accent)
-                                        : AnyShapeStyle(.tertiary)
-                                    )
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(program.name)
-                                        .foregroundStyle(.primary)
-                                    Text(program.issuerName)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                Spacer()
-                            }
-                        }
-                        .buttonStyle(.plain)
+                    OnboardingContinueButton(
+                        isEnabled: !draftSelectedProgramIDs.isEmpty
+                    ) {
+                        environment.userSession.selectedProgramIDs = draftSelectedProgramIDs
                     }
                 }
-
-                if let dataSource = environment.dataSource, dataSource.isFallback {
-                    Section {
-                        Text("Viser \(dataSource.label.lowercased()) til Supabase-konfigurasjon er på plass.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 18)
             }
+            .background(PoengjegerTheme.background)
             .navigationTitle("Dine programmer")
+            .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
             .overlay {
                 if case .loading = environment.loadState, environment.programs.isEmpty {
                     ProgressView()
@@ -78,15 +49,215 @@ struct OnboardingView: View {
             .refreshable {
                 await environment.refresh()
             }
+            .onAppear {
+                draftSelectedProgramIDs = environment.userSession.selectedProgramIDs
+            }
+        }
+    }
+}
+
+private struct OnboardingHeader: View {
+    let selectedCount: Int
+    let programCount: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Velg programmene du følger")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                Spacer(minLength: 12)
+
+                Text("\(selectedCount)/\(programCount)")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(PoengjegerTheme.accent)
+                    .accessibilityLabel("\(selectedCount) av \(programCount) programmer valgt")
+            }
+
+            Text("Feed og varsler bruker valgene dine til å vise kampanjer med relevante frister, vilkår og kildegrunnlag.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct OnboardingProgramControls: View {
+    let programs: [BonusProgram]
+    @Binding var selectedProgramIDs: Set<UUID>
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Button {
+                selectedProgramIDs = Set(programs.map(\.id))
+            } label: {
+                Label("Velg alle", systemImage: "checkmark.circle")
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(programs.isEmpty)
+
+            Button(role: .destructive) {
+                selectedProgramIDs.removeAll()
+            } label: {
+                Label("Tøm", systemImage: "xmark.circle")
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(selectedProgramIDs.isEmpty)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+    }
+}
+
+private struct OnboardingProgramList: View {
+    let programs: [BonusProgram]
+    @Binding var selectedProgramIDs: Set<UUID>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Bonusprogrammer")
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+            ForEach(programs) { program in
+                ProgramSelectionRow(
+                    program: program,
+                    isSelected: selectedProgramIDs.contains(program.id)
+                ) {
+                    toggleProgramSelection(program.id)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                if program.id != programs.last?.id {
+                    Divider()
+                        .padding(.leading, 52)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
     }
 
-    private func toggleProgramSelection(_ programID: UUID, in selectedProgramIDs: inout Set<UUID>) {
+    private func toggleProgramSelection(_ programID: UUID) {
         if selectedProgramIDs.contains(programID) {
             selectedProgramIDs.remove(programID)
         } else {
             selectedProgramIDs.insert(programID)
         }
+    }
+}
+
+private struct OnboardingContinueButton: View {
+    let isEnabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label("Fortsett", systemImage: "arrow.right.circle.fill")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .tint(PoengjegerTheme.accent)
+        .disabled(!isEnabled)
+        .accessibilityHint(isEnabled ? "Åpner den personlige kampanjefeeden." : "Velg minst ett bonusprogram først.")
+    }
+}
+
+struct ProgramSelectionControlsSection: View {
+    let programs: [BonusProgram]
+    @Binding var selectedProgramIDs: Set<UUID>
+
+    var body: some View {
+        Section {
+            HStack {
+                Text("Valgt nå")
+                Spacer()
+                Text("\(selectedProgramIDs.count) av \(programs.count)")
+                    .foregroundStyle(.secondary)
+            }
+
+            Button("Velg alle") {
+                selectedProgramIDs = Set(programs.map(\.id))
+            }
+            .disabled(programs.isEmpty)
+
+            Button("Tøm valg", role: .destructive) {
+                selectedProgramIDs.removeAll()
+            }
+            .disabled(selectedProgramIDs.isEmpty)
+        }
+    }
+}
+
+struct ProgramSelectionSection: View {
+    let title: String
+    let programs: [BonusProgram]
+    @Binding var selectedProgramIDs: Set<UUID>
+
+    var body: some View {
+        Section(title) {
+            ForEach(programs) { program in
+                ProgramSelectionRow(
+                    program: program,
+                    isSelected: selectedProgramIDs.contains(program.id)
+                ) {
+                    toggleProgramSelection(program.id)
+                }
+            }
+        }
+    }
+
+    private func toggleProgramSelection(_ programID: UUID) {
+        if selectedProgramIDs.contains(programID) {
+            selectedProgramIDs.remove(programID)
+        } else {
+            selectedProgramIDs.insert(programID)
+        }
+    }
+}
+
+private struct ProgramSelectionRow: View {
+    let program: BonusProgram
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(
+                        isSelected
+                        ? AnyShapeStyle(PoengjegerTheme.accent)
+                        : AnyShapeStyle(.tertiary)
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(program.name)
+                        .foregroundStyle(.primary)
+                    Text(program.issuerName)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
     }
 }
 

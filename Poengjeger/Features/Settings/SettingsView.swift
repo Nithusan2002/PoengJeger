@@ -8,55 +8,20 @@ struct SettingsView: View {
 
         Form {
             Section("Varsler") {
-                Toggle("Aktiver varsler", isOn: $environment.userSession.notificationsEnabled)
+                Label("Varsler kommer etter at push-flyten er koblet opp.", systemImage: "bell.slash")
+                    .foregroundStyle(.secondary)
             }
 
-            Section {
-                HStack {
-                    Text("Valgt nå")
-                    Spacer()
-                    Text("\(environment.userSession.selectedProgramIDs.count) av \(environment.programs.count)")
-                        .foregroundStyle(.secondary)
-                }
+            ProgramSelectionControlsSection(
+                programs: environment.programs,
+                selectedProgramIDs: $environment.userSession.selectedProgramIDs
+            )
 
-                Button("Velg alle") {
-                    environment.userSession.selectedProgramIDs = Set(environment.programs.map(\.id))
-                }
-                .disabled(environment.programs.isEmpty)
-
-                Button("Tøm valg", role: .destructive) {
-                    environment.userSession.selectedProgramIDs.removeAll()
-                }
-                .disabled(environment.userSession.selectedProgramIDs.isEmpty)
-            }
-
-            Section("Valgte programmer") {
-                ForEach(environment.programs) { program in
-                    Button {
-                        toggleProgramSelection(program.id, in: &environment.userSession.selectedProgramIDs)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: environment.userSession.selectedProgramIDs.contains(program.id) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(
-                                    environment.userSession.selectedProgramIDs.contains(program.id)
-                                    ? AnyShapeStyle(PoengjegerTheme.accent)
-                                    : AnyShapeStyle(.tertiary)
-                                )
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(program.name)
-                                    .foregroundStyle(.primary)
-                                Text(program.issuerName)
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            ProgramSelectionSection(
+                title: "Valgte programmer",
+                programs: environment.programs,
+                selectedProgramIDs: $environment.userSession.selectedProgramIDs
+            )
 
             if let dataSource = environment.dataSource {
                 Section("Datakilde") {
@@ -64,6 +29,7 @@ struct SettingsView: View {
                 }
             }
 
+            #if DEBUG
             Section {
                 NavigationLink("Admin-kø") {
                     AdminQueueView()
@@ -73,15 +39,8 @@ struct SettingsView: View {
             } footer: {
                 Text("Denne skjermen er for intern review av ingestion-kandidater. Live admin krever egen admin-session.")
             }
+            #endif
         }
         .navigationTitle("Innstillinger")
-    }
-
-    private func toggleProgramSelection(_ programID: UUID, in selectedProgramIDs: inout Set<UUID>) {
-        if selectedProgramIDs.contains(programID) {
-            selectedProgramIDs.remove(programID)
-        } else {
-            selectedProgramIDs.insert(programID)
-        }
     }
 }

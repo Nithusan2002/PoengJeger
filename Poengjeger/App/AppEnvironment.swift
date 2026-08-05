@@ -13,7 +13,13 @@ final class AppEnvironment {
 
     let campaignRepository: CampaignRepository
     let adminRepository: AdminRepository
-    var userSession: UserSession
+    @ObservationIgnored
+    private let userSessionStore: UserSessionStore
+    var userSession: UserSession {
+        didSet {
+            userSessionStore.save(userSession)
+        }
+    }
     var programs: [BonusProgram] = []
     var campaigns: [Campaign] = []
     var loadState: LoadState = .idle
@@ -24,10 +30,16 @@ final class AppEnvironment {
     var adminInfoMessage: String?
     var isAdminPreview = false
 
-    init(campaignRepository: CampaignRepository, adminRepository: AdminRepository, userSession: UserSession) {
+    init(
+        campaignRepository: CampaignRepository,
+        adminRepository: AdminRepository,
+        userSession: UserSession,
+        userSessionStore: UserSessionStore = UserDefaultsUserSessionStore()
+    ) {
         self.campaignRepository = campaignRepository
         self.adminRepository = adminRepository
-        self.userSession = userSession
+        self.userSessionStore = userSessionStore
+        self.userSession = userSessionStore.load() ?? userSession
     }
 
     static func live() -> AppEnvironment {
@@ -57,7 +69,8 @@ final class AppEnvironment {
         AppEnvironment(
             campaignRepository: MockCampaignRepository(),
             adminRepository: MockAdminRepository(),
-            userSession: .empty
+            userSession: .empty,
+            userSessionStore: InMemoryUserSessionStore()
         )
     }
 

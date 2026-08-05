@@ -2,8 +2,18 @@ import SwiftUI
 
 struct FeedView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var selectedFilter: FeedFilter = .all
 
     private var campaigns: [Campaign] {
+        FeedUseCase()
+            .makeFeed(
+                campaigns: environment.campaigns,
+                selectedProgramIDs: environment.userSession.selectedProgramIDs,
+                filter: selectedFilter
+            )
+    }
+
+    private var unfilteredCampaigns: [Campaign] {
         FeedUseCase()
             .makeFeed(
                 campaigns: environment.campaigns,
@@ -11,11 +21,21 @@ struct FeedView: View {
             )
     }
 
+    private var unfilteredCampaignCount: Int {
+        unfilteredCampaigns.count
+    }
+
+    private var programNamesByID: [UUID: String] {
+        Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0.name) })
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 FeedHeader(
                     campaignCount: campaigns.count,
+                    unfilteredCampaignCount: unfilteredCampaignCount,
+                    selectedFilter: selectedFilter,
                     selectedProgramCount: environment.userSession.selectedProgramIDs.count
                 )
 
@@ -23,11 +43,13 @@ struct FeedView: View {
                     FeedStatusBanner(text: dataSource.label)
                 }
 
+                FeedFilterPicker(selectedFilter: $selectedFilter)
+
                 ForEach(campaigns) { campaign in
                     NavigationLink(value: campaign) {
                         CampaignCardView(
                             campaign: campaign,
-                            primaryProgramName: programName(for: campaign),
+                            primaryProgramName: primaryProgramName(for: campaign),
                             isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
                         )
                     }
@@ -39,6 +61,7 @@ struct FeedView: View {
         }
         .background(PoengjegerTheme.background)
         .navigationTitle("Aktive kampanjer")
+        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
         }
@@ -55,6 +78,12 @@ struct FeedView: View {
                     systemImage: "wifi.exclamationmark",
                     description: Text(message)
                 )
+            case _ where campaigns.isEmpty && selectedFilter != .all:
+                ContentUnavailableView(
+                    "Ingen treff",
+                    systemImage: "line.3.horizontal.decrease.circle",
+                    description: Text("Prøv et annet filter eller juster bonusprogrammene dine.")
+                )
             case _ where campaigns.isEmpty:
                 ContentUnavailableView(
                     "Ingen kampanjer ennå",
@@ -67,17 +96,19 @@ struct FeedView: View {
         }
     }
 
-    private func programName(for campaign: Campaign) -> String? {
+    private func primaryProgramName(for campaign: Campaign) -> String? {
         guard let primaryProgramID = campaign.primaryProgramID else {
             return nil
         }
 
-        return environment.programs.first(where: { $0.id == primaryProgramID })?.name
+        return programNamesByID[primaryProgramID]
     }
 }
 
 private struct FeedHeader: View {
     let campaignCount: Int
+    let unfilteredCampaignCount: Int
+    let selectedFilter: FeedFilter
     let selectedProgramCount: Int
 
     var body: some View {
@@ -109,225 +140,26 @@ private struct FeedHeader: View {
             return "Velg bonusprogrammer for å gjøre feeden personlig."
         }
 
-        return "Aktive kampanjer fra \(selectedProgramCount) valgte bonusprogram\(selectedProgramCount == 1 ? "" : "mer")."
+        if selectedFilter != .all {
+            return "\(campaignCount) av \(unfilteredCampaignCount) relevante kampanjer vises med filteret \(selectedFilter.title.lowercased())."
+        }
+
+        return "Aktive kampanjer fra \(selectedProgramCount) valgte bonusprogram\(selectedProgramCount == 1 ? "" : "mer"), sortert etter redaksjonell vurdering."
     }
 }
 
-private struct FeedStatusBanner: View {
-    let text: String
+private struct FeedFilterPicker: View {
+    @Binding var selectedFilter: FeedFilter
 
     var body: some View {
-        Label {
-            Text(text)
-                .fixedSize(horizontal: false, vertical: true)
-        } icon: {
-            Image(systemName: "exclamationmark.triangle")
-        }
-        .font(.footnote)
-        .foregroundStyle(PoengjegerTheme.warning)
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.warning.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-}
-
-private struct CampaignCardView: View {
-    let campaign: Campaign
-    let primaryProgramName: String?
-    let isFavorite: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
-                    TagRow(
-                        primaryProgramName: primaryProgramName,
-                        categoryName: campaign.category?.name,
-                        isFeatured: campaign.isFeatured
-                    )
-
-                    Text(campaign.title)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(!campaign.editorialSummary.isEmpty ? campaign.editorialSummary : campaign.summary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: 8)
-
-                if let score = campaign.editorialScore {
-                    ScoreBadge(score: score)
-                }
-            }
-
-            Divider()
-
-            HStack(alignment: .center, spacing: 10) {
-                CampaignMetadataStrip(campaign: campaign)
-
-                Spacer(minLength: 8)
-
-                if isFavorite {
-                    Image(systemName: "star.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.highlight)
-                        .accessibilityLabel("Lagret som favoritt")
-                }
+        Picker("Filter", selection: $selectedFilter) {
+            ForEach(FeedFilter.allCases) { filter in
+                Text(filter.title)
+                    .tag(filter)
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 5)
-        .accessibilityElement(children: .combine)
-    }
-}
-
-private struct TagRow: View {
-    let primaryProgramName: String?
-    let categoryName: String?
-    let isFeatured: Bool
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
-                tags
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                tags
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var tags: some View {
-        if let primaryProgramName {
-            TagView(title: primaryProgramName, tint: PoengjegerTheme.accent)
-        }
-
-        if let categoryName {
-            TagView(title: categoryName, tint: .secondary)
-        }
-
-        if isFeatured {
-            TagView(title: "Fremhevet", tint: PoengjegerTheme.highlight)
-        }
-    }
-}
-
-private struct ScoreBadge: View {
-    let score: Int
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text("\(score)")
-                .font(.headline)
-                .bold()
-            Text("score")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(PoengjegerTheme.accentSoft)
-        .foregroundStyle(PoengjegerTheme.accent)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Poengjeger-score \(score) av 100")
-    }
-}
-
-private struct TagView: View {
-    let title: String
-    var tint: Color = PoengjegerTheme.accent
-
-    var body: some View {
-        Text(title)
-            .font(.caption)
-            .foregroundStyle(tint)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(tint.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-    }
-}
-
-private struct CampaignMetadataStrip: View {
-    let campaign: Campaign
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 12) {
-                labels
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                labels
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var labels: some View {
-        MetadataLabel(
-            title: "Kontrollert",
-            value: campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted),
-            systemImage: "checkmark.seal"
-        )
-
-        if let endDate = campaign.endDate {
-            MetadataLabel(
-                title: "Utløper",
-                value: endDate.formatted(date: .abbreviated, time: .omitted),
-                systemImage: "calendar"
-            )
-        }
-
-        if let firstSource = campaign.sources.first {
-            MetadataLabel(
-                title: "Kilde",
-                value: firstSource.sourceName,
-                systemImage: "link"
-            )
-        }
-    }
-}
-
-private struct MetadataLabel: View {
-    let title: String
-    let value: String
-    let systemImage: String
-
-    var body: some View {
-        Label {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-        } icon: {
-            Image(systemName: systemImage)
-                .foregroundStyle(.secondary)
-        }
-        .labelStyle(.titleAndIcon)
+        .pickerStyle(.segmented)
+        .accessibilityLabel("Filtrer kampanjer")
     }
 }
 

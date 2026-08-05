@@ -41,6 +41,29 @@ struct Campaign: Identifiable, Hashable {
         return true
     }
 
+    var displaySummary: String {
+        editorialSummary.isEmpty ? summary : editorialSummary
+    }
+
+    var editorialTierLabel: String {
+        guard let editorialScore else {
+            return "Uten vurdering"
+        }
+
+        switch editorialScore {
+        case 80...:
+            return "Sterk mulighet"
+        case 65...:
+            return "Relevant"
+        default:
+            return "Nisjetilbud"
+        }
+    }
+
+    var sortedRequirements: [CampaignRequirement] {
+        requirements.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
     func matchesSelectedPrograms(_ selectedProgramIDs: Set<UUID>) -> Bool {
         !selectedProgramIDs.isDisjoint(with: linkedProgramIDs)
     }
@@ -80,12 +103,34 @@ enum DifficultyLevel: String, Hashable {
     case low
     case medium
     case high
+
+    var displayName: String {
+        switch self {
+        case .low:
+            return "Lav"
+        case .medium:
+            return "Middels"
+        case .high:
+            return "Høy"
+        }
+    }
 }
 
 enum AvailabilityScope: String, Hashable {
     case narrow
     case regional
     case broad
+
+    var displayName: String {
+        switch self {
+        case .narrow:
+            return "Smal"
+        case .regional:
+            return "Regional"
+        case .broad:
+            return "Bred"
+        }
+    }
 }
 
 struct GeoRestriction: Identifiable, Hashable {

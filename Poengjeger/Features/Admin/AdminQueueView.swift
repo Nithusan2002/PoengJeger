@@ -44,79 +44,17 @@ struct AdminQueueView: View {
 
             Section("Kandidater") {
                 ForEach(candidates) { candidate in
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(candidate.title)
-                                    .font(.headline)
-
-                                Text(candidate.summary)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer(minLength: 12)
-                            AdminStatusBadge(status: candidate.status)
+                    AdminCandidateRow(
+                        candidate: candidate,
+                        note: noteBinding(for: candidate.id),
+                        showsActions: environment.isAdminPreview,
+                        onSetStatus: { status in
+                            Task { await setStatus(status, for: candidate) }
+                        },
+                        onPromote: {
+                            Task { await promote(candidate) }
                         }
-
-                        HStack(spacing: 8) {
-                            AdminTag(title: candidate.sourceName)
-
-                            if let suggestedProgramName = candidate.suggestedProgramName {
-                                AdminTag(title: suggestedProgramName, tint: PoengjegerTheme.accent)
-                            }
-
-                            if let suggestedCategoryName = candidate.suggestedCategoryName {
-                                AdminTag(title: suggestedCategoryName, tint: .secondary)
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            MetadataLine(title: "Oppdaget", value: candidate.detectedAt.formatted(date: .abbreviated, time: .shortened))
-                            MetadataLine(title: "Ingest", value: candidate.ingestKind)
-                            MetadataLine(title: "Kilde", value: candidate.sourceURL.absoluteString)
-
-                            if let reviewNote = candidate.reviewNote, !reviewNote.isEmpty {
-                                MetadataLine(title: "Notat", value: reviewNote)
-                            }
-                        }
-
-                        if candidate.canReview || candidate.canPromote {
-                            TextField("Kort notat til review", text: noteBinding(for: candidate.id), axis: .vertical)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        if environment.isAdminPreview {
-                            HStack {
-                                if candidate.canReview {
-                                    Button("Needs review") {
-                                        Task { await setStatus(.needsReview, for: candidate) }
-                                    }
-                                    .buttonStyle(.bordered)
-
-                                    Button("Godkjenn") {
-                                        Task { await setStatus(.approved, for: candidate) }
-                                    }
-                                    .buttonStyle(.bordered)
-
-                                    Button("Avvis", role: .destructive) {
-                                        Task { await setStatus(.rejected, for: candidate) }
-                                    }
-                                    .buttonStyle(.bordered)
-                                }
-
-                                Spacer()
-
-                                if candidate.canPromote {
-                                    Button("Promoter til draft") {
-                                        Task { await promote(candidate) }
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
+                    )
                 }
             }
         }
@@ -169,6 +107,112 @@ struct AdminQueueView: View {
             candidateID: candidate.id,
             note: noteDrafts[candidate.id]
         )
+    }
+}
+
+private struct AdminCandidateRow: View {
+    let candidate: IngestionCandidate
+    @Binding var note: String
+    let showsActions: Bool
+    let onSetStatus: (IngestionCandidate.Status) -> Void
+    let onPromote: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(candidate.title)
+                        .font(.headline)
+
+                    Text(candidate.summary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 12)
+                AdminStatusBadge(status: candidate.status)
+            }
+
+            HStack(spacing: 8) {
+                AdminTag(title: candidate.sourceName)
+
+                if let suggestedProgramName = candidate.suggestedProgramName {
+                    AdminTag(title: suggestedProgramName, tint: PoengjegerTheme.accent)
+                }
+
+                if let suggestedCategoryName = candidate.suggestedCategoryName {
+                    AdminTag(title: suggestedCategoryName, tint: .secondary)
+                }
+            }
+
+            CandidateMetadata(candidate: candidate)
+
+            if candidate.canReview || candidate.canPromote {
+                TextField("Kort notat til review", text: $note, axis: .vertical)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            if showsActions {
+                AdminCandidateActions(
+                    candidate: candidate,
+                    onSetStatus: onSetStatus,
+                    onPromote: onPromote
+                )
+            }
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+private struct CandidateMetadata: View {
+    let candidate: IngestionCandidate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            MetadataLine(title: "Oppdaget", value: candidate.detectedAt.formatted(date: .abbreviated, time: .shortened))
+            MetadataLine(title: "Ingest", value: candidate.ingestKind)
+            MetadataLine(title: "Kilde", value: candidate.sourceURL.absoluteString)
+
+            if let reviewNote = candidate.reviewNote, !reviewNote.isEmpty {
+                MetadataLine(title: "Notat", value: reviewNote)
+            }
+        }
+    }
+}
+
+private struct AdminCandidateActions: View {
+    let candidate: IngestionCandidate
+    let onSetStatus: (IngestionCandidate.Status) -> Void
+    let onPromote: () -> Void
+
+    var body: some View {
+        HStack {
+            if candidate.canReview {
+                Button("Needs review") {
+                    onSetStatus(.needsReview)
+                }
+                .buttonStyle(.bordered)
+
+                Button("Godkjenn") {
+                    onSetStatus(.approved)
+                }
+                .buttonStyle(.bordered)
+
+                Button("Avvis", role: .destructive) {
+                    onSetStatus(.rejected)
+                }
+                .buttonStyle(.bordered)
+            }
+
+            Spacer()
+
+            if candidate.canPromote {
+                Button("Promoter til draft") {
+                    onPromote()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
     }
 }
 

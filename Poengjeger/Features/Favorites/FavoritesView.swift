@@ -7,38 +7,30 @@ struct FavoritesView: View {
         environment.favoriteCampaigns
     }
 
+    private var programNamesByID: [UUID: String] {
+        Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0.name) })
+    }
+
     var body: some View {
-        List(favorites) { campaign in
-            NavigationLink(value: campaign) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        if let programName = programName(for: campaign) {
-                            Text(programName)
-                                .font(.caption)
-                                .foregroundStyle(PoengjegerTheme.accent)
-                        }
-
-                        if let categoryName = campaign.category?.name {
-                            Text(categoryName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                ForEach(favorites) { campaign in
+                    NavigationLink(value: campaign) {
+                        CampaignCardView(
+                            campaign: campaign,
+                            primaryProgramName: programName(for: campaign),
+                            isFavorite: true
+                        )
                     }
-
-                    Text(campaign.title)
-                        .font(.headline)
-                    Text(!campaign.editorialSummary.isEmpty ? campaign.editorialSummary : campaign.summary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    Text("Sist kontrollert \(campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 4)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
         }
+        .background(PoengjegerTheme.background)
         .navigationTitle("Favoritter")
+        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
         }
@@ -61,6 +53,6 @@ struct FavoritesView: View {
             return nil
         }
 
-        return environment.programs.first(where: { $0.id == primaryProgramID })?.name
+        return programNamesByID[primaryProgramID]
     }
 }
