@@ -6,7 +6,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 
 - iOS-app i SwiftUI.
 - Brukervalg av relevante bonusprogrammer.
-- Personlig feed med aktive kampanjer, detaljer, filtrering og favoritter.
+- Tett, skannbar personlig feed med aktive kampanjer, detaljer, filtrering og favoritter.
 - Begrensede relevante varsler.
 - Supabase-datamodell med redaksjonell kampanjeadministrasjon.
 - Kandidatkø som kan promotere funn til utkast, aldri direkte til publisert kampanje.
@@ -14,7 +14,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 ## Neste valideringer
 
 1. Verifiser den komplette redaksjonelle arbeidsflyten med representative kampanjer, inkludert draft-redigering og publisering.
-2. Ferdigstill iOS-flytens loading-, empty- og error-tilstander mot backenddata.
+2. Verifiser den nye skannbare feeden visuelt med representative kampanjer, Dynamic Type, mørk modus og backenddata.
 3. Velg og analyser minst tre eksplisitt godkjente kilder før automatisert overvåking bygges.
 4. Stram inn adminverktøyet med bedre session-håndtering, rolleadministrasjon og QA før bredere intern bruk.
 

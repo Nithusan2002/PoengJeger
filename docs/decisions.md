@@ -83,3 +83,9 @@
 - Bakgrunn: Poengjeger trenger å redusere manuelt arbeid med innholdsoppdagelse, men produktet krever kildeintegritet og redaksjonell kontroll før publisering.
 - Beslutning: Første connector-spike bygges som Supabase Edge Function som leser aktive kilder fra `source_registry`, henter offentlig API/HTML uten innlogging, og skriver kun til `ingestion_candidates` og `ingestion_runs`. Trumf Netthandel er aktiv først. SAS EuroBonus Shopping er prioritert som neste kilde, men holdes inaktiv til robots/vilkår er eksplisitt avklart. re:member-parseren finnes fra spike, men kilden er parkert og skal ikke kjøres i første operative fase.
 - Konsekvens: Vi får en trygg test av innhentingsløpet uten å blande det inn i iOS-klienten eller automatisk publisering. Til gjengjeld produserer første versjon primært butikk-/partnerkandidater, ikke komplette kampanjer, og krever redaksjonell sortering.
+
+## ADR-015: Kampanjefeeden prioriterer skannbar verdi fremfor kortbasert layout
+- Status: Vedtatt
+- Bakgrunn: Produktbriefen sier at brukeren skal forstå de viktigste relevante kampanjene på under ett minutt. En kortbasert feed bruker mye skjermplass per kampanje og gjør det vanskeligere å sammenligne verdi, frist og program raskt.
+- Beslutning: Hovedfeeden bygges som en tett, plain SwiftUI-liste der verdi-labelen er radens visuelle anker. Headeren samler søk, sortering, kategori og programvalg, mens radene viser verdi, utløpsstatus, tittel og programmerker uten kortbakgrunn. Utløpte og fremtidige kampanjer skjules fra feeden.
+- Konsekvens: Feedopplevelsen blir mer effektiv for gjentatt bruk og bedre tilpasset Poengjegers verdiforslag om tidsbesparelse. Det krever tydeligere datamodell for kort `value_label` og programfarger senere; inntil feltene finnes, bruker klienten redaksjonell score/vurdering og lokale programfarge-fallbacks.
