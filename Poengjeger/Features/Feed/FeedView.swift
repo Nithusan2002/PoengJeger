@@ -2,66 +2,105 @@ import SwiftUI
 
 struct FeedView: View {
     @Environment(AppEnvironment.self) private var environment
-    @State private var selectedFilter: FeedFilter = .all
+    @FocusState private var isSearchFocused: Bool
+    @State private var isSearchVisible = false
+    @State private var searchText = ""
+    @State private var selectedSort: FeedSort = .expiringFirst
+    @State private var selectedCategoryID: UUID?
+    @State private var showsAllPrograms = false
+    @State private var isProgramSheetPresented = false
 
     private var campaigns: [Campaign] {
-        FeedUseCase()
-            .makeFeed(
-                campaigns: environment.campaigns,
-                selectedProgramIDs: environment.userSession.selectedProgramIDs,
-                filter: selectedFilter
-            )
+        ScannableFeedUseCase().makeFeed(
+            campaigns: environment.campaigns,
+            selectedProgramIDs: environment.userSession.selectedProgramIDs,
+            showsAllPrograms: showsAllPrograms,
+            selectedCategoryID: selectedCategoryID,
+            searchText: searchText,
+            sort: selectedSort
+        )
     }
 
-    private var unfilteredCampaigns: [Campaign] {
-        FeedUseCase()
-            .makeFeed(
-                campaigns: environment.campaigns,
-                selectedProgramIDs: environment.userSession.selectedProgramIDs
-            )
+    private var activeCampaignCount: Int {
+        ScannableFeedUseCase().makeFeed(
+            campaigns: environment.campaigns,
+            selectedProgramIDs: environment.userSession.selectedProgramIDs,
+            showsAllPrograms: showsAllPrograms,
+            selectedCategoryID: nil,
+            searchText: "",
+            sort: selectedSort
+        )
+        .count
     }
 
-    private var unfilteredCampaignCount: Int {
-        unfilteredCampaigns.count
+    private var categories: [CampaignCategory] {
+        Dictionary(
+            grouping: environment.campaigns.compactMap(\.category),
+            by: \.id
+        )
+        .compactMap(\.value.first)
+        .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 
-    private var programNamesByID: [UUID: String] {
-        Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0.name) })
+    private var programsByID: [UUID: BonusProgram] {
+        Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0) })
+    }
+
+    private var hasSelectedPrograms: Bool {
+        !environment.userSession.selectedProgramIDs.isEmpty
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
-                FeedHeader(
-                    campaignCount: campaigns.count,
-                    unfilteredCampaignCount: unfilteredCampaignCount,
-                    selectedFilter: selectedFilter,
-                    selectedProgramCount: environment.userSession.selectedProgramIDs.count
-                )
+        @Bindable var environment = environment
 
-                if let dataSource = environment.dataSource, dataSource.isFallback {
-                    FeedStatusBanner(text: dataSource.label)
+        List {
+            if let dataSource = environment.dataSource, dataSource.isFallback {
+                FeedStatusBanner(text: dataSource.label)
+                    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
+                    .listRowSeparator(.hidden)
+            }
+
+            if isLoadingInitialData {
+                ForEach(0..<6, id: \.self) { _ in
+                    FeedPlaceholderRow()
+                        .redacted(reason: .placeholder)
                 }
-
-                FeedFilterPicker(selectedFilter: $selectedFilter)
-
+            } else {
                 ForEach(campaigns) { campaign in
                     NavigationLink(value: campaign) {
-                        CampaignCardView(
+                        FeedCampaignRow(
                             campaign: campaign,
-                            primaryProgramName: primaryProgramName(for: campaign),
-                            isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
+                            programs: programs(for: campaign)
                         )
                     }
                     .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets(top: 11, leading: 16, bottom: 11, trailing: 16))
+                    .listRowBackground(PoengjegerTheme.background)
+                    .accessibilityLabel(accessibilityLabel(for: campaign))
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 18)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(PoengjegerTheme.background)
-        .navigationTitle("Aktive kampanjer")
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            FeedControlHeader(
+                campaignCount: activeCampaignCount,
+                showsAllPrograms: showsAllPrograms || !hasSelectedPrograms,
+                isSearchVisible: isSearchVisible,
+                searchText: $searchText,
+                selectedSort: $selectedSort,
+                selectedCategoryID: $selectedCategoryID,
+                categories: categories,
+                hasSelectedPrograms: hasSelectedPrograms,
+                onToggleSearch: toggleSearch,
+                onOpenProgramFilter: { isProgramSheetPresented = true },
+                onToggleShowsAllPrograms: { showsAllPrograms.toggle() },
+                isSearchFocused: $isSearchFocused
+            )
+        }
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
         }
@@ -69,97 +108,415 @@ struct FeedView: View {
             await environment.refresh()
         }
         .overlay {
-            switch environment.loadState {
-            case .loading where campaigns.isEmpty:
-                ProgressView("Laster feed")
-            case let .failed(message) where campaigns.isEmpty:
+            if case let .failed(message) = environment.loadState, campaigns.isEmpty {
                 ContentUnavailableView(
                     "Kunne ikke hente kampanjer",
                     systemImage: "wifi.exclamationmark",
                     description: Text(message)
                 )
-            case _ where campaigns.isEmpty && selectedFilter != .all:
+            } else if !isLoadingInitialData && campaigns.isEmpty {
                 ContentUnavailableView(
-                    "Ingen treff",
-                    systemImage: "line.3.horizontal.decrease.circle",
-                    description: Text("Prøv et annet filter eller juster bonusprogrammene dine.")
+                    "Ingen kampanjer matcher filteret ditt akkurat nå.",
+                    systemImage: "line.3.horizontal.decrease.circle"
                 )
-            case _ where campaigns.isEmpty:
-                ContentUnavailableView(
-                    "Ingen kampanjer ennå",
-                    systemImage: "tag",
-                    description: Text("Velg bonusprogrammer for å se relevante kampanjer med frister, vilkår og kildegrunnlag.")
-                )
-            default:
-                EmptyView()
             }
+        }
+        .sheet(isPresented: $isProgramSheetPresented) {
+            ProgramFilterSheet(
+                programs: environment.programs,
+                selectedProgramIDs: $environment.userSession.selectedProgramIDs
+            )
         }
     }
 
-    private func primaryProgramName(for campaign: Campaign) -> String? {
-        guard let primaryProgramID = campaign.primaryProgramID else {
-            return nil
+    private var isLoadingInitialData: Bool {
+        if case .loading = environment.loadState {
+            return environment.campaigns.isEmpty
         }
 
-        return programNamesByID[primaryProgramID]
+        return false
+    }
+
+    private func toggleSearch() {
+        isSearchVisible.toggle()
+
+        if isSearchVisible {
+            isSearchFocused = true
+        } else {
+            searchText = ""
+            isSearchFocused = false
+        }
+    }
+
+    private func programs(for campaign: Campaign) -> [BonusProgram] {
+        campaign.linkedProgramIDs.compactMap { programsByID[$0] }
+    }
+
+    private func accessibilityLabel(for campaign: Campaign) -> String {
+        let expiry = FeedDateHelper.expiryLabel(campaign.endDate).text
+        let programNames = programs(for: campaign).map(\.name).joined(separator: ", ")
+        return "\(campaign.valueLabel). \(campaign.title). \(expiry). \(programNames)."
     }
 }
 
-private struct FeedHeader: View {
+private struct FeedControlHeader: View {
     let campaignCount: Int
-    let unfilteredCampaignCount: Int
-    let selectedFilter: FeedFilter
-    let selectedProgramCount: Int
+    let showsAllPrograms: Bool
+    let isSearchVisible: Bool
+    @Binding var searchText: String
+    @Binding var selectedSort: FeedSort
+    @Binding var selectedCategoryID: UUID?
+    let categories: [CampaignCategory]
+    let hasSelectedPrograms: Bool
+    let onToggleSearch: () -> Void
+    let onOpenProgramFilter: () -> Void
+    let onToggleShowsAllPrograms: () -> Void
+    let isSearchFocused: FocusState<Bool>.Binding
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Prioritert for deg")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Kampanjer")
+                        .font(.system(.largeTitle, design: .rounded).weight(.heavy))
+                        .foregroundStyle(.primary)
 
-                Spacer(minLength: 12)
+                    Text("\(campaignCount) aktive · \(showsAllPrograms ? "alle programmer" : "dine programmer")")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
-                Text("\(campaignCount)")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.accent)
-                    .accessibilityLabel("\(campaignCount) aktive kampanjer")
+                Spacer(minLength: 8)
+
+                Button(action: onToggleSearch) {
+                    Image(systemName: isSearchVisible ? "xmark" : "magnifyingglass")
+                        .frame(width: 38, height: 38)
+                }
+                .buttonStyle(.bordered)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .accessibilityLabel(isSearchVisible ? "Lukk søk" : "Søk")
+
+                Button(action: onOpenProgramFilter) {
+                    Image(systemName: "slider.horizontal.3")
+                        .frame(width: 38, height: 38)
+                }
+                .buttonStyle(.bordered)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .accessibilityLabel("Velg programmer")
             }
 
-            Text(headerSubtitle)
+            if isSearchVisible {
+                TextField("Søk i kampanjer", text: $searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textFieldStyle(.roundedBorder)
+                    .focused(isSearchFocused)
+                    .accessibilityLabel("Søk i kampanjer")
+            }
+
+            HStack(alignment: .center, spacing: 10) {
+                Picker("Sorter", selection: $selectedSort) {
+                    ForEach(FeedSort.allCases) { sort in
+                        Text(sort.title)
+                            .tag(sort)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityLabel("Sorter kampanjer")
+
+                Menu {
+                    Button {
+                        selectedCategoryID = nil
+                    } label: {
+                        if selectedCategoryID == nil {
+                            Label("Alle kategorier", systemImage: "checkmark")
+                        } else {
+                            Text("Alle kategorier")
+                        }
+                    }
+
+                    ForEach(categories) { category in
+                        Button {
+                            selectedCategoryID = category.id
+                        } label: {
+                            if selectedCategoryID == category.id {
+                                Label(category.name, systemImage: "checkmark")
+                            } else {
+                                Text(category.name)
+                            }
+                        }
+                    }
+                } label: {
+                    Label(selectedCategoryName, systemImage: "tag")
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 34)
+                        .background(categoryBackground)
+                        .foregroundStyle(categoryForeground)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .accessibilityLabel("Velg kategori")
+            }
+
+            if hasSelectedPrograms {
+                Button(showsAllPrograms ? "Vis bare mine programmer" : "Vis alle programmer") {
+                    onToggleShowsAllPrograms()
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(PoengjegerTheme.accent)
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 14)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
+    }
+
+    private var selectedCategoryName: String {
+        guard let selectedCategoryID,
+              let category = categories.first(where: { $0.id == selectedCategoryID })
+        else {
+            return "Kategori"
+        }
+
+        return category.name
+    }
+
+    private var categoryBackground: Color {
+        selectedCategoryID == nil ? PoengjegerTheme.surface : PoengjegerTheme.accent
+    }
+
+    private var categoryForeground: Color {
+        selectedCategoryID == nil ? Color.primary : Color.white
+    }
+}
+
+private struct FeedCampaignRow: View {
+    let campaign: Campaign
+    let programs: [BonusProgram]
+
+    private var expiry: ExpiryDisplay {
+        FeedDateHelper.expiryLabel(campaign.endDate)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(campaign.valueLabel)
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+
+                Spacer(minLength: 8)
+
+                Text(expiry.text.uppercased())
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(expiry.urgent ? PoengjegerTheme.warning : .secondary)
+                    .multilineTextAlignment(.trailing)
+                    .lineLimit(2)
+                    .accessibilityLabel(expiry.text)
+            }
+
+            Text(campaign.title)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if !programs.isEmpty {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) {
+                        programTags
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        programTags
+                    }
+                }
+            }
         }
-        .padding(.top, 2)
-        .accessibilityElement(children: .combine)
+        .contentShape(Rectangle())
+        .padding(.vertical, 2)
     }
 
-    private var headerSubtitle: String {
-        if selectedProgramCount == 0 {
-            return "Velg bonusprogrammer for å gjøre feeden personlig."
+    @ViewBuilder
+    private var programTags: some View {
+        ForEach(programs) { program in
+            ProgramTag(program: program)
         }
-
-        if selectedFilter != .all {
-            return "\(campaignCount) av \(unfilteredCampaignCount) relevante kampanjer vises med filteret \(selectedFilter.title.lowercased())."
-        }
-
-        return "Aktive kampanjer fra \(selectedProgramCount) valgte bonusprogram\(selectedProgramCount == 1 ? "" : "mer"), sortert etter redaksjonell vurdering."
     }
 }
 
-private struct FeedFilterPicker: View {
-    @Binding var selectedFilter: FeedFilter
+private struct ProgramTag: View {
+    let program: BonusProgram
 
     var body: some View {
-        Picker("Filter", selection: $selectedFilter) {
-            ForEach(FeedFilter.allCases) { filter in
-                Text(filter.title)
-                    .tag(filter)
+        HStack(spacing: 5) {
+            Circle()
+                .fill(program.feedColor)
+                .frame(width: 7, height: 7)
+                .accessibilityHidden(true)
+
+            Text(program.shortDisplayName.uppercased())
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(program.feedColor)
+                .lineLimit(1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct FeedPlaceholderRow: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("15 % bonus")
+                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                Spacer()
+                Text("3 DAGER IGJEN")
+                    .font(.caption2.weight(.bold))
+            }
+
+            Text("Kampanjetittel med kort forklaring")
+                .font(.subheadline)
+
+            HStack {
+                ProgramTag(program: SampleData.trumf)
+                ProgramTag(program: SampleData.euroBonus)
             }
         }
-        .pickerStyle(.segmented)
-        .accessibilityLabel("Filtrer kampanjer")
+        .padding(.vertical, 2)
+        .listRowInsets(EdgeInsets(top: 11, leading: 16, bottom: 11, trailing: 16))
+        .listRowBackground(PoengjegerTheme.background)
+    }
+}
+
+private struct ProgramFilterSheet: View {
+    let programs: [BonusProgram]
+    @Binding var selectedProgramIDs: Set<UUID>
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button("Velg alle") {
+                        selectedProgramIDs = Set(programs.map(\.id))
+                    }
+
+                    Button("Tøm valg", role: .destructive) {
+                        selectedProgramIDs.removeAll()
+                    }
+                    .disabled(selectedProgramIDs.isEmpty)
+                }
+
+                Section("Programmer") {
+                    ForEach(programs) { program in
+                        Button {
+                            toggle(program.id)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: selectedProgramIDs.contains(program.id) ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(selectedProgramIDs.contains(program.id) ? PoengjegerTheme.accent : .secondary)
+                                    .accessibilityHidden(true)
+
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(program.name)
+                                        .foregroundStyle(.primary)
+                                    Text(program.issuerName)
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+                            }
+                        }
+                        .accessibilityLabel(program.name)
+                        .accessibilityValue(selectedProgramIDs.contains(program.id) ? "Valgt" : "Ikke valgt")
+                    }
+                }
+            }
+            .navigationTitle("Dine programmer")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Ferdig") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func toggle(_ programID: UUID) {
+        if selectedProgramIDs.contains(programID) {
+            selectedProgramIDs.remove(programID)
+        } else {
+            selectedProgramIDs.insert(programID)
+        }
+    }
+}
+
+private extension Campaign {
+    var valueLabel: String {
+        if let estimatedValueText = editorialAssessment?.estimatedValueText?.lowercased() {
+            if estimatedValueText.contains("høy verdi") || estimatedValueText.contains("svært god") {
+                return "Høy verdi"
+            }
+
+            if estimatedValueText.contains("moderat") || estimatedValueText.contains("middels") {
+                return "Moderat verdi"
+            }
+
+            if estimatedValueText.contains("lav") || estimatedValueText.contains("svak") {
+                return "Lav verdi"
+            }
+        }
+
+        if let editorialScore {
+            switch editorialScore {
+            case 80...:
+                return "Høy verdi"
+            case 55..<80:
+                return "Moderat verdi"
+            default:
+                return "Tilbud"
+            }
+        }
+
+        return editorialTierLabel == "Uten vurdering" ? "Tilbud" : editorialTierLabel
+    }
+}
+
+private extension BonusProgram {
+    var shortDisplayName: String {
+        switch slug {
+        case "sas-eurobonus":
+            return "SAS"
+        case "norwegian-reward":
+            return "Norwegian"
+        default:
+            return name
+        }
+    }
+
+    var feedColor: Color {
+        switch slug {
+        case "sas-eurobonus":
+            return Color(red: 0.08, green: 0.28, blue: 0.62)
+        case "trumf":
+            return Color(red: 0.10, green: 0.48, blue: 0.28)
+        case "spenn":
+            return Color(red: 0.62, green: 0.30, blue: 0.76)
+        default:
+            return PoengjegerTheme.accent
+        }
     }
 }
 

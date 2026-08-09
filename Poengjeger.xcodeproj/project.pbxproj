@@ -32,6 +32,7 @@
 		023 /* UserSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127 /* UserSessionStore.swift */; };
 		024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128 /* Assets.xcassets */; };
 		025 /* CampaignCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129 /* CampaignCardView.swift */; };
+		026 /* FeedPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130 /* FeedPresentation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,6 +76,7 @@
 		127 /* UserSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSessionStore.swift; sourceTree = "<group>"; };
 		128 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		129 /* CampaignCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignCardView.swift; sourceTree = "<group>"; };
+		130 /* FeedPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPresentation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,6 +218,7 @@
 			isa = PBXGroup;
 			children = (
 				113 /* FeedView.swift */,
+				130 /* FeedPresentation.swift */,
 			);
 			path = Feed;
 			sourceTree = "<group>";
@@ -451,6 +454,7 @@
 				022 /* AdminQueueView.swift in Sources */,
 				023 /* UserSessionStore.swift in Sources */,
 				025 /* CampaignCardView.swift in Sources */,
+				026 /* FeedPresentation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
