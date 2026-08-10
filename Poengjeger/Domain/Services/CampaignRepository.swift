@@ -2,6 +2,7 @@ import Foundation
 
 struct CampaignBootstrapData: Sendable {
     let programs: [BonusProgram]
+    let programGuides: [ProgramGuide]
     let campaigns: [Campaign]
     let dataSource: CampaignDataSource
 }

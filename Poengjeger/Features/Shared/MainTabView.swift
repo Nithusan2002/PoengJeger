@@ -7,21 +7,28 @@ struct MainTabView: View {
                 FeedView()
             }
             .tabItem {
-                Label("Feed", systemImage: "list.bullet.rectangle")
+                Label("Kampanjer", systemImage: "safari")
+            }
+
+            NavigationStack {
+                LearnView()
+            }
+            .tabItem {
+                Label("Lær", systemImage: "graduationcap")
             }
 
             NavigationStack {
                 FavoritesView()
             }
             .tabItem {
-                Label("Favoritter", systemImage: "star")
+                Label("Lagret", systemImage: "bookmark")
             }
 
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
-                Label("Innstillinger", systemImage: "gearshape")
+                Label("Profil", systemImage: "person")
             }
         }
         .tint(PoengjegerTheme.accent)

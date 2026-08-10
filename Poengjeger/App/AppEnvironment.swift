@@ -21,6 +21,7 @@ final class AppEnvironment {
         }
     }
     var programs: [BonusProgram] = []
+    var programGuides: [ProgramGuide] = []
     var campaigns: [Campaign] = []
     var loadState: LoadState = .idle
     var dataSource: CampaignDataSource?
@@ -86,6 +87,7 @@ final class AppEnvironment {
             let repository = campaignRepository
             let bootstrapData = try await repository.fetchBootstrapData()
             programs = bootstrapData.programs
+            programGuides = bootstrapData.programGuides
             campaigns = bootstrapData.campaigns
             dataSource = bootstrapData.dataSource
             userSession.selectedProgramIDs.formIntersection(Set(programs.map(\.id)))
@@ -98,6 +100,10 @@ final class AppEnvironment {
 
     var favoriteCampaigns: [Campaign] {
         campaigns.filter { userSession.favoriteCampaignIDs.contains($0.id) }
+    }
+
+    func programGuide(for program: BonusProgram) -> ProgramGuide? {
+        programGuides.first { $0.programID == program.id && $0.status == .published }
     }
 
     func loadAdminQueueIfNeeded() async {

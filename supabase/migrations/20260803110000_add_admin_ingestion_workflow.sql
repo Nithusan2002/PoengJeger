@@ -22,17 +22,16 @@ join public.source_registry sr on sr.id = ic.source_registry_id
 join public.campaign_sources cs on cs.id = sr.campaign_source_id
 left join public.bonus_programs bp on bp.id = ic.suggested_program_id
 left join public.campaign_categories cc on cc.id = ic.suggested_category_id;
-
 alter table public.ingestion_candidates
 drop constraint if exists ingestion_candidates_review_pair;
-
+alter table public.ingestion_candidates
+drop constraint if exists ingestion_candidates_review_state;
 alter table public.ingestion_candidates
 add constraint ingestion_candidates_review_state check (
   (status = 'new' and reviewed_at is null and promoted_campaign_id is null)
   or (status in ('needs_review', 'approved', 'rejected') and reviewed_at is not null and promoted_campaign_id is null)
   or (status = 'promoted' and reviewed_at is not null and promoted_campaign_id is not null)
 );
-
 create or replace function public.set_ingestion_candidate_status(
   p_candidate_id uuid,
   p_status text,
@@ -72,7 +71,6 @@ begin
   return updated_candidate;
 end;
 $$;
-
 create or replace function public.promote_ingestion_candidate_to_campaign(
   p_candidate_id uuid,
   p_primary_program_id uuid default null,

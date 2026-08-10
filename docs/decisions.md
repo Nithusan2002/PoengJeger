@@ -89,3 +89,9 @@
 - Bakgrunn: Produktbriefen sier at brukeren skal forstå de viktigste relevante kampanjene på under ett minutt. En kortbasert feed bruker mye skjermplass per kampanje og gjør det vanskeligere å sammenligne verdi, frist og program raskt.
 - Beslutning: Hovedfeeden bygges som en tett, plain SwiftUI-liste der verdi-labelen er radens visuelle anker. Headeren samler søk, sortering, kategori og programvalg, mens radene viser verdi, utløpsstatus, tittel og programmerker uten kortbakgrunn. Utløpte og fremtidige kampanjer skjules fra feeden.
 - Konsekvens: Feedopplevelsen blir mer effektiv for gjentatt bruk og bedre tilpasset Poengjegers verdiforslag om tidsbesparelse. Det krever tydeligere datamodell for kort `value_label` og programfarger senere; inntil feltene finnes, bruker klienten redaksjonell score/vurdering og lokale programfarge-fallbacks.
+
+## ADR-016: Programguider legges under en enkel Lær-inngang, ikke som generisk utforskflate
+- Status: Vedtatt
+- Bakgrunn: Læringsinnhold kan gi verdi mellom kampanjer og forklare programstrategier, men en generisk utforsk- eller bloggflate kan stjele fokus fra kjerneløkken med å finne, forstå og lagre relevante kampanjer.
+- Beslutning: Første versjon bygges som en enkel `Lær`-fane med programindeks og programsider per bonusprogram. Programsiden viser intro, redaksjonell strategi, verdi-/utløpskort, opptjening, bruk, vanlige feller og aktive kampanjer for programmet. Innganger kommer også fra kampanjedetalj og programinnstillinger.
+- Konsekvens: Læringsinnholdet støtter feeden i stedet for å bli en blogg- eller nyhetsseksjon. Første versjon bruker forsiktig, redaksjonell veiledning uten harde poengverdianslag med mindre de er eksplisitt kontrollert. Innholdet lagres i `program_guides` med RLS, publiseringsstatus, redigerbare displayfelter og `last_reviewed_at`; senere kan samme innhold brukes av web-landingssider dersom SEO blir prioritert.

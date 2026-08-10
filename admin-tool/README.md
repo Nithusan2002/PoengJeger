@@ -54,6 +54,7 @@ select public.grant_editorial_role(
 - redigerer draft-felt, krav og primærkilde
 - foreslår redaksjonell vurdering via Edge Function uten å lagre automatisk
 - lagrer eller publiserer kampanjer uten SQL Editor
+- vedlikeholder `program_guides` per bonusprogram med Lær-intro, verdi-/utløpskort, tipsseksjoner, draft/published/archived-status og redaksjonelt kontrolltidspunkt
 
 ## AI-forslag
 
@@ -78,5 +79,6 @@ server/cron-kjøring, men legges ikke i adminverktøyet eller browseren.
 - refresh-token-flyt
 - full sessionsikkerhet for produksjonsdrift
 - full redigering av multi-program-kampanjer og redaksjonelle vurderingstabeller
+- avansert revisjonshistorikk eller flertrinnsgodkjenning for programguider
 
 Denne flaten er ment som første operative interne MVP, ikke ferdig produksjonsverktøy.

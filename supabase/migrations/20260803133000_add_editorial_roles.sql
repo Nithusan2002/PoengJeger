@@ -12,16 +12,13 @@ create table if not exists public.editorial_user_roles (
     revoked_at is null or revoked_at >= granted_at
   )
 );
-
 create index if not exists editorial_user_roles_role_active_idx
   on public.editorial_user_roles (role, user_id)
   where revoked_at is null;
-
 drop trigger if exists set_editorial_user_roles_updated_at on public.editorial_user_roles;
 create trigger set_editorial_user_roles_updated_at
 before update on public.editorial_user_roles
 for each row execute function public.set_updated_at();
-
 create or replace function public.current_editorial_role()
 returns text
 language plpgsql
@@ -50,7 +47,6 @@ begin
   return auth.jwt() -> 'app_metadata' ->> 'poengjeger_role';
 end;
 $$;
-
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -58,7 +54,6 @@ stable
 as $$
   select coalesce(public.current_editorial_role() in ('admin', 'editor'), false);
 $$;
-
 create or replace function public.grant_editorial_role(
   p_user_id uuid,
   p_role text,
@@ -110,7 +105,6 @@ begin
   return role_record;
 end;
 $$;
-
 create or replace function public.revoke_editorial_role(
   p_user_id uuid,
   p_revoke_note text default null
@@ -147,14 +141,13 @@ begin
   return role_record;
 end;
 $$;
-
 alter table public.editorial_user_roles enable row level security;
-
+drop policy if exists "admins read editorial roles" on public.editorial_user_roles;
 create policy "admins read editorial roles"
 on public.editorial_user_roles
 for select
 using (public.is_admin());
-
+drop policy if exists "admins manage editorial roles" on public.editorial_user_roles;
 create policy "admins manage editorial roles"
 on public.editorial_user_roles
 for all

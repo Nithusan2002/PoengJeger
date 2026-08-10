@@ -15,7 +15,6 @@
 		006 /* Campaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106 /* Campaign.swift */; };
 		007 /* UserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107 /* UserSession.swift */; };
 		008 /* CampaignRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 108 /* CampaignRepository.swift */; };
-		009 /* FeedUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109 /* FeedUseCase.swift */; };
 		010 /* MockCampaignRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110 /* MockCampaignRepository.swift */; };
 		011 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111 /* MainTabView.swift */; };
 		012 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 112 /* OnboardingView.swift */; };
@@ -23,7 +22,7 @@
 		014 /* CampaignDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114 /* CampaignDetailView.swift */; };
 		015 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 115 /* FavoritesView.swift */; };
 		016 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116 /* SettingsView.swift */; };
-		017 /* FeedUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* FeedUseCaseTests.swift */; };
+		017 /* ScannableFeedUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117 /* ScannableFeedUseCaseTests.swift */; };
 		018 /* SupabaseCampaignRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 119 /* SupabaseCampaignRepository.swift */; };
 		019 /* IngestionCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123 /* IngestionCandidate.swift */; };
 		020 /* AdminRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124 /* AdminRepository.swift */; };
@@ -33,6 +32,9 @@
 		024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 128 /* Assets.xcassets */; };
 		025 /* CampaignCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 129 /* CampaignCardView.swift */; };
 		026 /* FeedPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130 /* FeedPresentation.swift */; };
+		027 /* ProgramDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131 /* ProgramDetailView.swift */; };
+		028 /* ProgramGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132 /* ProgramGuide.swift */; };
+		029 /* LearnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133 /* LearnView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,7 +57,6 @@
 		106 /* Campaign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Campaign.swift; sourceTree = "<group>"; };
 		107 /* UserSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSession.swift; sourceTree = "<group>"; };
 		108 /* CampaignRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignRepository.swift; sourceTree = "<group>"; };
-		109 /* FeedUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedUseCase.swift; sourceTree = "<group>"; };
 		110 /* MockCampaignRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockCampaignRepository.swift; sourceTree = "<group>"; };
 		111 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		112 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -63,7 +64,7 @@
 		114 /* CampaignDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignDetailView.swift; sourceTree = "<group>"; };
 		115 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		116 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		117 /* FeedUseCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedUseCaseTests.swift; sourceTree = "<group>"; };
+		117 /* ScannableFeedUseCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannableFeedUseCaseTests.swift; sourceTree = "<group>"; };
 		118 /* PoengjegerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PoengjegerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		119 /* SupabaseCampaignRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseCampaignRepository.swift; sourceTree = "<group>"; };
 		120 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -77,6 +78,9 @@
 		128 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		129 /* CampaignCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignCardView.swift; sourceTree = "<group>"; };
 		130 /* FeedPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPresentation.swift; sourceTree = "<group>"; };
+		131 /* ProgramDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailView.swift; sourceTree = "<group>"; };
+		132 /* ProgramGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramGuide.swift; sourceTree = "<group>"; };
+		133 /* LearnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,6 +189,7 @@
 				106 /* Campaign.swift */,
 				107 /* UserSession.swift */,
 				123 /* IngestionCandidate.swift */,
+				132 /* ProgramGuide.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -193,7 +198,6 @@
 			isa = PBXGroup;
 			children = (
 				616 /* Services */,
-				617 /* UseCases */,
 			);
 			sourceTree = "<group>";
 		};
@@ -227,6 +231,7 @@
 			isa = PBXGroup;
 			children = (
 				618 /* CampaignDetail */,
+				624 /* Programs */,
 				619 /* Favorites */,
 				621 /* Admin */,
 			);
@@ -257,14 +262,6 @@
 				124 /* AdminRepository.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		617 /* UseCases */ = {
-			isa = PBXGroup;
-			children = (
-				109 /* FeedUseCase.swift */,
-			);
-			path = UseCases;
 			sourceTree = "<group>";
 		};
 		618 /* CampaignDetail */ = {
@@ -316,6 +313,15 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		624 /* Programs */ = {
+			isa = PBXGroup;
+			children = (
+				133 /* LearnView.swift */,
+				131 /* ProgramDetailView.swift */,
+			);
+			path = Programs;
+			sourceTree = "<group>";
+		};
 		700 /* PoengjegerTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -327,7 +333,7 @@
 		701 = {
 			isa = PBXGroup;
 			children = (
-				117 /* FeedUseCaseTests.swift */,
+				117 /* ScannableFeedUseCaseTests.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -441,7 +447,6 @@
 				019 /* IngestionCandidate.swift in Sources */,
 				008 /* CampaignRepository.swift in Sources */,
 				020 /* AdminRepository.swift in Sources */,
-				009 /* FeedUseCase.swift in Sources */,
 				010 /* MockCampaignRepository.swift in Sources */,
 				021 /* MockAdminRepository.swift in Sources */,
 				011 /* MainTabView.swift in Sources */,
@@ -455,6 +460,9 @@
 				023 /* UserSessionStore.swift in Sources */,
 				025 /* CampaignCardView.swift in Sources */,
 				026 /* FeedPresentation.swift in Sources */,
+				027 /* ProgramDetailView.swift in Sources */,
+				028 /* ProgramGuide.swift in Sources */,
+				029 /* LearnView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -462,7 +470,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				017 /* FeedUseCaseTests.swift in Sources */,
+				017 /* ScannableFeedUseCaseTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

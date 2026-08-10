@@ -2,136 +2,7 @@ import Foundation
 import Testing
 @testable import Poengjeger
 
-struct FeedUseCaseTests {
-    @Test
-    func feedOnlyIncludesCampaignsForSelectedPrograms() {
-        let selectedProgramIDs = [SampleData.trumf.id]
-        let campaigns = FeedUseCase().makeFeed(
-            campaigns: SampleData.campaigns,
-            selectedProgramIDs: Set(selectedProgramIDs)
-        )
-
-        #expect(campaigns.count == 1)
-        #expect(campaigns.first?.primaryProgramID == SampleData.trumf.id)
-    }
-
-    @Test
-    func feedSortsByEditorialScoreDescending() {
-        let selectedProgramIDs = Set(SampleData.programs.map(\.id))
-        let campaigns = FeedUseCase().makeFeed(
-            campaigns: SampleData.campaigns,
-            selectedProgramIDs: selectedProgramIDs
-        )
-
-        #expect(campaigns.map(\.editorialScore) == [82, 76, 71])
-    }
-
-    @Test
-    func feedSortsCampaignsWithoutScoreAfterScoredCampaignsByVerificationDate() {
-        let programID = SampleData.trumf.id
-        let recentUnscoredCampaign = makeCampaign(
-            title: "Ny uten score",
-            editorialScore: nil,
-            lastVerifiedAt: Date(timeIntervalSince1970: 300),
-            linkedProgramIDs: [programID]
-        )
-        let olderScoredCampaign = makeCampaign(
-            title: "Eldre med score",
-            editorialScore: 10,
-            lastVerifiedAt: Date(timeIntervalSince1970: 100),
-            linkedProgramIDs: [programID]
-        )
-        let olderUnscoredCampaign = makeCampaign(
-            title: "Eldre uten score",
-            editorialScore: nil,
-            lastVerifiedAt: Date(timeIntervalSince1970: 200),
-            linkedProgramIDs: [programID]
-        )
-
-        let campaigns = FeedUseCase().makeFeed(
-            campaigns: [recentUnscoredCampaign, olderUnscoredCampaign, olderScoredCampaign],
-            selectedProgramIDs: [programID]
-        )
-
-        #expect(campaigns.map(\.title) == ["Eldre med score", "Ny uten score", "Eldre uten score"])
-    }
-
-    @Test
-    func feedCanFilterCampaignsExpiringSoon() {
-        let programID = SampleData.trumf.id
-        let referenceDate = Date(timeIntervalSince1970: 1_000)
-        let expiringSoon = makeCampaign(
-            title: "Utløper snart",
-            endDate: Date(timeIntervalSince1970: 1_000 + 86_400 * 3),
-            linkedProgramIDs: [programID]
-        )
-        let expiringLater = makeCampaign(
-            title: "Utløper senere",
-            endDate: Date(timeIntervalSince1970: 1_000 + 86_400 * 10),
-            linkedProgramIDs: [programID]
-        )
-        let withoutEndDate = makeCampaign(
-            title: "Uten frist",
-            endDate: nil,
-            linkedProgramIDs: [programID]
-        )
-
-        let campaigns = FeedUseCase().makeFeed(
-            campaigns: [expiringLater, withoutEndDate, expiringSoon],
-            selectedProgramIDs: [programID],
-            filter: .expiringSoon,
-            referenceDate: referenceDate
-        )
-
-        #expect(campaigns.map(\.title) == ["Utløper snart"])
-    }
-
-    @Test
-    func feedCanFilterHighScoreCampaigns() {
-        let programID = SampleData.trumf.id
-        let highScore = makeCampaign(
-            title: "Høy score",
-            editorialScore: 75,
-            linkedProgramIDs: [programID]
-        )
-        let lowerScore = makeCampaign(
-            title: "Lavere score",
-            editorialScore: 74,
-            linkedProgramIDs: [programID]
-        )
-
-        let campaigns = FeedUseCase().makeFeed(
-            campaigns: [lowerScore, highScore],
-            selectedProgramIDs: [programID],
-            filter: .highScore
-        )
-
-        #expect(campaigns.map(\.title) == ["Høy score"])
-    }
-
-    @Test
-    func feedCanFilterLowFrictionCampaigns() {
-        let programID = SampleData.trumf.id
-        let lowFriction = makeCampaign(
-            title: "Lav friksjon",
-            difficultyLevel: .low,
-            linkedProgramIDs: [programID]
-        )
-        let mediumFriction = makeCampaign(
-            title: "Middels friksjon",
-            difficultyLevel: .medium,
-            linkedProgramIDs: [programID]
-        )
-
-        let campaigns = FeedUseCase().makeFeed(
-            campaigns: [mediumFriction, lowFriction],
-            selectedProgramIDs: [programID],
-            filter: .lowFriction
-        )
-
-        #expect(campaigns.map(\.title) == ["Lav friksjon"])
-    }
-
+struct ScannableFeedUseCaseTests {
     @Test
     func displaySummaryPrefersEditorialSummaryWhenPresent() {
         let campaign = makeCampaign(
@@ -189,7 +60,7 @@ struct FeedUseCaseTests {
     }
 
     @Test
-    func scannableFeedHidesExpiredCampaignsAndFiltersSelectedPrograms() {
+    func scannableFeedHidesInactiveUnpublishedAndUnselectedCampaigns() {
         let referenceDate = Date(timeIntervalSince1970: 10_000)
         let activeSelected = makeCampaign(
             title: "Aktiv valgt",
@@ -212,9 +83,15 @@ struct FeedUseCaseTests {
             endDate: Date(timeIntervalSince1970: 10_000 + 86_400),
             linkedProgramIDs: [SampleData.euroBonus.id]
         )
+        let draftSelected = makeCampaign(
+            title: "Draft valgt",
+            status: .draft,
+            endDate: Date(timeIntervalSince1970: 10_000 + 86_400),
+            linkedProgramIDs: [SampleData.trumf.id]
+        )
 
         let campaigns = ScannableFeedUseCase().makeFeed(
-            campaigns: [activeOther, futureSelected, expiredSelected, activeSelected],
+            campaigns: [activeOther, draftSelected, futureSelected, expiredSelected, activeSelected],
             selectedProgramIDs: [SampleData.trumf.id],
             showsAllPrograms: false,
             selectedCategoryID: nil,
@@ -259,6 +136,44 @@ struct FeedUseCaseTests {
         )
 
         #expect(campaigns.map(\.title) == ["EuroBonus kaffe", "Trumf kaffe"])
+    }
+
+    @Test
+    func scannableFeedFiltersByEditorialSearchTextAndCategory() {
+        let selectedCategory = SampleData.groceryCategory
+        let matchingCampaign = makeCampaign(
+            title: "Dagligvarebonus",
+            summary: "Vanlig sammendrag",
+            editorialSummary: "Ekstra trumf paa helgehandel",
+            category: selectedCategory,
+            linkedProgramIDs: [SampleData.trumf.id]
+        )
+        let noSearchMatch = makeCampaign(
+            title: "Dagligvarebonus uten treff",
+            summary: "Vanlig sammendrag",
+            editorialSummary: "Ordinart tilbud",
+            category: selectedCategory,
+            linkedProgramIDs: [SampleData.trumf.id]
+        )
+        let wrongCategory = makeCampaign(
+            title: "Helgehandel med kort",
+            summary: "Ekstra trumf",
+            editorialSummary: "Ekstra trumf paa helgehandel",
+            category: SampleData.cardCategory,
+            linkedProgramIDs: [SampleData.trumf.id]
+        )
+
+        let campaigns = ScannableFeedUseCase().makeFeed(
+            campaigns: [wrongCategory, noSearchMatch, matchingCampaign],
+            selectedProgramIDs: [SampleData.trumf.id],
+            showsAllPrograms: false,
+            selectedCategoryID: selectedCategory.id,
+            searchText: "helgehandel",
+            sort: .alphabetic,
+            referenceDate: Date(timeIntervalSince1970: 10_000)
+        )
+
+        #expect(campaigns.map(\.title) == ["Dagligvarebonus"])
     }
 
     @Test
@@ -317,11 +232,44 @@ struct FeedUseCaseTests {
         )
     }
 
+    @Test
+    func scannableFeedUsesEditorialScoreAsExpiryTieBreaker() {
+        let referenceDate = Date(timeIntervalSince1970: 10_000)
+        let lowerScore = makeCampaign(
+            title: "Lavere score",
+            editorialScore: 40,
+            endDate: Date(timeIntervalSince1970: 10_000 + 86_400)
+        )
+        let higherScore = makeCampaign(
+            title: "Hoyere score",
+            editorialScore: 80,
+            endDate: Date(timeIntervalSince1970: 10_000 + 86_400)
+        )
+        let unscored = makeCampaign(
+            title: "Uten score",
+            editorialScore: nil,
+            endDate: Date(timeIntervalSince1970: 10_000 + 86_400)
+        )
+
+        let campaigns = ScannableFeedUseCase().makeFeed(
+            campaigns: [lowerScore, unscored, higherScore],
+            selectedProgramIDs: [SampleData.trumf.id],
+            showsAllPrograms: false,
+            selectedCategoryID: nil,
+            searchText: "",
+            sort: .expiringFirst,
+            referenceDate: referenceDate
+        )
+
+        #expect(campaigns.map(\.title) == ["Hoyere score", "Lavere score", "Uten score"])
+    }
+
     private func makeCampaign(
         title: String = "Testkampanje",
         summary: String = "Sammendrag",
         editorialScore: Int? = 50,
         editorialSummary: String = "",
+        status: Campaign.Status = .published,
         startDate: Date? = nil,
         endDate: Date? = nil,
         lastVerifiedAt: Date = Date(timeIntervalSince1970: 100),
@@ -335,7 +283,7 @@ struct FeedUseCaseTests {
             title: title,
             summary: summary,
             details: "Detaljer",
-            status: .published,
+            status: status,
             startDate: startDate,
             endDate: endDate,
             lastVerifiedAt: lastVerifiedAt,

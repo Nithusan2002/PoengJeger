@@ -14,7 +14,6 @@ create table if not exists public.source_registry (
   ),
   constraint source_registry_poll_interval_positive check (poll_interval_minutes > 0)
 );
-
 create table if not exists public.ingestion_runs (
   id uuid primary key default gen_random_uuid(),
   source_registry_id uuid not null references public.source_registry (id) on delete cascade,
@@ -32,7 +31,6 @@ create table if not exists public.ingestion_runs (
     finished_at is null or finished_at >= started_at
   )
 );
-
 create table if not exists public.ingestion_candidates (
   id uuid primary key default gen_random_uuid(),
   source_registry_id uuid not null references public.source_registry (id) on delete cascade,
@@ -60,50 +58,42 @@ create table if not exists public.ingestion_candidates (
     or (reviewed_by is not null and reviewed_at is not null)
   )
 );
-
 create index if not exists source_registry_active_idx
   on public.source_registry (is_active, poll_interval_minutes);
-
 create index if not exists ingestion_runs_source_started_idx
   on public.ingestion_runs (source_registry_id, started_at desc);
-
 create index if not exists ingestion_candidates_status_detected_idx
   on public.ingestion_candidates (status, detected_at desc);
-
 create index if not exists ingestion_candidates_promoted_campaign_idx
   on public.ingestion_candidates (promoted_campaign_id)
   where promoted_campaign_id is not null;
-
 create unique index if not exists ingestion_candidates_source_hash_idx
   on public.ingestion_candidates (source_registry_id, normalized_hash)
   where normalized_hash is not null;
-
 drop trigger if exists set_source_registry_updated_at on public.source_registry;
 create trigger set_source_registry_updated_at
 before update on public.source_registry
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_ingestion_candidates_updated_at on public.ingestion_candidates;
 create trigger set_ingestion_candidates_updated_at
 before update on public.ingestion_candidates
 for each row execute function public.set_updated_at();
-
 alter table public.source_registry enable row level security;
 alter table public.ingestion_runs enable row level security;
 alter table public.ingestion_candidates enable row level security;
-
+drop policy if exists "admins manage source registry" on public.source_registry;
 create policy "admins manage source registry"
 on public.source_registry
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "admins manage ingestion runs" on public.ingestion_runs;
 create policy "admins manage ingestion runs"
 on public.ingestion_runs
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "admins manage ingestion candidates" on public.ingestion_candidates;
 create policy "admins manage ingestion candidates"
 on public.ingestion_candidates
 for all

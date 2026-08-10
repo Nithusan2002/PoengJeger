@@ -35,6 +35,7 @@ struct FallbackCampaignRepository: CampaignRepository {
             let fallbackData = try await fallback.fetchBootstrapData()
             return CampaignBootstrapData(
                 programs: fallbackData.programs,
+                programGuides: fallbackData.programGuides,
                 campaigns: fallbackData.campaigns,
                 dataSource: .mock(reason: error.localizedDescription)
             )
@@ -53,10 +54,12 @@ struct SupabaseCampaignRepository: CampaignRepository {
 
     func fetchBootstrapData() async throws -> CampaignBootstrapData {
         async let programs = fetchPrograms()
+        async let programGuides = fetchProgramGuides()
         async let campaigns = fetchCampaigns()
 
         return try await CampaignBootstrapData(
             programs: programs,
+            programGuides: programGuides,
             campaigns: campaigns,
             dataSource: .supabase
         )
@@ -71,6 +74,17 @@ struct SupabaseCampaignRepository: CampaignRepository {
 
         let response: [BonusProgramDTO] = try await request(path: "bonus_programs", queryItems: queryItems)
         return response.map(\.domainModel)
+    }
+
+    private func fetchProgramGuides() async throws -> [ProgramGuide] {
+        let queryItems = [
+            URLQueryItem(name: "select", value: "id,program_id,status,intro_text,strategy,value_estimate_label,value_estimate_detail,expiration_summary,expiration_detail,earning_tips,redemption_tips,risk_notes,last_reviewed_at"),
+            URLQueryItem(name: "status", value: "eq.published"),
+            URLQueryItem(name: "order", value: "last_reviewed_at.desc.nullslast")
+        ]
+
+        let response: [ProgramGuideDTO] = try await request(path: "program_guides", queryItems: queryItems)
+        return response.compactMap(\.domainModel)
     }
 
     private func fetchCampaigns() async throws -> [Campaign] {
@@ -176,6 +190,60 @@ private struct BonusProgramDTO: Decodable {
             issuerName: issuerName,
             countryCode: countryCode,
             isActive: isActive
+        )
+    }
+}
+
+private struct ProgramGuideDTO: Decodable {
+    let id: UUID
+    let programID: UUID
+    let status: String
+    let introText: String?
+    let strategy: String
+    let valueEstimateLabel: String?
+    let valueEstimateDetail: String?
+    let expirationSummary: String?
+    let expirationDetail: String?
+    let earningTips: [String]
+    let redemptionTips: [String]
+    let riskNotes: [String]
+    let lastReviewedAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case programID = "program_id"
+        case status
+        case introText = "intro_text"
+        case strategy
+        case valueEstimateLabel = "value_estimate_label"
+        case valueEstimateDetail = "value_estimate_detail"
+        case expirationSummary = "expiration_summary"
+        case expirationDetail = "expiration_detail"
+        case earningTips = "earning_tips"
+        case redemptionTips = "redemption_tips"
+        case riskNotes = "risk_notes"
+        case lastReviewedAt = "last_reviewed_at"
+    }
+
+    var domainModel: ProgramGuide? {
+        guard let guideStatus = ProgramGuide.Status(rawValue: status) else {
+            return nil
+        }
+
+        return ProgramGuide(
+            id: id,
+            programID: programID,
+            status: guideStatus,
+            introText: introText,
+            strategy: strategy,
+            valueEstimateLabel: valueEstimateLabel,
+            valueEstimateDetail: valueEstimateDetail,
+            expirationSummary: expirationSummary,
+            expirationDetail: expirationDetail,
+            earningTips: earningTips,
+            redemptionTips: redemptionTips,
+            riskNotes: riskNotes,
+            lastReviewedAt: lastReviewedAt
         )
     }
 }

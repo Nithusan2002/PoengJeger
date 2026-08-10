@@ -2,19 +2,23 @@ import Foundation
 
 struct MockCampaignRepository: CampaignRepository {
     private let programs: [BonusProgram]
+    private let programGuides: [ProgramGuide]
     private let campaigns: [Campaign]
 
     init(
         programs: [BonusProgram] = SampleData.programs,
+        programGuides: [ProgramGuide] = SampleData.programGuides,
         campaigns: [Campaign] = SampleData.campaigns
     ) {
         self.programs = programs
+        self.programGuides = programGuides
         self.campaigns = campaigns
     }
 
     func fetchBootstrapData() async throws -> CampaignBootstrapData {
         CampaignBootstrapData(
             programs: programs.filter(\.isActive).sorted { $0.name < $1.name },
+            programGuides: programGuides.filter { $0.status == .published },
             campaigns: campaigns.filter(\.isActive),
             dataSource: .mock(reason: nil)
         )
@@ -46,10 +50,94 @@ enum SampleData {
         name: "Spenn",
         issuerName: "Spenn",
         countryCode: "NO",
-        isActive: true
+        isActive: false
     )
 
     static let programs: [BonusProgram] = [euroBonus, spann, trumf]
+
+    static let programGuides: [ProgramGuide] = [
+        ProgramGuide(
+            id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A701")!,
+            programID: euroBonus.id,
+            status: .published,
+            introText: "EuroBonus er nyttig når du har en konkret plan for opptjening og bruk. Guiden hjelper deg å vurdere kampanjer opp mot fleksibilitet, gebyrer og faktisk reisebehov.",
+            strategy: "EuroBonus passer best når du kan samle nok poeng til reiser eller fordeler du faktisk vil bruke. Vurder kampanjer opp mot fleksibilitet, gebyrer og om reisen allerede er relevant.",
+            valueEstimateLabel: "Varierer",
+            valueEstimateDetail: "Verdien avhenger av reisemål, tilgjengelighet, avgifter og alternativ kontantpris.",
+            expirationSummary: "Sjekk vilkår",
+            expirationDetail: "Kontroller alltid gjeldende utløpsregler hos SAS før du lar saldo ligge lenge.",
+            earningTips: [
+                "Prioriter kampanjer der du uansett skal kjøpe reisen, varen eller tjenesten.",
+                "Se etter kombinasjoner av kort, partner og tidsbegrenset kampanje, men kontroller vilkårene før du handler.",
+                "Vær ekstra kritisk til tilbud som krever nytt kredittkort eller høyt minimumsforbruk."
+            ],
+            redemptionTips: [
+                "Bruk poeng der kontantprisen er høy og tilgjengeligheten passer dine datoer.",
+                "Sammenlign poengbruk med ordinær pris, skatter, gebyrer og fleksibilitet.",
+                "Ikke bind deg til opptjening hvis du ikke har en realistisk plan for bruk."
+            ],
+            riskNotes: [
+                "Tilgjengelighet på bonusreiser kan være begrenset.",
+                "Kampanjer kan være målrettet eller ha krav som ikke er synlige i overskriften.",
+                "Poengverdi er et estimat, ikke en fast kurs."
+            ],
+            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 10))
+        ),
+        ProgramGuide(
+            id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A702")!,
+            programID: trumf.id,
+            status: .published,
+            introText: "Trumf er kontantnært og lett å forstå, men totalprisen bør fortsatt styre valget. Bonus er best når den kommer på kjøp du allerede ville gjort.",
+            strategy: "Trumf er ofte mest nyttig når bonusen kommer fra dagligvarekjøp du allerede ville gjort. Høy prosentbonus er mindre verdt hvis varen er dyrere enn alternativet.",
+            valueEstimateLabel: "1 kr = 1 kr",
+            valueEstimateDetail: "Trumf-bonus er konkret kroneverdi, men kampanjeverdi må vurderes mot totalpris.",
+            expirationSummary: "Lav friksjon",
+            expirationDetail: "Sjekk saldo og overføringsvilkår før du flytter bonus til andre programmer.",
+            earningTips: [
+                "Aktiver kampanjer før kjøp når det kreves.",
+                "Sjekk om bonusen gjelder hele handelen eller bare utvalgte varer.",
+                "Vurder totalpris først, bonus etterpå."
+            ],
+            redemptionTips: [
+                "Bruk saldoen der den gir konkret verdi for deg, eller overfør bare når vilkårene passer.",
+                "Følg med på kampanjer som gjør ordinære kjøp mer lønnsomme uten ekstra friksjon.",
+                "Hold oversikt over aktiveringskrav og kampanjeperioder."
+            ],
+            riskNotes: [
+                "Utvalg, butikk og medlemskrav kan variere.",
+                "Bonus kan beregnes etter rabatter eller med unntak for enkelte varer.",
+                "Ikke la bonusprosent alene styre kjøpet."
+            ],
+            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 10))
+        ),
+        ProgramGuide(
+            id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A703")!,
+            programID: spann.id,
+            status: .published,
+            introText: "Spenn bør vurderes ut fra partnerne du faktisk bruker. Kampanjer med planlagt kjøp og lav friksjon er normalt mest relevante.",
+            strategy: "Spenn bør vurderes som et partnerprogram der verdien avhenger av om du allerede bruker relevante partnere. Kampanjer med lav friksjon og planlagt kjøp er mest interessante.",
+            valueEstimateLabel: "Partnerverdi",
+            valueEstimateDetail: "Verdien styres av hvor du kan opptjene og bruke poengene.",
+            expirationSummary: "Følg saldo",
+            expirationDetail: "Kontroller program- og partnervilkår før større opptjening eller bruk.",
+            earningTips: [
+                "Knytt kjøpet til riktig partnerflyt før betaling.",
+                "Prioriter kampanjer på reise, hotell eller handel du allerede har behov for.",
+                "Sjekk om kampanjen krever registrering, appbruk eller en bestemt lenke."
+            ],
+            redemptionTips: [
+                "Sammenlign poengbruk med kontantpris før du bruker saldo.",
+                "Bruk poeng på kjøp der alternativverdien er tydelig for deg.",
+                "Unngå å spre opptjening hvis du ikke når nyttige innløsningsnivåer."
+            ],
+            riskNotes: [
+                "Partnerkrav kan gjøre en enkel kampanje mindre enkel i praksis.",
+                "Verdien av poengbruk kan variere mellom partnere.",
+                "Kampanjer kan kreve korrekt sporing for at bonusen skal registreres."
+            ],
+            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 10))
+        )
+    ]
 
     static let groceryCategory = CampaignCategory(
         id: UUID(uuidString: "51EC3B45-91D1-4FA1-95C4-16120E16C111")!,

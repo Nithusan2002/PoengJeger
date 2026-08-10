@@ -10,6 +10,11 @@
     review: "Review",
     expired: "Expired"
   };
+  const PROGRAM_GUIDE_STATUS_LABELS = {
+    draft: "Draft",
+    published: "Published",
+    archived: "Archived"
+  };
   const STATUS_LABELS = {
     new: "Ny",
     needs_review: "Trenger review",
@@ -23,11 +28,14 @@
     role: null,
     candidates: [],
     campaigns: [],
+    programGuides: [],
     categories: [],
     programs: [],
     sources: [],
     selectedCandidateId: null,
     selectedCampaignId: null,
+    selectedProgramGuideProgramId: null,
+    activePanelId: "queue-panel",
     loading: false
   };
 
@@ -48,6 +56,11 @@
     loginButton: document.querySelector("#login-button"),
     loginForm: document.querySelector("#login-form"),
     passwordInput: document.querySelector("#password-input"),
+    programGuideDetailPanel: document.querySelector("#program-guide-detail-panel"),
+    programGuideList: document.querySelector("#program-guide-list"),
+    programGuideMessage: document.querySelector("#program-guide-message"),
+    programGuidePanel: document.querySelector("#program-guide-panel"),
+    programGuideRefreshButton: document.querySelector("#program-guide-refresh-button"),
     queueList: document.querySelector("#queue-list"),
     queueMessage: document.querySelector("#queue-message"),
     queuePanel: document.querySelector("#queue-panel"),
@@ -56,14 +69,22 @@
     signOutButton: document.querySelector("#sign-out-button"),
     statusFilter: document.querySelector("#status-filter")
   };
+  elements.workspaceNav = document.querySelector("#workspace-nav");
+  elements.workspaceNavButtons = Array.from(document.querySelectorAll("[data-panel-target]"));
 
   elements.loginForm.addEventListener("submit", onLoginSubmit);
   elements.ingestButton.addEventListener("click", runIngestionFromAdmin);
   elements.refreshButton.addEventListener("click", refreshQueue);
   elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
+  elements.programGuideRefreshButton.addEventListener("click", refreshProgramGuides);
   elements.signOutButton.addEventListener("click", signOut);
   elements.statusFilter.addEventListener("change", refreshQueue);
   elements.campaignStatusFilter.addEventListener("change", refreshCampaigns);
+  elements.workspaceNavButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      setActivePanel(button.getAttribute("data-panel-target"));
+    });
+  });
 
   if (!hasConfig()) {
     setMessage(
@@ -147,7 +168,7 @@
 
       renderSessionPill();
       await fetchReferenceData();
-      await Promise.all([refreshQueue(), refreshCampaigns()]);
+      await Promise.all([refreshQueue(), refreshCampaigns(), refreshProgramGuides()]);
     } catch (error) {
       clearSession();
       renderUnauthenticated();
@@ -249,6 +270,45 @@
     }
   }
 
+  async function refreshProgramGuides() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    elements.programGuideRefreshButton.disabled = true;
+    setMessage(elements.programGuideMessage, "Laster programguider...", "muted");
+
+    try {
+      state.programGuides = await fetchProgramGuides();
+
+      if (!state.programs.length) {
+        state.selectedProgramGuideProgramId = null;
+        renderProgramGuideList();
+        renderEmptyProgramGuideDetail("Ingen bonusprogrammer er tilgjengelige.");
+        setMessage(elements.programGuideMessage, "Ingen programmer å vise.", "muted");
+        return;
+      }
+
+      if (!state.programs.some((program) => program.id === state.selectedProgramGuideProgramId)) {
+        state.selectedProgramGuideProgramId = state.programs[0].id;
+      }
+
+      renderProgramGuideList();
+      renderProgramGuideDetail();
+      setMessage(
+        elements.programGuideMessage,
+        `Viser ${state.programs.length} program${state.programs.length === 1 ? "" : "mer"}.`,
+        "success"
+      );
+    } catch (error) {
+      setMessage(elements.programGuideMessage, error.message, "error");
+      renderEmptyProgramGuideDetail("Kunne ikke laste programguider.");
+    } finally {
+      elements.programGuideRefreshButton.disabled = false;
+    }
+  }
+
   async function runIngestionFromAdmin() {
     if (!state.session) {
       renderUnauthenticated();
@@ -333,7 +393,8 @@
 
   async function fetchPrograms() {
     const params = new URLSearchParams();
-    params.set("select", "id,name,slug");
+    params.set("select", "id,name,slug,is_active");
+    params.set("is_active", "eq.true");
     params.set("order", "name.asc");
 
     return apiRequest(`/rest/v1/bonus_programs?${params.toString()}`);
@@ -384,6 +445,33 @@
 
     const response = await apiRequest(`/rest/v1/campaigns?${params.toString()}`);
     return response.map(normalizeCampaign);
+  }
+
+  async function fetchProgramGuides() {
+    const params = new URLSearchParams();
+    params.set(
+      "select",
+      [
+        "id",
+        "program_id",
+        "status",
+        "intro_text",
+        "strategy",
+        "value_estimate_label",
+        "value_estimate_detail",
+        "expiration_summary",
+        "expiration_detail",
+        "earning_tips",
+        "redemption_tips",
+        "risk_notes",
+        "last_reviewed_at",
+        "updated_at"
+      ].join(",")
+    );
+    params.set("order", "updated_at.desc");
+
+    const response = await apiRequest(`/rest/v1/program_guides?${params.toString()}`);
+    return response.map(normalizeProgramGuide);
   }
 
   function normalizeCandidate(candidate) {
@@ -442,20 +530,56 @@
     };
   }
 
+  function normalizeProgramGuide(guide) {
+    return {
+      id: guide.id,
+      programId: guide.program_id,
+      status: guide.status,
+      introText: guide.intro_text || "",
+      strategy: guide.strategy || "",
+      valueEstimateLabel: guide.value_estimate_label || "",
+      valueEstimateDetail: guide.value_estimate_detail || "",
+      expirationSummary: guide.expiration_summary || "",
+      expirationDetail: guide.expiration_detail || "",
+      earningTips: Array.isArray(guide.earning_tips) ? guide.earning_tips : [],
+      redemptionTips: Array.isArray(guide.redemption_tips) ? guide.redemption_tips : [],
+      riskNotes: Array.isArray(guide.risk_notes) ? guide.risk_notes : [],
+      lastReviewedAt: guide.last_reviewed_at,
+      updatedAt: guide.updated_at
+    };
+  }
+
   function renderUnauthenticated() {
     elements.authPanel.classList.remove("hidden");
     elements.queuePanel.classList.add("hidden");
     elements.campaignPanel.classList.add("hidden");
+    elements.programGuidePanel.classList.add("hidden");
+    elements.workspaceNav.classList.add("hidden");
     elements.signOutButton.classList.add("hidden");
     elements.sessionPill.classList.add("hidden");
   }
 
   function renderAuthenticatedShell() {
     elements.authPanel.classList.add("hidden");
-    elements.queuePanel.classList.remove("hidden");
-    elements.campaignPanel.classList.remove("hidden");
+    elements.workspaceNav.classList.remove("hidden");
     elements.signOutButton.classList.remove("hidden");
     elements.sessionPill.classList.remove("hidden");
+    setActivePanel(state.activePanelId);
+  }
+
+  function setActivePanel(panelId) {
+    const validPanelIds = ["queue-panel", "campaign-panel", "program-guide-panel"];
+    state.activePanelId = validPanelIds.includes(panelId) ? panelId : "queue-panel";
+
+    [elements.queuePanel, elements.campaignPanel, elements.programGuidePanel].forEach((panel) => {
+      panel.classList.toggle("hidden", panel.id !== state.activePanelId);
+    });
+
+    elements.workspaceNavButtons.forEach((button) => {
+      const isActive = button.getAttribute("data-panel-target") === state.activePanelId;
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-current", isActive ? "page" : "false");
+    });
   }
 
   function renderSessionPill() {
@@ -547,6 +671,42 @@
     });
   }
 
+  function renderProgramGuideList() {
+    elements.programGuideList.innerHTML = "";
+
+    state.programs.forEach((program) => {
+      const guide = guideForProgram(program.id);
+      const item = document.createElement("li");
+      item.className = "queue-item";
+
+      if (program.id === state.selectedProgramGuideProgramId) {
+        item.classList.add("selected");
+      }
+
+      item.innerHTML = `
+        <div class="badge-row">
+          ${renderProgramGuideBadge(guide ? guide.status : "draft")}
+          ${renderMetaBadge(program.slug)}
+        </div>
+        <h3>${escapeHtml(program.name)}</h3>
+        <p>${escapeHtml(guide ? firstTextLine(guide.strategy, "Ingen strategi ennå.") : "Ingen guide opprettet ennå.")}</p>
+        <div class="candidate-meta">
+          <span>${guide ? `Sist oppdatert ${formatDateTime(guide.updatedAt)}` : "Ikke opprettet"}</span>
+          <span>•</span>
+          <span>${guide && guide.lastReviewedAt ? `Kontrollert ${formatDateTime(guide.lastReviewedAt)}` : "Ikke kontrollert"}</span>
+        </div>
+      `;
+
+      item.addEventListener("click", function () {
+        state.selectedProgramGuideProgramId = program.id;
+        renderProgramGuideList();
+        renderProgramGuideDetail();
+      });
+
+      elements.programGuideList.appendChild(item);
+    });
+  }
+
   function renderDetail() {
     const candidate = state.candidates.find((entry) => entry.id === state.selectedCandidateId);
 
@@ -632,8 +792,9 @@
               }
             });
 
-            state.selectedCampaignId = campaignId;
-            await refreshCampaigns();
+        state.selectedCampaignId = campaignId;
+        await refreshCampaigns();
+        setActivePanel("campaign-panel");
           } else {
             await apiRequest("/rest/v1/rpc/set_ingestion_candidate_status", {
               method: "POST",
@@ -659,9 +820,9 @@
     if (openCampaignButton) {
       openCampaignButton.addEventListener("click", function () {
         state.selectedCampaignId = openCampaignButton.getAttribute("data-open-campaign");
+        setActivePanel("campaign-panel");
         renderCampaignList();
         renderCampaignDetail();
-        elements.campaignPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
   }
@@ -906,6 +1067,363 @@
     elements.campaignDetailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
   }
 
+  function renderProgramGuideDetail() {
+    const program = state.programs.find((entry) => entry.id === state.selectedProgramGuideProgramId);
+
+    if (!program) {
+      renderEmptyProgramGuideDetail("Velg et program for å redigere guiden.");
+      return;
+    }
+
+    const guide = guideForProgram(program.id);
+    const draft = guide || emptyProgramGuideDraft(program.id);
+    const readiness = programGuideReadiness(draft);
+
+    elements.programGuideDetailPanel.classList.remove("empty");
+    elements.programGuideDetailPanel.innerHTML = `
+      <form id="program-guide-editor-form" class="detail-form">
+        <div class="program-guide-editor-layout">
+          <section class="program-guide-edit-pane">
+            <div class="badge-row">
+              ${renderProgramGuideBadge(draft.status)}
+              ${renderMetaBadge(program.name)}
+            </div>
+
+            <section class="draft-readiness" aria-live="polite">
+              ${renderProgramGuideReadiness(readiness)}
+            </section>
+
+            <div class="detail-grid">
+              <label class="field">
+                <span>Program</span>
+                <input type="text" value="${escapeAttribute(program.name)}" disabled />
+              </label>
+
+              <label class="field">
+                <span>Status</span>
+                <select name="status">
+                  ${renderProgramGuideStatusOptions(draft.status)}
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Intro på programsiden</span>
+              <textarea name="introText" rows="4" placeholder="Kort forklaring som vises øverst på programsiden...">${escapeHtml(
+                draft.introText
+              )}</textarea>
+              <span class="hint">Vises både i Lær-listen og øverst på programsiden. Skriv 1-2 konkrete setninger uten bastante verdianslag.</span>
+            </label>
+
+            <label class="field">
+              <span>Strategi</span>
+              <textarea name="strategy" rows="5" placeholder="Når passer dette programmet, og hva bør brukeren vurdere?">${escapeHtml(
+                draft.strategy
+              )}</textarea>
+              <span class="hint">Hold dette som redaksjonell veiledning. Skill estimat og fakta fra generell vurdering.</span>
+            </label>
+
+            <div class="detail-grid">
+              <label class="field">
+                <span>Verdi-kort: tittel</span>
+                <input
+                  name="valueEstimateLabel"
+                  type="text"
+                  placeholder="For eksempel: Varierer"
+                  value="${escapeAttribute(draft.valueEstimateLabel)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Utløp-kort: tittel</span>
+                <input
+                  name="expirationSummary"
+                  type="text"
+                  placeholder="For eksempel: Sjekk vilkår"
+                  value="${escapeAttribute(draft.expirationSummary)}"
+                />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Verdi-kort: forklaring</span>
+              <textarea name="valueEstimateDetail" rows="3" placeholder="Hva styrer verdien, og hva bør kontrolleres?">${escapeHtml(draft.valueEstimateDetail)}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Utløp-kort: forklaring</span>
+              <textarea name="expirationDetail" rows="3" placeholder="Forklar utløpsrisiko uten å gjette konkrete regler.">${escapeHtml(draft.expirationDetail)}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Slik tjener du, ett tips per linje</span>
+              <textarea name="earningTips" rows="5" placeholder="Registrer medlemsnummer før kjøp&#10;Aktiver kampanjer før betaling">${escapeHtml(draft.earningTips.join("\n"))}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Slik bruker du, ett tips per linje</span>
+              <textarea name="redemptionTips" rows="5" placeholder="Sammenlign poengbruk med kontantpris&#10;Unngå bruk der alternativverdien er lav">${escapeHtml(draft.redemptionTips.join("\n"))}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Vanlige feller, ett punkt per linje</span>
+              <textarea name="riskNotes" rows="5" placeholder="Kampanjer kan være målrettet&#10;Vilkår kan endres før bruk">${escapeHtml(draft.riskNotes.join("\n"))}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Sist redaksjonelt kontrollert</span>
+              <input
+                name="lastReviewedAt"
+                type="datetime-local"
+                value="${escapeAttribute(toDateTimeLocalValue(draft.lastReviewedAt))}"
+              />
+            </label>
+
+            <div class="detail-actions">
+              <div class="action-row">
+                <button type="submit">Lagre draft</button>
+                <button type="button" class="success" data-guide-action="publish">Lagre og publiser</button>
+                <button type="button" class="secondary" data-guide-action="reviewed">Marker kontrollert</button>
+                <button type="button" class="secondary" data-guide-action="archive">Arkiver</button>
+              </div>
+              <span class="help">Publisering krever intro, strategi og minst ett punkt i hver tipsseksjon. Verdi og utløp bør fylles før publisering.</span>
+            </div>
+          </section>
+
+          <aside class="program-guide-preview-pane">
+            <div class="preview-sticky">
+              <div class="preview-heading">
+                <span>Forhåndsvisning</span>
+                <strong>${escapeHtml(program.name)}</strong>
+              </div>
+              <div id="program-guide-live-preview">
+                ${renderProgramGuidePreview(program, draft)}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </form>
+    `;
+
+    const form = elements.programGuideDetailPanel.querySelector("#program-guide-editor-form");
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      await saveProgramGuideEditor(form, program, guide, null);
+    });
+
+    elements.programGuideDetailPanel.querySelectorAll("[data-guide-action]").forEach((button) => {
+      button.addEventListener("click", async function () {
+        await saveProgramGuideEditor(form, program, guide, button.getAttribute("data-guide-action"));
+      });
+    });
+
+    form.addEventListener("input", function () {
+      updateProgramGuideDraftAssist(form, program);
+    });
+    form.addEventListener("change", function () {
+      updateProgramGuideDraftAssist(form, program);
+    });
+  }
+
+  function renderEmptyProgramGuideDetail(message) {
+    elements.programGuideDetailPanel.classList.add("empty");
+    elements.programGuideDetailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
+  }
+
+  function emptyProgramGuideDraft(programId) {
+    return {
+      id: null,
+      programId,
+      status: "draft",
+      introText: "",
+      strategy: "",
+      valueEstimateLabel: "",
+      valueEstimateDetail: "",
+      expirationSummary: "",
+      expirationDetail: "",
+      earningTips: [],
+      redemptionTips: [],
+      riskNotes: [],
+      lastReviewedAt: null,
+      updatedAt: null
+    };
+  }
+
+  function collectProgramGuideDraftFromForm(form, program) {
+    const formData = new FormData(form);
+    return {
+      ...emptyProgramGuideDraft(program.id),
+      status: String(formData.get("status") || "draft"),
+      introText: String(formData.get("introText") || "").trim(),
+      strategy: String(formData.get("strategy") || "").trim(),
+      valueEstimateLabel: String(formData.get("valueEstimateLabel") || "").trim(),
+      valueEstimateDetail: String(formData.get("valueEstimateDetail") || "").trim(),
+      expirationSummary: String(formData.get("expirationSummary") || "").trim(),
+      expirationDetail: String(formData.get("expirationDetail") || "").trim(),
+      earningTips: splitTextareaLines(formData.get("earningTips")),
+      redemptionTips: splitTextareaLines(formData.get("redemptionTips")),
+      riskNotes: splitTextareaLines(formData.get("riskNotes")),
+      lastReviewedAt: String(formData.get("lastReviewedAt") || "").trim()
+    };
+  }
+
+  function programGuideReadiness(guide) {
+    const checks = [
+      {
+        label: "Intro",
+        complete: Boolean(guide.introText),
+        help: "Vises i Lær-listen og på programsiden."
+      },
+      {
+        label: "Strategi",
+        complete: Boolean(guide.strategy),
+        help: "Forklar når programmet er nyttig."
+      },
+      {
+        label: "Verdi-kort",
+        complete: Boolean(guide.valueEstimateLabel && guide.valueEstimateDetail),
+        help: "Bruk forsiktig estimat eller forklar variasjon."
+      },
+      {
+        label: "Utløp-kort",
+        complete: Boolean(guide.expirationSummary && guide.expirationDetail),
+        help: "Forklar risiko uten å gjette vilkår."
+      },
+      {
+        label: "Opptjening",
+        complete: guide.earningTips.length > 0,
+        help: "Minst ett konkret tips."
+      },
+      {
+        label: "Bruk",
+        complete: guide.redemptionTips.length > 0,
+        help: "Minst ett råd for innløsning."
+      },
+      {
+        label: "Feller",
+        complete: guide.riskNotes.length > 0,
+        help: "Minst ett risikopunkt."
+      }
+    ];
+
+    const completeCount = checks.filter((check) => check.complete).length;
+    return {
+      checks,
+      completeCount,
+      totalCount: checks.length,
+      isPublishReady: checks.every((check) => check.complete)
+    };
+  }
+
+  function renderProgramGuideReadiness(readiness) {
+    return `
+      <div class="readiness-header">
+        <div>
+          <span class="readiness-kicker">Draft-status</span>
+          <strong>${readiness.completeCount}/${readiness.totalCount} felt klare</strong>
+        </div>
+        <span class="readiness-pill ${readiness.isPublishReady ? "ready" : "draft"}">
+          ${readiness.isPublishReady ? "Klar til publisering" : "Mangler innhold"}
+        </span>
+      </div>
+      <div class="readiness-grid">
+        ${readiness.checks
+          .map(
+            (check) => `
+              <div class="readiness-item ${check.complete ? "complete" : ""}">
+                <span aria-hidden="true">${check.complete ? "✓" : "–"}</span>
+                <div>
+                  <strong>${escapeHtml(check.label)}</strong>
+                  <small>${escapeHtml(check.help)}</small>
+                </div>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderProgramGuidePreview(program, guide) {
+    const intro = guide.introText || "Intro vises her når du skriver.";
+    const strategy = guide.strategy || "Strategiteksten vises her.";
+    const valueLabel = guide.valueEstimateLabel || "Verdi";
+    const valueDetail = guide.valueEstimateDetail || "Forklaring av verdi vises her.";
+    const expirationLabel = guide.expirationSummary || "Utløp";
+    const expirationDetail = guide.expirationDetail || "Forklaring av utløpsrisiko vises her.";
+
+    return `
+      <div class="program-preview-card">
+        <div class="program-preview-hero">
+          <div class="program-preview-mark">${escapeHtml(programInitials(program))}</div>
+          <div>
+            <h3>${escapeHtml(program.name)}</h3>
+            <p>${escapeHtml(intro)}</p>
+          </div>
+        </div>
+
+        <div class="program-preview-metrics">
+          <div>
+            <span>Verdi per poeng</span>
+            <strong>${escapeHtml(valueLabel)}</strong>
+            <p>${escapeHtml(valueDetail)}</p>
+          </div>
+          <div>
+            <span>Utløp</span>
+            <strong>${escapeHtml(expirationLabel)}</strong>
+            <p>${escapeHtml(expirationDetail)}</p>
+          </div>
+        </div>
+
+        <div class="program-preview-section">
+          <span>Slik tjener du raskere</span>
+          ${renderPreviewTips(guide.earningTips)}
+        </div>
+
+        <div class="program-preview-section">
+          <span>Slik får du mest ut av poengene</span>
+          ${renderPreviewTips(guide.redemptionTips)}
+        </div>
+
+        <div class="program-preview-section">
+          <span>Vanlige feller</span>
+          ${renderPreviewTips(guide.riskNotes)}
+        </div>
+
+        <p class="program-preview-strategy">${escapeHtml(strategy)}</p>
+      </div>
+    `;
+  }
+
+  function renderPreviewTips(items) {
+    if (!items.length) {
+      return `<p class="program-preview-empty">Ingen punkter ennå.</p>`;
+    }
+
+    return `
+      <ul>
+        ${items
+          .slice(0, 3)
+          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .join("")}
+      </ul>
+    `;
+  }
+
+  function updateProgramGuideDraftAssist(form, program) {
+    const draft = collectProgramGuideDraftFromForm(form, program);
+    const readinessContainer = form.querySelector(".draft-readiness");
+    const previewContainer = form.querySelector("#program-guide-live-preview");
+
+    if (readinessContainer) {
+      readinessContainer.innerHTML = renderProgramGuideReadiness(programGuideReadiness(draft));
+    }
+
+    if (previewContainer) {
+      previewContainer.innerHTML = renderProgramGuidePreview(program, draft);
+    }
+  }
+
   async function saveCampaignEditor(form, originalCampaign, overrideStatus) {
     const formData = new FormData(form);
     const payload = collectCampaignFormData(formData, originalCampaign, overrideStatus);
@@ -937,6 +1455,97 @@
         button.disabled = false;
       });
     }
+  }
+
+  async function saveProgramGuideEditor(form, program, originalGuide, action) {
+    const formData = new FormData(form);
+    const payload = collectProgramGuideFormData(formData, program, originalGuide, action);
+    const validationErrors = validateProgramGuidePayload(payload);
+
+    if (validationErrors.length) {
+      setMessage(elements.programGuideMessage, validationErrors.join(" "), "error");
+      return;
+    }
+
+    const submitButtons = form.querySelectorAll("button");
+    submitButtons.forEach((button) => {
+      button.disabled = true;
+    });
+
+    try {
+      await upsertProgramGuide(payload);
+      setMessage(elements.programGuideMessage, "Programguiden ble lagret.", "success");
+      await refreshProgramGuides();
+    } catch (error) {
+      setMessage(elements.programGuideMessage, error.message, "error");
+    } finally {
+      submitButtons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
+  }
+
+  function collectProgramGuideFormData(formData, program, originalGuide, action) {
+    const now = new Date().toISOString();
+    let status = String(formData.get("status") || "draft");
+    let lastReviewedAt = String(formData.get("lastReviewedAt") || "").trim();
+
+    if (action === "publish") {
+      status = "published";
+      lastReviewedAt = lastReviewedAt || now;
+    } else if (action === "archive") {
+      status = "archived";
+    } else if (action === "reviewed") {
+      lastReviewedAt = now;
+    }
+
+    return {
+      id: originalGuide ? originalGuide.id : null,
+      programId: program.id,
+      status,
+      introText: String(formData.get("introText") || "").trim(),
+      strategy: String(formData.get("strategy") || "").trim(),
+      valueEstimateLabel: String(formData.get("valueEstimateLabel") || "").trim(),
+      valueEstimateDetail: String(formData.get("valueEstimateDetail") || "").trim(),
+      expirationSummary: String(formData.get("expirationSummary") || "").trim(),
+      expirationDetail: String(formData.get("expirationDetail") || "").trim(),
+      earningTips: splitTextareaLines(formData.get("earningTips")),
+      redemptionTips: splitTextareaLines(formData.get("redemptionTips")),
+      riskNotes: splitTextareaLines(formData.get("riskNotes")),
+      lastReviewedAt: lastReviewedAt ? toISOString(lastReviewedAt) : null
+    };
+  }
+
+  function validateProgramGuidePayload(payload) {
+    const errors = [];
+
+    if (!payload.strategy) {
+      errors.push("Strategi mangler.");
+    }
+
+    if (payload.status === "published") {
+      if (!payload.introText) {
+        errors.push("Publisering krever intro på programsiden.");
+      }
+
+      if (!payload.earningTips.length) {
+        errors.push("Publisering krever minst ett opptjeningstips.");
+      }
+
+      if (!payload.redemptionTips.length) {
+        errors.push("Publisering krever minst ett brukstips.");
+      }
+
+      if (!payload.riskNotes.length) {
+        errors.push("Publisering krever minst ett risikonotat.");
+      }
+
+      if (!payload.lastReviewedAt) {
+        errors.push("Publisering krever kontrolltidspunkt.");
+      }
+    }
+
+    return errors;
   }
 
   function collectCampaignFormData(formData, originalCampaign, overrideStatus) {
@@ -1247,6 +1856,42 @@
     });
   }
 
+  async function upsertProgramGuide(payload) {
+    const body = {
+      program_id: payload.programId,
+      status: payload.status,
+      intro_text: payload.introText || null,
+      strategy: payload.strategy,
+      value_estimate_label: payload.valueEstimateLabel || null,
+      value_estimate_detail: payload.valueEstimateDetail || null,
+      expiration_summary: payload.expirationSummary || null,
+      expiration_detail: payload.expirationDetail || null,
+      earning_tips: payload.earningTips,
+      redemption_tips: payload.redemptionTips,
+      risk_notes: payload.riskNotes,
+      last_reviewed_at: payload.lastReviewedAt
+    };
+
+    if (payload.id) {
+      await apiRequest(`/rest/v1/program_guides?id=eq.${payload.id}`, {
+        method: "PATCH",
+        body,
+        extraHeaders: {
+          Prefer: "return=minimal"
+        }
+      });
+      return;
+    }
+
+    await apiRequest("/rest/v1/program_guides", {
+      method: "POST",
+      body: [body],
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
   async function signOut() {
     if (state.session) {
       try {
@@ -1263,11 +1908,14 @@
     state.role = null;
     state.candidates = [];
     state.campaigns = [];
+    state.programGuides = [];
     state.selectedCandidateId = null;
     state.selectedCampaignId = null;
+    state.selectedProgramGuideProgramId = null;
     elements.loginForm.reset();
     renderEmptyDetail("Velg en kandidat for detaljer.");
     renderEmptyCampaignDetail("Velg en kampanje for å redigere draften.");
+    renderEmptyProgramGuideDetail("Velg et program for å redigere guiden.");
     renderUnauthenticated();
     setMessage(elements.authMessage, "Du er logget ut.", "success");
   }
@@ -1497,6 +2145,11 @@
     return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(label)}</span>`;
   }
 
+  function renderProgramGuideBadge(status) {
+    const label = PROGRAM_GUIDE_STATUS_LABELS[status] || status;
+    return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(label)}</span>`;
+  }
+
   function renderMetaBadge(value) {
     return value ? `<span class="badge">${escapeHtml(value)}</span>` : "";
   }
@@ -1520,6 +2173,15 @@
       .join("");
   }
 
+  function renderProgramGuideStatusOptions(selectedStatus) {
+    return Object.entries(PROGRAM_GUIDE_STATUS_LABELS)
+      .map(([value, label]) => {
+        const isSelected = value === selectedStatus ? " selected" : "";
+        return `<option value="${escapeAttribute(value)}"${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
   function renderEnumOptions(options, selectedValue) {
     return options
       .map((option) => {
@@ -1534,9 +2196,59 @@
     return program ? program.name : "";
   }
 
+  function programInitials(program) {
+    if (!program || !program.name) {
+      return "PJ";
+    }
+
+    const specialCases = {
+      "sas-eurobonus": "EUR",
+      trumf: "TRU",
+      spenn: "SPE",
+      "norwegian-cashpoints": "CAS",
+      "norwegian-reward": "CAS",
+      "flying-blue": "FLY",
+      avios: "AVI"
+    };
+
+    if (specialCases[program.slug]) {
+      return specialCases[program.slug];
+    }
+
+    const initials = program.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase();
+
+    return initials || program.name.slice(0, 2).toUpperCase();
+  }
+
   function categoryName(categoryId) {
     const category = state.categories.find((item) => item.id === categoryId);
     return category ? category.name : "";
+  }
+
+  function guideForProgram(programId) {
+    return state.programGuides.find((guide) => guide.programId === programId) || null;
+  }
+
+  function splitTextareaLines(value) {
+    return String(value || "")
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function firstTextLine(value, fallback) {
+    const normalized = String(value || "").trim();
+    if (!normalized) {
+      return fallback;
+    }
+
+    return normalized.length > 140 ? `${normalized.slice(0, 137)}...` : normalized;
   }
 
   function emptyToNull(value) {

@@ -1,5 +1,4 @@
 create extension if not exists pgcrypto;
-
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -9,7 +8,6 @@ begin
   return new;
 end;
 $$;
-
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -20,7 +18,6 @@ as $$
     false
   );
 $$;
-
 create table if not exists public.bonus_programs (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -33,7 +30,6 @@ create table if not exists public.bonus_programs (
   constraint bonus_programs_slug_format check (slug ~ '^[a-z0-9-]+$'),
   constraint bonus_programs_country_code_length check (char_length(country_code) = 2)
 );
-
 create table if not exists public.campaign_categories (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -42,7 +38,6 @@ create table if not exists public.campaign_categories (
   updated_at timestamptz not null default now(),
   constraint campaign_categories_slug_format check (slug ~ '^[a-z0-9-]+$')
 );
-
 create table if not exists public.campaign_sources (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -54,7 +49,6 @@ create table if not exists public.campaign_sources (
     source_type in ('official', 'newsletter', 'bank', 'retailer', 'forum', 'blog', 'social', 'other')
   )
 );
-
 create table if not exists public.user_profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   preferred_locale text not null default 'nb-NO',
@@ -62,7 +56,6 @@ create table if not exists public.user_profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists public.campaigns (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -87,14 +80,12 @@ create table if not exists public.campaigns (
     editorial_score is null or (editorial_score >= 0 and editorial_score <= 100)
   )
 );
-
 create table if not exists public.campaign_programs (
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
   program_id uuid not null references public.bonus_programs (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (campaign_id, program_id)
 );
-
 create table if not exists public.campaign_requirements (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
@@ -103,7 +94,6 @@ create table if not exists public.campaign_requirements (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists public.campaign_source_references (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
@@ -115,7 +105,6 @@ create table if not exists public.campaign_source_references (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists public.campaign_editorial_assessments (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null unique references public.campaigns (id) on delete cascade,
@@ -137,7 +126,6 @@ create table if not exists public.campaign_editorial_assessments (
     availability_scope is null or availability_scope in ('narrow', 'regional', 'broad')
   )
 );
-
 create table if not exists public.campaign_geo_restrictions (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
@@ -146,21 +134,18 @@ create table if not exists public.campaign_geo_restrictions (
   constraint campaign_geo_restrictions_country_code_length check (char_length(country_code) = 2),
   unique (campaign_id, country_code)
 );
-
 create table if not exists public.user_program_preferences (
   user_id uuid not null references auth.users (id) on delete cascade,
   program_id uuid not null references public.bonus_programs (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, program_id)
 );
-
 create table if not exists public.user_favorite_campaigns (
   user_id uuid not null references auth.users (id) on delete cascade,
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
   saved_at timestamptz not null default now(),
   primary key (user_id, campaign_id)
 );
-
 create table if not exists public.notification_subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -173,7 +158,6 @@ create table if not exists public.notification_subscriptions (
     program_id is not null or campaign_category_id is not null
   )
 );
-
 create table if not exists public.campaign_audit_log (
   id bigint generated always as identity primary key,
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
@@ -183,34 +167,24 @@ create table if not exists public.campaign_audit_log (
   change_note text,
   created_at timestamptz not null default now()
 );
-
 create index if not exists campaigns_status_end_date_idx
   on public.campaigns (status, end_date);
-
 create index if not exists campaigns_primary_program_idx
   on public.campaigns (primary_program_id);
-
 create index if not exists campaigns_category_idx
   on public.campaigns (category_id);
-
 create index if not exists campaign_programs_program_campaign_idx
   on public.campaign_programs (program_id, campaign_id);
-
 create index if not exists campaign_requirements_campaign_sort_idx
   on public.campaign_requirements (campaign_id, sort_order);
-
 create index if not exists campaign_source_references_campaign_idx
   on public.campaign_source_references (campaign_id);
-
 create index if not exists campaign_geo_restrictions_campaign_idx
   on public.campaign_geo_restrictions (campaign_id);
-
 create index if not exists notification_subscriptions_user_idx
   on public.notification_subscriptions (user_id);
-
 create index if not exists campaign_audit_log_campaign_created_idx
   on public.campaign_audit_log (campaign_id, created_at desc);
-
 create or replace function public.enforce_campaign_publish_requirements()
 returns trigger
 language plpgsql
@@ -236,7 +210,6 @@ begin
   return new;
 end;
 $$;
-
 create or replace function public.log_campaign_status_change()
 returns trigger
 language plpgsql
@@ -253,62 +226,50 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists set_bonus_programs_updated_at on public.bonus_programs;
 create trigger set_bonus_programs_updated_at
 before update on public.bonus_programs
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_campaign_categories_updated_at on public.campaign_categories;
 create trigger set_campaign_categories_updated_at
 before update on public.campaign_categories
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_campaign_sources_updated_at on public.campaign_sources;
 create trigger set_campaign_sources_updated_at
 before update on public.campaign_sources
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_user_profiles_updated_at on public.user_profiles;
 create trigger set_user_profiles_updated_at
 before update on public.user_profiles
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_campaigns_updated_at on public.campaigns;
 create trigger set_campaigns_updated_at
 before update on public.campaigns
 for each row execute function public.set_updated_at();
-
 drop trigger if exists enforce_campaign_publish_requirements on public.campaigns;
 create trigger enforce_campaign_publish_requirements
 before insert or update on public.campaigns
 for each row execute function public.enforce_campaign_publish_requirements();
-
 drop trigger if exists log_campaign_status_change on public.campaigns;
 create trigger log_campaign_status_change
 after insert or update on public.campaigns
 for each row execute function public.log_campaign_status_change();
-
 drop trigger if exists set_campaign_requirements_updated_at on public.campaign_requirements;
 create trigger set_campaign_requirements_updated_at
 before update on public.campaign_requirements
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_campaign_source_references_updated_at on public.campaign_source_references;
 create trigger set_campaign_source_references_updated_at
 before update on public.campaign_source_references
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_campaign_editorial_assessments_updated_at on public.campaign_editorial_assessments;
 create trigger set_campaign_editorial_assessments_updated_at
 before update on public.campaign_editorial_assessments
 for each row execute function public.set_updated_at();
-
 drop trigger if exists set_notification_subscriptions_updated_at on public.notification_subscriptions;
 create trigger set_notification_subscriptions_updated_at
 before update on public.notification_subscriptions
 for each row execute function public.set_updated_at();
-
 alter table public.bonus_programs enable row level security;
 alter table public.campaign_categories enable row level security;
 alter table public.campaign_sources enable row level security;
@@ -323,29 +284,29 @@ alter table public.user_program_preferences enable row level security;
 alter table public.user_favorite_campaigns enable row level security;
 alter table public.notification_subscriptions enable row level security;
 alter table public.campaign_audit_log enable row level security;
-
+drop policy if exists "published bonus programs are readable" on public.bonus_programs;
 create policy "published bonus programs are readable"
 on public.bonus_programs
 for select
 using (is_active or public.is_admin());
-
+drop policy if exists "admins manage bonus programs" on public.bonus_programs;
 create policy "admins manage bonus programs"
 on public.bonus_programs
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign categories are readable" on public.campaign_categories;
 create policy "campaign categories are readable"
 on public.campaign_categories
 for select
 using (true);
-
+drop policy if exists "admins manage campaign categories" on public.campaign_categories;
 create policy "admins manage campaign categories"
 on public.campaign_categories
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign sources readable for published content" on public.campaign_sources;
 create policy "campaign sources readable for published content"
 on public.campaign_sources
 for select
@@ -360,34 +321,34 @@ using (
       and (c.end_date is null or c.end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaign sources" on public.campaign_sources;
 create policy "admins manage campaign sources"
 on public.campaign_sources
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "users read own profile" on public.user_profiles;
 create policy "users read own profile"
 on public.user_profiles
 for select
 using (auth.uid() = id);
-
+drop policy if exists "users insert own profile" on public.user_profiles;
 create policy "users insert own profile"
 on public.user_profiles
 for insert
 with check (auth.uid() = id);
-
+drop policy if exists "users update own profile" on public.user_profiles;
 create policy "users update own profile"
 on public.user_profiles
 for update
 using (auth.uid() = id)
 with check (auth.uid() = id);
-
+drop policy if exists "admins read all profiles" on public.user_profiles;
 create policy "admins read all profiles"
 on public.user_profiles
 for select
 using (public.is_admin());
-
+drop policy if exists "published campaigns are readable" on public.campaigns;
 create policy "published campaigns are readable"
 on public.campaigns
 for select
@@ -399,13 +360,13 @@ using (
     and (end_date is null or end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaigns" on public.campaigns;
 create policy "admins manage campaigns"
 on public.campaigns
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign program links for readable campaigns" on public.campaign_programs;
 create policy "campaign program links for readable campaigns"
 on public.campaign_programs
 for select
@@ -420,13 +381,13 @@ using (
       and (c.end_date is null or c.end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaign program links" on public.campaign_programs;
 create policy "admins manage campaign program links"
 on public.campaign_programs
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign requirements for readable campaigns" on public.campaign_requirements;
 create policy "campaign requirements for readable campaigns"
 on public.campaign_requirements
 for select
@@ -441,13 +402,13 @@ using (
       and (c.end_date is null or c.end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaign requirements" on public.campaign_requirements;
 create policy "admins manage campaign requirements"
 on public.campaign_requirements
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign source references for readable campaigns" on public.campaign_source_references;
 create policy "campaign source references for readable campaigns"
 on public.campaign_source_references
 for select
@@ -462,13 +423,13 @@ using (
       and (c.end_date is null or c.end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaign source references" on public.campaign_source_references;
 create policy "admins manage campaign source references"
 on public.campaign_source_references
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign editorial assessments for readable campaigns" on public.campaign_editorial_assessments;
 create policy "campaign editorial assessments for readable campaigns"
 on public.campaign_editorial_assessments
 for select
@@ -483,13 +444,13 @@ using (
       and (c.end_date is null or c.end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaign editorial assessments" on public.campaign_editorial_assessments;
 create policy "admins manage campaign editorial assessments"
 on public.campaign_editorial_assessments
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "campaign geo restrictions for readable campaigns" on public.campaign_geo_restrictions;
 create policy "campaign geo restrictions for readable campaigns"
 on public.campaign_geo_restrictions
 for select
@@ -504,51 +465,51 @@ using (
       and (c.end_date is null or c.end_date >= now())
   )
 );
-
+drop policy if exists "admins manage campaign geo restrictions" on public.campaign_geo_restrictions;
 create policy "admins manage campaign geo restrictions"
 on public.campaign_geo_restrictions
 for all
 using (public.is_admin())
 with check (public.is_admin());
-
+drop policy if exists "users read own program preferences" on public.user_program_preferences;
 create policy "users read own program preferences"
 on public.user_program_preferences
 for select
 using (auth.uid() = user_id);
-
+drop policy if exists "users manage own program preferences" on public.user_program_preferences;
 create policy "users manage own program preferences"
 on public.user_program_preferences
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
-
+drop policy if exists "users read own favorites" on public.user_favorite_campaigns;
 create policy "users read own favorites"
 on public.user_favorite_campaigns
 for select
 using (auth.uid() = user_id);
-
+drop policy if exists "users manage own favorites" on public.user_favorite_campaigns;
 create policy "users manage own favorites"
 on public.user_favorite_campaigns
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
-
+drop policy if exists "users read own notification subscriptions" on public.notification_subscriptions;
 create policy "users read own notification subscriptions"
 on public.notification_subscriptions
 for select
 using (auth.uid() = user_id);
-
+drop policy if exists "users manage own notification subscriptions" on public.notification_subscriptions;
 create policy "users manage own notification subscriptions"
 on public.notification_subscriptions
 for all
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
-
+drop policy if exists "admins read campaign audit log" on public.campaign_audit_log;
 create policy "admins read campaign audit log"
 on public.campaign_audit_log
 for select
 using (public.is_admin());
-
+drop policy if exists "admins insert campaign audit log" on public.campaign_audit_log;
 create policy "admins insert campaign audit log"
 on public.campaign_audit_log
 for insert

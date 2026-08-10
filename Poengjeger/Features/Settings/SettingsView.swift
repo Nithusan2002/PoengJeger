@@ -23,6 +23,27 @@ struct SettingsView: View {
                 selectedProgramIDs: $environment.userSession.selectedProgramIDs
             )
 
+            Section("Programguider") {
+                ForEach(environment.programs) { program in
+                    NavigationLink {
+                        ProgramDetailView(
+                            program: program,
+                            guide: environment.programGuide(for: program),
+                            campaigns: environment.campaigns
+                        )
+                    } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(program.name)
+                                .foregroundStyle(.primary)
+                            Text("Strategi, feller og aktive kampanjer")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityLabel("Åpne programguide for \(program.name)")
+                }
+            }
+
             if let dataSource = environment.dataSource {
                 Section("Datakilde") {
                     Text(dataSource.label)

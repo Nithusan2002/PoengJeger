@@ -26,7 +26,6 @@ begin
   return auth.jwt() -> 'app_metadata' ->> 'poengjeger_role';
 end;
 $$;
-
 create or replace function public.is_admin()
 returns boolean
 language sql

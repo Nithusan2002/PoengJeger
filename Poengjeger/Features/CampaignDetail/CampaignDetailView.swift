@@ -13,7 +13,9 @@ struct CampaignDetailView: View {
             LazyVStack(alignment: .leading, spacing: 16) {
                 DetailIntro(
                     campaign: campaign,
-                    primaryProgramName: primaryProgramName
+                    primaryProgram: primaryProgram,
+                    primaryProgramGuide: primaryProgramGuide,
+                    campaigns: environment.campaigns
                 )
 
                 if hasEditorialAssessment {
@@ -115,12 +117,17 @@ struct CampaignDetailView: View {
         }
     }
 
-    private var primaryProgramName: String? {
+    private var primaryProgram: BonusProgram? {
         guard let primaryProgramID = campaign.primaryProgramID else {
             return nil
         }
 
-        return environment.programs.first(where: { $0.id == primaryProgramID })?.name
+        return environment.programs.first(where: { $0.id == primaryProgramID })
+    }
+
+    private var primaryProgramGuide: ProgramGuide? {
+        guard let primaryProgram else { return nil }
+        return environment.programGuide(for: primaryProgram)
     }
 
     private var hasEditorialAssessment: Bool {
@@ -197,17 +204,27 @@ private struct DetailTopBar: View {
 
 private struct DetailIntro: View {
     let campaign: Campaign
-    let primaryProgramName: String?
+    let primaryProgram: BonusProgram?
+    let primaryProgramGuide: ProgramGuide?
+    let campaigns: [Campaign]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 8) {
-                    if let primaryProgramName {
-                        Text(primaryProgramName)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(PoengjegerTheme.accent)
-                            .textCase(.uppercase)
+                    if let primaryProgram {
+                        NavigationLink {
+                            ProgramDetailView(
+                                program: primaryProgram,
+                                guide: primaryProgramGuide,
+                                campaigns: campaigns
+                            )
+                        } label: {
+                            Label(primaryProgram.name.uppercased(), systemImage: "book")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(PoengjegerTheme.accent)
+                        }
+                        .accessibilityLabel("Åpne programguide for \(primaryProgram.name)")
                     }
 
                     Text(campaign.title)

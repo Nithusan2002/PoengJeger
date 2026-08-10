@@ -5,6 +5,7 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 ## Kampanjeinnhold
 
 - `bonus_programs`: støttede bonusprogrammer.
+- `program_guides`: redaksjonelle strategiguider per bonusprogram med publiseringsstatus, intro, nøkkelfelter for verdi/utløp, tipsseksjoner og siste kontrolltidspunkt.
 - `campaign_categories`: kampanjekategorier.
 - `campaigns`: publiseringslivssyklus, kjerneinnhold, datoer, primærprogram og redaksjonell kortvurdering.
 - `campaign_programs`: kobler en kampanje til flere programmer.
@@ -15,6 +16,8 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 - `campaign_audit_log`: statusendringer for kampanjer.
 
 En publisert kampanje krever minst én kildehenvisning og `last_verified_at`. Dette håndheves i databasen.
+
+Publiserte programguider kan leses av klienten for aktive bonusprogrammer. Utkast og arkiverte guider er kun tilgjengelige for redaksjonelle adminbrukere.
 
 ## Brukerdata
 
