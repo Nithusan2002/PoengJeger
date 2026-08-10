@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CampaignDetailView: View {
     @Environment(AppEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
 
     let campaign: Campaign
 
@@ -10,31 +11,13 @@ struct CampaignDetailView: View {
 
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                DetailHero(
+                DetailIntro(
                     campaign: campaign,
-                    primaryProgramName: primaryProgramName,
-                    isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
-                ) {
-                    toggleFavorite(in: &environment.userSession.favoriteCampaignIDs)
-                }
-
-                DetailCard(title: "Hva får du?", systemImage: "gift") {
-                    DetailTextBlock(text: campaign.summary, prominence: .lead)
-                    DetailTextBlock(text: campaign.details)
-                }
-
-                if !campaign.requirements.isEmpty {
-                    DetailCard(title: "Viktigste krav", systemImage: "checklist") {
-                        VStack(alignment: .leading, spacing: 10) {
-                            ForEach(campaign.sortedRequirements) { requirement in
-                                DetailRequirementRow(text: requirement.text)
-                            }
-                        }
-                    }
-                }
+                    primaryProgramName: primaryProgramName
+                )
 
                 if hasEditorialAssessment {
-                    DetailCard(title: "Hvorfor interessant", systemImage: "chart.line.uptrend.xyaxis") {
+                    DetailSection(title: "Hvorfor interessant", systemImage: "chart.line.uptrend.xyaxis") {
                         VStack(alignment: .leading, spacing: 12) {
                             if !campaign.editorialSummary.isEmpty {
                                 DetailTextBlock(text: campaign.editorialSummary, prominence: .lead)
@@ -44,42 +27,53 @@ struct CampaignDetailView: View {
                                 DetailTextBlock(text: assessment.reasonWhyItMatters)
 
                                 if let estimatedValueText = assessment.estimatedValueText {
-                                    DetailMetricRow(title: "Estimert verdi", value: estimatedValueText)
+                                    DetailFactLine(title: "Estimert verdi", value: estimatedValueText)
                                 }
 
-                                ViewThatFits(in: .horizontal) {
-                                    HStack(spacing: 10) {
-                                        editorialMetrics
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 10) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Divider()
+                                    VStack(alignment: .leading, spacing: 8) {
                                         editorialMetrics
                                     }
                                 }
                             } else if let score = campaign.editorialScore {
-                                DetailMetricRow(title: "Redaksjonell vurdering", value: campaign.editorialTierLabel)
-                                DetailMetricRow(title: "Scoregrunnlag", value: "\(score)/100")
+                                DetailFactLine(title: "Redaksjonell vurdering", value: campaign.editorialTierLabel)
+                                DetailFactLine(title: "Scoregrunnlag", value: "\(score)/100")
+                            }
+                        }
+                    }
+                }
+
+                DetailSection(title: "Slik fungerer det", systemImage: "gift") {
+                    DetailTextBlock(text: campaign.details)
+                }
+
+                if !campaign.requirements.isEmpty {
+                    DetailSection(title: "Viktigste krav", systemImage: "checklist") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(campaign.sortedRequirements) { requirement in
+                                DetailRequirementRow(text: requirement.text)
                             }
                         }
                     }
                 }
 
                 if hasLimitations {
-                    DetailCard(title: "Begrensninger", systemImage: "exclamationmark.triangle") {
+                    DetailSection(title: "Begrensninger", systemImage: "exclamationmark.triangle") {
                         VStack(alignment: .leading, spacing: 12) {
                             if let riskNote = campaign.editorialAssessment?.riskNote {
                                 DetailTextBlock(text: riskNote)
                             }
 
                             if !campaign.geoRestrictions.isEmpty {
-                                DetailMetricRow(
+                                DetailFactLine(
                                     title: "Geografi",
                                     value: campaign.geoRestrictions.map(\.countryCode).joined(separator: ", ")
                                 )
                             }
 
                             if let endDate = campaign.endDate {
-                                DetailMetricRow(
+                                DetailFactLine(
                                     title: "Utløper",
                                     value: endDate.formatted(date: .long, time: .omitted)
                                 )
@@ -88,9 +82,9 @@ struct CampaignDetailView: View {
                     }
                 }
 
-                DetailCard(title: "Fakta og kilde", systemImage: "link") {
+                DetailSection(title: "Fakta og kilde", systemImage: "link") {
                     VStack(alignment: .leading, spacing: 14) {
-                        CampaignFactGrid(campaign: campaign)
+                        CampaignFactList(campaign: campaign)
 
                         if !campaign.sources.isEmpty {
                             Divider()
@@ -106,19 +100,18 @@ struct CampaignDetailView: View {
 
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 18)
+            .padding(.top, 18)
+            .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
-        .navigationTitle(campaign.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                FavoriteToolbarButton(
-                    isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
-                ) {
-                    toggleFavorite(in: &environment.userSession.favoriteCampaignIDs)
-                }
-            }
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            DetailTopBar(
+                isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id),
+                onBack: { dismiss() },
+                onToggleFavorite: { toggleFavorite(in: &environment.userSession.favoriteCampaignIDs) }
+            )
         }
     }
 
@@ -141,16 +134,16 @@ struct CampaignDetailView: View {
     @ViewBuilder
     private var editorialMetrics: some View {
         if let score = campaign.editorialScore {
-            DetailMetricRow(title: "Vurdering", value: campaign.editorialTierLabel)
-            DetailMetricRow(title: "Scoregrunnlag", value: "\(score)/100")
+            DetailFactLine(title: "Vurdering", value: campaign.editorialTierLabel)
+            DetailFactLine(title: "Scoregrunnlag", value: "\(score)/100")
         }
 
         if let difficultyLevel = campaign.editorialAssessment?.difficultyLevel {
-            DetailMetricRow(title: "Friksjon", value: difficultyLevel.displayName)
+            DetailFactLine(title: "Friksjon", value: difficultyLevel.displayName)
         }
 
         if let availabilityScope = campaign.editorialAssessment?.availabilityScope {
-            DetailMetricRow(title: "Tilgjengelighet", value: availabilityScope.displayName)
+            DetailFactLine(title: "Tilgjengelighet", value: availabilityScope.displayName)
         }
     }
 
@@ -164,14 +157,50 @@ struct CampaignDetailView: View {
 
 }
 
-private struct DetailHero: View {
-    let campaign: Campaign
-    let primaryProgramName: String?
+private struct DetailTopBar: View {
     let isFavorite: Bool
+    let onBack: () -> Void
     let onToggleFavorite: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        HStack(spacing: 10) {
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.title3.weight(.semibold))
+                    .frame(width: 38, height: 38)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tilbake")
+
+            Spacer(minLength: 8)
+
+            Button(action: onToggleFavorite) {
+                Image(systemName: isFavorite ? "star.fill" : "star")
+                    .font(.title3.weight(.semibold))
+                    .frame(width: 38, height: 38)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(isFavorite ? PoengjegerTheme.highlight : PoengjegerTheme.accent)
+            .accessibilityLabel(isFavorite ? "Fjern favoritt" : "Lagre favoritt")
+            .accessibilityValue(isFavorite ? "Lagret" : "Ikke lagret")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.regularMaterial)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
+    }
+}
+
+private struct DetailIntro: View {
+    let campaign: Campaign
+    let primaryProgramName: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 8) {
                     if let primaryProgramName {
@@ -184,82 +213,111 @@ private struct DetailHero: View {
                     Text(campaign.title)
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.primary)
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: 8)
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) {
-                    heroFacts
-                }
+            Text(campaign.summary)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    heroFacts
-                }
-            }
-
-            Button {
-                onToggleFavorite()
-            } label: {
-                Label(
-                    isFavorite ? "Lagret som favoritt" : "Lagre favoritt",
-                    systemImage: isFavorite ? "star.fill" : "star"
+            VStack(alignment: .leading, spacing: 10) {
+                DetailQuickFactCard(
+                    title: "Verdi",
+                    value: campaign.detailValueLabel,
+                    systemImage: "chart.line.uptrend.xyaxis"
                 )
-                .frame(maxWidth: .infinity)
+
+                HStack(spacing: 10) {
+                    DetailQuickFactCard(
+                        title: "Frist",
+                        value: FeedDateHelper.expiryLabel(campaign.endDate).text,
+                        systemImage: "calendar"
+                    )
+
+                    DetailQuickFactCard(
+                        title: "Friksjon",
+                        value: campaign.editorialAssessment?.difficultyLevel?.displayName ?? "Ukjent",
+                        systemImage: "gauge.with.dots.needle.50percent"
+                    )
+                }
             }
-            .buttonStyle(.borderedProminent)
-            .tint(isFavorite ? PoengjegerTheme.highlight : PoengjegerTheme.accent)
-            .controlSize(.large)
-            .accessibilityHint(isFavorite ? "Fjerner kampanjen fra favoritter." : "Legger kampanjen i favoritter.")
+
+            if let primarySource = campaign.sources.first {
+                CampaignSourceCTA(source: primarySource)
+            }
         }
-        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+}
+
+private struct DetailQuickFactCard: View {
+    let title: String
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Label(title.uppercased(), systemImage: systemImage)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(3)
+                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
         .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 5)
-    }
-
-    @ViewBuilder
-    private var heroFacts: some View {
-        if campaign.editorialScore != nil {
-            DetailMetricRow(title: "Vurdering", value: campaign.editorialTierLabel)
-        }
-
-        if let endDate = campaign.endDate {
-            DetailMetricRow(
-                title: "Utløper",
-                value: endDate.formatted(date: .abbreviated, time: .omitted)
-            )
-        }
-
-        DetailMetricRow(
-            title: "Kontrollert",
-            value: campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted)
-        )
+        .accessibilityElement(children: .combine)
     }
 }
 
-private struct FavoriteToolbarButton: View {
-    let isFavorite: Bool
-    let action: () -> Void
+private struct CampaignSourceCTA: View {
+    let source: CampaignSourceReference
 
     var body: some View {
-        Button(action: action) {
-            Image(systemName: isFavorite ? "star.fill" : "star")
+        VStack(alignment: .leading, spacing: 8) {
+            Link(destination: source.url) {
+                Label("Åpne kampanjesiden", systemImage: "arrow.up.right.square")
+                    .font(.headline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .tint(PoengjegerTheme.accent)
+            .accessibilityLabel("Åpne kampanjesiden hos \(source.sourceName)")
+
+            Text("Primærkilde: \(source.sourceName)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Text("Kampanjer er samlet fra offentlige kilder. Sjekk alltid vilkårene hos tilbyder.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
-        .foregroundStyle(isFavorite ? PoengjegerTheme.highlight : PoengjegerTheme.accent)
-        .accessibilityLabel(isFavorite ? "Fjern favoritt" : "Lagre favoritt")
-        .accessibilityValue(isFavorite ? "Lagret" : "Ikke lagret")
+        .padding(.top, 2)
     }
 }
 
-private struct DetailCard<Content: View>: View {
+private struct DetailSection<Content: View>: View {
     let title: String
     let systemImage: String
     @ViewBuilder var content: Content
@@ -283,24 +341,23 @@ private struct DetailCard<Content: View>: View {
     }
 }
 
-private struct DetailMetricRow: View {
+private struct DetailFactLine: View {
     let title: String
     let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(title)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .frame(width: 104, alignment: .leading)
+
             Text(value)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(PoengjegerTheme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
@@ -321,18 +378,12 @@ private struct DetailRequirementRow: View {
     }
 }
 
-private struct CampaignFactGrid: View {
+private struct CampaignFactList: View {
     let campaign: Campaign
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top, spacing: 10) {
-                facts
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                facts
-            }
+        VStack(alignment: .leading, spacing: 10) {
+            facts
         }
     }
 
@@ -360,13 +411,6 @@ private struct CampaignFactGrid: View {
             )
         }
 
-        if campaign.isFeatured {
-            FactRow(
-                systemImage: "sparkles",
-                title: "Feed-status",
-                value: "Fremhevet"
-            )
-        }
     }
 }
 
@@ -446,6 +490,44 @@ private struct DetailTextBlock: View {
             .font(prominence == .lead ? .headline : .body)
             .foregroundStyle(prominence == .lead ? .primary : .secondary)
             .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+private extension Campaign {
+    var detailValueLabel: String {
+        if let value = editorialAssessment?.estimatedValueText?.detailValueLabel {
+            return value
+        }
+
+        if editorialScore != nil {
+            return editorialTierLabel
+        }
+
+        return "Se vilkår"
+    }
+}
+
+private extension String {
+    var detailValueLabel: String? {
+        let normalized = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+
+        let patterns = [
+            #"\d[\d\s]*(?:kr|kroner)(?:\s+i\s+[A-Za-zÆØÅæøå-]+-bonus)?"#,
+            #"\d[\d\s]*(?:EuroBonus-poeng|CashPoints|poeng)"#,
+            #"\d+\s*%\s+[A-Za-zÆØÅæøå-]+-bonus"#,
+            #"\d+\s*%\s+bonus"#,
+            #"~?\d+(?:,\d+)?\s*cent/poeng"#
+        ]
+
+        for pattern in patterns {
+            if let match = normalized.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
+                return String(normalized[match]).replacingOccurrences(of: #" +"#, with: " ", options: .regularExpression)
+            }
+        }
+
+        let firstSentence = normalized.split(separator: ".").first.map(String.init) ?? normalized
+        return firstSentence.count <= 38 ? firstSentence : nil
     }
 }
 

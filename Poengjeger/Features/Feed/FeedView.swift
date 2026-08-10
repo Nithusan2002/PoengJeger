@@ -83,6 +83,10 @@ struct FeedView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(PoengjegerTheme.background)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear
+                .frame(height: 76)
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -155,7 +159,7 @@ struct FeedView: View {
     private func accessibilityLabel(for campaign: Campaign) -> String {
         let expiry = FeedDateHelper.expiryLabel(campaign.endDate).text
         let programNames = programs(for: campaign).map(\.name).joined(separator: ", ")
-        return "\(campaign.valueLabel). \(campaign.title). \(expiry). \(programNames)."
+        return "\(campaign.feedHeadline). \(campaign.feedReason). \(expiry). \(programNames)."
     }
 }
 
@@ -174,7 +178,7 @@ private struct FeedControlHeader: View {
     let isSearchFocused: FocusState<Bool>.Binding
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kampanjer")
@@ -190,18 +194,20 @@ private struct FeedControlHeader: View {
 
                 Button(action: onToggleSearch) {
                     Image(systemName: isSearchVisible ? "xmark" : "magnifyingglass")
-                        .frame(width: 38, height: 38)
+                        .font(.headline.weight(.semibold))
+                        .frame(width: 34, height: 34)
                 }
                 .buttonStyle(.bordered)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .accessibilityLabel(isSearchVisible ? "Lukk søk" : "Søk")
 
                 Button(action: onOpenProgramFilter) {
                     Image(systemName: "slider.horizontal.3")
-                        .frame(width: 38, height: 38)
+                        .font(.headline.weight(.semibold))
+                        .frame(width: 34, height: 34)
                 }
                 .buttonStyle(.bordered)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .accessibilityLabel("Velg programmer")
             }
 
@@ -214,63 +220,79 @@ private struct FeedControlHeader: View {
                     .accessibilityLabel("Søk i kampanjer")
             }
 
-            HStack(alignment: .center, spacing: 10) {
-                Picker("Sorter", selection: $selectedSort) {
-                    ForEach(FeedSort.allCases) { sort in
-                        Text(sort.title)
-                            .tag(sort)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .accessibilityLabel("Sorter kampanjer")
-
-                Menu {
-                    Button {
-                        selectedCategoryID = nil
-                    } label: {
-                        if selectedCategoryID == nil {
-                            Label("Alle kategorier", systemImage: "checkmark")
-                        } else {
-                            Text("Alle kategorier")
-                        }
-                    }
-
-                    ForEach(categories) { category in
-                        Button {
-                            selectedCategoryID = category.id
-                        } label: {
-                            if selectedCategoryID == category.id {
-                                Label(category.name, systemImage: "checkmark")
-                            } else {
-                                Text(category.name)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    Menu {
+                        ForEach(FeedSort.allCases) { sort in
+                            Button {
+                                selectedSort = sort
+                            } label: {
+                                if selectedSort == sort {
+                                    Label(sort.title, systemImage: "checkmark")
+                                } else {
+                                    Text(sort.title)
+                                }
                             }
                         }
+                    } label: {
+                        FilterChip(
+                            title: selectedSort.title,
+                            systemImage: "arrow.up.arrow.down",
+                            isSelected: true
+                        )
                     }
-                } label: {
-                    Label(selectedCategoryName, systemImage: "tag")
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                        .padding(.horizontal, 10)
-                        .frame(minHeight: 34)
-                        .background(categoryBackground)
-                        .foregroundStyle(categoryForeground)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-                .accessibilityLabel("Velg kategori")
-            }
+                    .accessibilityLabel("Sorter kampanjer")
 
-            if hasSelectedPrograms {
-                Button(showsAllPrograms ? "Vis bare mine programmer" : "Vis alle programmer") {
-                    onToggleShowsAllPrograms()
+                    Menu {
+                        Button {
+                            selectedCategoryID = nil
+                        } label: {
+                            if selectedCategoryID == nil {
+                                Label("Alle kategorier", systemImage: "checkmark")
+                            } else {
+                                Text("Alle kategorier")
+                            }
+                        }
+
+                        ForEach(categories) { category in
+                            Button {
+                                selectedCategoryID = category.id
+                            } label: {
+                                if selectedCategoryID == category.id {
+                                    Label(category.name, systemImage: "checkmark")
+                                } else {
+                                    Text(category.name)
+                                }
+                            }
+                        }
+                    } label: {
+                        FilterChip(
+                            title: selectedCategoryName,
+                            systemImage: "tag",
+                            isSelected: selectedCategoryID != nil
+                        )
+                    }
+                    .accessibilityLabel("Velg kategori")
+
+                    if hasSelectedPrograms {
+                        Button {
+                            onToggleShowsAllPrograms()
+                        } label: {
+                            FilterChip(
+                                title: showsAllPrograms ? "Alle programmer" : "Mine programmer",
+                                systemImage: showsAllPrograms ? "person.2" : "person.crop.circle",
+                                isSelected: showsAllPrograms
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(showsAllPrograms ? "Viser alle programmer" : "Viser dine programmer")
+                    }
                 }
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.accent)
-                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 14)
+        .padding(.top, 10)
+        .padding(.bottom, 12)
         .background(.ultraThinMaterial)
         .overlay(alignment: .bottom) {
             Divider()
@@ -287,12 +309,22 @@ private struct FeedControlHeader: View {
         return category.name
     }
 
-    private var categoryBackground: Color {
-        selectedCategoryID == nil ? PoengjegerTheme.surface : PoengjegerTheme.accent
-    }
+}
 
-    private var categoryForeground: Color {
-        selectedCategoryID == nil ? Color.primary : Color.white
+private struct FilterChip: View {
+    let title: String
+    let systemImage: String
+    let isSelected: Bool
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .font(.subheadline.weight(.semibold))
+            .lineLimit(1)
+            .padding(.horizontal, 10)
+            .frame(minHeight: 34)
+            .background(isSelected ? PoengjegerTheme.accentSoft : PoengjegerTheme.surface)
+            .foregroundStyle(isSelected ? PoengjegerTheme.accent : Color.primary)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
@@ -305,12 +337,12 @@ private struct FeedCampaignRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(campaign.valueLabel)
+                Text(campaign.feedHeadline)
                     .font(.system(size: 20, weight: .heavy, design: .rounded))
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
                     .minimumScaleFactor(0.75)
 
                 Spacer(minLength: 8)
@@ -323,20 +355,28 @@ private struct FeedCampaignRow: View {
                     .accessibilityLabel(expiry.text)
             }
 
-            Text(campaign.title)
-                .font(.subheadline)
+            if campaign.feedHeadline != campaign.title {
+                Text(campaign.title)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Text(campaign.feedReason)
+                .font(.footnote)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if !programs.isEmpty {
+            if campaign.editorialScore != nil || !programs.isEmpty {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) {
-                        programTags
+                        metadata
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        programTags
+                        metadata
                     }
                 }
             }
@@ -346,10 +386,30 @@ private struct FeedCampaignRow: View {
     }
 
     @ViewBuilder
-    private var programTags: some View {
+    private var metadata: some View {
+        if campaign.editorialScore != nil {
+            FeedEditorialTierPill(label: campaign.editorialTierLabel)
+        }
+
         ForEach(programs) { program in
             ProgramTag(program: program)
         }
+    }
+}
+
+private struct FeedEditorialTierPill: View {
+    let label: String
+
+    var body: some View {
+        Text(label.uppercased())
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(PoengjegerTheme.accent)
+            .lineLimit(1)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(PoengjegerTheme.accentSoft)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityLabel("Vurdering \(label)")
     }
 }
 
@@ -464,33 +524,52 @@ private struct ProgramFilterSheet: View {
 }
 
 private extension Campaign {
-    var valueLabel: String {
-        if let estimatedValueText = editorialAssessment?.estimatedValueText?.lowercased() {
-            if estimatedValueText.contains("høy verdi") || estimatedValueText.contains("svært god") {
-                return "Høy verdi"
-            }
+    var feedHeadline: String {
+        if let value = editorialAssessment?.estimatedValueText?.feedValueLabel {
+            return value
+        }
 
-            if estimatedValueText.contains("moderat") || estimatedValueText.contains("middels") {
-                return "Moderat verdi"
-            }
+        return title
+    }
 
-            if estimatedValueText.contains("lav") || estimatedValueText.contains("svak") {
-                return "Lav verdi"
+    var feedReason: String {
+        if let reason = editorialAssessment?.reasonWhyItMatters, !reason.isEmpty {
+            return reason
+        }
+
+        return displaySummary
+    }
+}
+
+private extension String {
+    var feedValueLabel: String? {
+        let normalized = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+
+        let patterns = [
+            #"\d[\d\s]*(?:kr|kroner)(?:\s+i\s+[A-Za-zÆØÅæøå-]+-bonus)?"#,
+            #"\d[\d\s]*(?:EuroBonus-poeng|CashPoints|poeng)"#,
+            #"\d+\s*%\s+[A-Za-zÆØÅæøå-]+-bonus"#,
+            #"\d+\s*%\s+bonus"#,
+            #"\d+\s+dager\s+gratis"#
+        ]
+
+        for pattern in patterns {
+            if let match = normalized.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
+                return String(normalized[match]).normalizedFeedValueLabel
             }
         }
 
-        if let editorialScore {
-            switch editorialScore {
-            case 80...:
-                return "Høy verdi"
-            case 55..<80:
-                return "Moderat verdi"
-            default:
-                return "Tilbud"
-            }
+        let firstSentence = normalized.split(separator: ".").first.map(String.init) ?? normalized
+        if firstSentence.count <= 34 {
+            return firstSentence
         }
 
-        return editorialTierLabel == "Uten vurdering" ? "Tilbud" : editorialTierLabel
+        return nil
+    }
+
+    private var normalizedFeedValueLabel: String {
+        replacingOccurrences(of: #" +"#, with: " ", options: .regularExpression)
     }
 }
 
