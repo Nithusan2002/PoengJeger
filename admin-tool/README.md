@@ -44,6 +44,7 @@ select public.grant_editorial_role(
 ## Hva denne første versjonen gjør
 
 - logger inn med Supabase Auth
+- fornyer utløpende Supabase-session med refresh-token og ber om ny innlogging når sessionen ikke kan fornyes
 - leser `current_editorial_role()`
 - henter `admin_ingestion_candidate_queue`
 - kjører `ingest-campaign-candidates` manuelt for valgte kilder med innlogget admin/editor-token
@@ -76,7 +77,6 @@ server/cron-kjøring, men legges ikke i adminverktøyet eller browseren.
 ## Bevisst ikke med ennå
 
 - rolleadministrasjon i UI
-- refresh-token-flyt
 - full sessionsikkerhet for produksjonsdrift
 - full redigering av multi-program-kampanjer og redaksjonelle vurderingstabeller
 - avansert revisjonshistorikk eller flertrinnsgodkjenning for programguider

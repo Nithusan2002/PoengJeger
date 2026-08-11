@@ -3,6 +3,7 @@
 
   const CONFIG = window.ADMIN_TOOL_CONFIG || {};
   const STORAGE_KEY = "poengjeger_admin_session";
+  const SESSION_REFRESH_MARGIN_SECONDS = 60;
   const CAMPAIGN_STATUS_LABELS = {
     draft: "Draft",
     published: "Published",
@@ -36,7 +37,8 @@
     selectedCampaignId: null,
     selectedProgramGuideProgramId: null,
     activePanelId: "queue-panel",
-    loading: false
+    loading: false,
+    sessionRefreshPromise: null
   };
 
   const elements = {
@@ -131,12 +133,7 @@
         }
       });
 
-      state.session = {
-        accessToken: session.access_token,
-        refreshToken: session.refresh_token,
-        expiresAt: session.expires_at,
-        userEmail: session.user && session.user.email ? session.user.email : email
-      };
+      state.session = normalizeSessionPayload(session, email);
       persistSession();
 
       elements.passwordInput.value = "";
@@ -157,9 +154,10 @@
     }
 
     renderAuthenticatedShell();
-    setMessage(elements.queueMessage, "Laster rolle og kandidater...", "muted");
+    setMessage(elements.queueMessage, "Laster session, rolle og kandidater...", "muted");
 
     try {
+      await ensureSession();
       state.role = await fetchRole();
 
       if (!state.role || (state.role !== "admin" && state.role !== "editor")) {
@@ -585,7 +583,10 @@
   function renderSessionPill() {
     const email = state.session ? state.session.userEmail : "ukjent";
     const role = state.role ? state.role.toUpperCase() : "UKJENT";
-    elements.sessionPill.textContent = `${email} · ${role}`;
+    const expiry = state.session && state.session.expiresAt
+      ? ` · utløper ${formatTimeFromUnixSeconds(state.session.expiresAt)}`
+      : "";
+    elements.sessionPill.textContent = `${email} · ${role}${expiry}`;
   }
 
   function renderQueue() {
@@ -1897,7 +1898,8 @@
       try {
         await apiRequest("/auth/v1/logout", {
           method: "POST",
-          useSession: true
+          useSession: true,
+          skipSessionRefresh: true
         });
       } catch (_error) {
         // Logout should still clear the local session even if the remote token is already gone.
@@ -1927,6 +1929,23 @@
 
     const requestOptions = options || {};
     const useSession = requestOptions.useSession !== false;
+
+    if (useSession && !requestOptions.skipSessionRefresh) {
+      await ensureSession();
+    }
+
+    const response = await fetchSupabase(path, requestOptions, useSession);
+
+    if (response.status === 401 && useSession && !requestOptions.skipSessionRefresh) {
+      await ensureSession({ force: true });
+      const retryResponse = await fetchSupabase(path, requestOptions, useSession);
+      return parseSupabaseResponse(retryResponse);
+    }
+
+    return parseSupabaseResponse(response);
+  }
+
+  async function fetchSupabase(path, requestOptions, useSession) {
     const headers = {
       apikey: CONFIG.supabasePublishableKey,
       Accept: "application/json"
@@ -1946,12 +1965,14 @@
       Object.assign(headers, requestOptions.extraHeaders);
     }
 
-    const response = await fetch(`${CONFIG.supabaseUrl}${path}`, {
+    return fetch(`${CONFIG.supabaseUrl}${path}`, {
       method: requestOptions.method || "GET",
       headers,
       body: requestOptions.body ? JSON.stringify(requestOptions.body) : undefined
     });
+  }
 
+  async function parseSupabaseResponse(response) {
     const isJson = (response.headers.get("content-type") || "").includes("application/json");
     const payload = isJson ? await response.json() : await response.text();
 
@@ -1980,8 +2001,22 @@
       throw new Error("Du må være logget inn for å bruke denne handlingen.");
     }
 
+    await ensureSession();
+
     const functionsUrl = CONFIG.supabaseUrl.replace(".supabase.co", ".functions.supabase.co");
     const requestOptions = options || {};
+    const response = await fetchFunction(functionsUrl, path, requestOptions);
+
+    if (response.status === 401) {
+      await ensureSession({ force: true });
+      const retryResponse = await fetchFunction(functionsUrl, path, requestOptions);
+      return parseFunctionResponse(retryResponse);
+    }
+
+    return parseFunctionResponse(response);
+  }
+
+  function fetchFunction(functionsUrl, path, requestOptions) {
     const headers = {
       apikey: CONFIG.supabasePublishableKey,
       authorization: `Bearer ${state.session.accessToken}`,
@@ -1992,12 +2027,14 @@
       headers["Content-Type"] = "application/json";
     }
 
-    const response = await fetch(`${functionsUrl}${path}`, {
+    return fetch(`${functionsUrl}${path}`, {
       method: requestOptions.method || "GET",
       headers,
       body: requestOptions.body ? JSON.stringify(requestOptions.body) : undefined
     });
+  }
 
+  async function parseFunctionResponse(response) {
     const isJson = (response.headers.get("content-type") || "").includes("application/json");
     const payload = isJson ? await response.json() : await response.text();
 
@@ -2015,6 +2052,81 @@
     }
 
     return payload;
+  }
+
+  async function ensureSession(options) {
+    const shouldForce = Boolean(options && options.force);
+
+    if (!state.session || !state.session.accessToken) {
+      throw new Error("Du må være logget inn for å bruke denne handlingen.");
+    }
+
+    if (!state.session.refreshToken) {
+      handleExpiredSession();
+      throw new Error("Sessionen mangler refresh-token. Logg inn på nytt.");
+    }
+
+    if (!shouldForce && !isSessionExpiring(state.session)) {
+      return state.session;
+    }
+
+    if (!state.sessionRefreshPromise) {
+      state.sessionRefreshPromise = refreshSession()
+        .catch((error) => {
+          handleExpiredSession();
+          throw error;
+        })
+        .finally(() => {
+          state.sessionRefreshPromise = null;
+        });
+    }
+
+    return state.sessionRefreshPromise;
+  }
+
+  async function refreshSession() {
+    const previousEmail = state.session ? state.session.userEmail : null;
+    const response = await authRequest("/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      body: {
+        refresh_token: state.session.refreshToken
+      }
+    });
+
+    state.session = normalizeSessionPayload(response, previousEmail);
+    persistSession();
+    renderSessionPill();
+
+    return state.session;
+  }
+
+  function normalizeSessionPayload(session, fallbackEmail) {
+    if (!session || !session.access_token || !session.refresh_token) {
+      throw new Error("Supabase returnerte ikke en komplett session.");
+    }
+
+    return {
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+      expiresAt: session.expires_at || null,
+      userEmail: session.user && session.user.email ? session.user.email : fallbackEmail || "ukjent"
+    };
+  }
+
+  function isSessionExpiring(session) {
+    if (!session.expiresAt) {
+      return false;
+    }
+
+    const secondsUntilExpiry = Number(session.expiresAt) - Math.floor(Date.now() / 1000);
+    return secondsUntilExpiry <= SESSION_REFRESH_MARGIN_SECONDS;
+  }
+
+  function handleExpiredSession() {
+    clearSession();
+    state.role = null;
+    renderUnauthenticated();
+    setMessage(elements.authMessage, "Sessionen er utløpt. Logg inn på nytt.", "error");
   }
 
   function clampIngestionLimit(value) {
@@ -2080,7 +2192,12 @@
   function loadSession() {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
+      const session = raw ? JSON.parse(raw) : null;
+      if (!session || !session.accessToken || !session.refreshToken) {
+        return null;
+      }
+
+      return session;
     } catch (_error) {
       return null;
     }
@@ -2112,6 +2229,18 @@
 
     return new Intl.DateTimeFormat("nb-NO", {
       dateStyle: "medium",
+      timeStyle: "short"
+    }).format(date);
+  }
+
+  function formatTimeFromUnixSeconds(value) {
+    const date = new Date(Number(value) * 1000);
+
+    if (Number.isNaN(date.getTime())) {
+      return "ukjent";
+    }
+
+    return new Intl.DateTimeFormat("nb-NO", {
       timeStyle: "short"
     }).format(date);
   }
