@@ -1441,11 +1441,21 @@
     });
 
     try {
-      await updateCampaign(payload);
+      const isPublishing = payload.status === "published" && originalCampaign.status !== "published";
+      if (isPublishing) {
+        await updateCampaign({ ...payload, status: "draft" });
+      } else {
+        await updateCampaign(payload);
+      }
+
       await upsertEditorialAssessment(payload);
       await replaceCampaignProgramLinks(payload);
       await replaceCampaignRequirements(payload);
       await upsertPrimarySource(payload, originalCampaign);
+
+      if (isPublishing) {
+        await updateCampaign(payload);
+      }
 
       setMessage(elements.campaignMessage, "Kampanjen ble lagret.", "success");
       await refreshCampaigns();
