@@ -32,6 +32,12 @@ Begrunnelse:
 - Bedre arbeidsflate for tabeller, review, filtrering og redigering.
 - Mindre produktstøy i iOS-MVP-en.
 
+## Status
+
+Første operative adminflate finnes i `admin-tool/`. Den er fortsatt en intern MVP, men dekker kandidat-review, manuell innhenting, promotering til `draft`, kampanjeredigering, publisering og vedlikehold av `program_guides`.
+
+Dette dokumentet beskriver derfor målbildet og avgrensningen for adminflaten. For konkret lokal kjøring og nåværende funksjoner, bruk `admin-tool/README.md`.
+
 ## Brukerproblem
 
 Redaksjonen trenger i dag database- eller SQL-basert arbeid for å håndtere kandidater og kampanjer. Det er for tungvint til daglig drift og øker risikoen for feil, treg publisering og ujevn datakvalitet.
@@ -193,9 +199,10 @@ En kampanje skal ikke kunne publiseres uten:
 
 ## Neste tekniske oppgave
 
-Den neste konkrete oppgaven bør være å definere live admin-auth og RLS-grenser for dette verktøyet:
+Live admin-auth og RLS-grenser er etablert i første form gjennom `editorial_user_roles`, `current_editorial_role()`, `is_admin()` og admin-RPC-er. Neste konkrete oppgaver bør være:
 
-1. modell for admin-rolle i Supabase
-2. RLS-policyer for `ingestion_candidates`, `campaigns` og relevante relasjoner
-3. hvilke operasjoner som går via RPC versus direkte tabellskriving
-4. minste skjema for draft-redigering og publiseringsvalidering
+1. fullføre QA mot `docs/release-readiness.md`
+2. dokumentere og teste bootstrap, granting og revoking av interne roller
+3. legge til operativ liste for kampanjer som er utløpt eller trenger ny kontroll
+4. avklare minste varslingsflyt før push bygges, se `docs/notification-strategy.md`
+5. vurdere om flere kampanjefelt må flyttes fra direkte tabellskriving til eksplisitte RPC-er

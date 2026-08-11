@@ -6,6 +6,8 @@ Dette dokumentet beskriver en konkret teknisk plan for Poengjeger MVP basert på
 - `AGENTS.md`
 - `docs/product-brief.md`
 
+Status: Dette er et plan- og arkitekturdokument. Flere deler er nå implementert eller konkretisert i migrasjoner, iOS-kode, `admin-tool/`, `docs/data-model.md`, `docs/admin-tool-mvp.md`, `docs/ingestion-connectors.md` og `docs/release-readiness.md`. Ved konflikt er migrasjoner og gjeldende kode teknisk sannhetskilde, mens nyere operative dokumenter styrer arbeidsflyt.
+
 ## 2. Bekreftede krav
 
 Følgende er eksplisitt bekreftet i prosjektgrunnlaget:

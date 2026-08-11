@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Readiness"
+  short_description: "Kontroller Poengjeger før pilot eller produksjonsutrulling."
+  default_prompt: "Kontroller om denne Poengjeger-endringen er klar for release."

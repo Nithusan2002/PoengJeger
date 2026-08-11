@@ -37,14 +37,17 @@ Bruk relevante Skills fra `.agents/skills/` for arbeidsområdet.
 | Ny kampanjekilde, innhenting, connector, endrings- eller duplikatdeteksjon | `campaign-monitoring` |
 | Kampanjeinnhold, oppsummering, vilkår, tagging, rangering eller kommersielt innhold | `content-quality` |
 | Nye funksjoner, ekstern data, bakgrunnsjobber eller sikkerhetskritiske endringer | `qa-security` |
+| Pilot, produksjonsutrulling, release readiness eller go/no-go | `release-readiness` etter relevante fag-Skills |
 
-`qa-security` er obligatorisk før produksjonsutrulling.
+`qa-security` og `release-readiness` er obligatoriske før produksjonsutrulling.
 
 ## Arbeidsrekkefølge
 
 For nye brukerfunksjoner: produktvurdering, iOS-/UX-vurdering, backend ved behov, implementering, QA.
 
 For automatisk kampanjeinnhenting: kampanjeovervåking, innholds- og kildekvalitet, backend og lagring, QA, manuell redaksjonell godkjenning.
+
+For pilot eller produksjon: relevante fag-Skills, QA/security, release-readiness og eksplisitt go/no-go.
 
 ## Stopp før
 

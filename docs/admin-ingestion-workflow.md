@@ -10,7 +10,8 @@ Målet er å unngå direkte publisering fra maskinelt oppdaget innhold.
 
 - Kandidater skal ikke publiseres direkte.
 - Publiserte kampanjer må fortsatt ha verifisert kilde og `last_verified_at`.
-- Admin-flyten er foreløpig database-/Supabase-basert, ikke et eget operativt UI.
+- Admin-flyten har både databaseprimitiver og en første intern webflate i `admin-tool/`.
+- SQL Editor skal være fallback for bootstrap, feilsøking og nødoperasjoner, ikke normal daglig review.
 
 ## Flyt
 
@@ -50,6 +51,14 @@ Den oppretter én kandidat i status `new` for SAS EuroBonus, ment for manuell re
 
 ## Slik tar du dette i bruk
 
+For daglig review brukes det interne adminverktøyet:
+
+```bash
+python3 -m http.server 4173 --directory admin-tool
+```
+
+Åpne `http://localhost:4173`, logg inn med Supabase Auth, og kontroller at brukeren har rolle i `editorial_user_roles`.
+
 Hvis du kjører via CLI mot remote prosjekt, trenger du først prosjektlink og databasepassord.
 
 Eksempel:
@@ -69,7 +78,7 @@ Hvis du ikke vil bruke CLI ennå, er den enkleste veien:
 4. Kjør `select * from public.admin_ingestion_candidate_queue order by detected_at desc;`
 
 Merk:
-- Review-/promote-funksjonene er laget for å fungere både fra app/RPC og fra Supabase SQL Editor.
+- Review-/promote-funksjonene er laget for å fungere fra adminverktøy/RPC og fra Supabase SQL Editor.
 - I SQL Editor kan `reviewed_by` være tom fordi handlingen ikke går via en sluttbruker-token. `reviewed_at` og status brukes derfor som minimumsspor i denne første admin-MVP-en.
 - Promote oppretter fortsatt bare `draft`, ikke `published`.
 
@@ -147,4 +156,4 @@ select public.promote_ingestion_candidate_to_campaign(
 
 ## Neste naturlige utvidelse
 
-Når denne flyten fungerer, er neste steg å legge et lite separat internt adminverktøy over de samme primitivene i stedet for å bruke SQL direkte eller bygge live admin i iOS-klienten.
+Neste steg er ikke å bygge admin inn i iOS-klienten. Forbedre i stedet det separate adminverktøyet med tryggere sesjonshåndtering, rolleadministrasjon, bedre lister for utløpende innhold og release-kontrollene i `docs/release-readiness.md`.
