@@ -220,73 +220,17 @@ private struct FeedControlHeader: View {
                     .accessibilityLabel("Søk i kampanjer")
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            ViewThatFits(in: .horizontal) {
                 HStack(spacing: 8) {
-                    Menu {
-                        ForEach(FeedSort.allCases) { sort in
-                            Button {
-                                selectedSort = sort
-                            } label: {
-                                if selectedSort == sort {
-                                    Label(sort.title, systemImage: "checkmark")
-                                } else {
-                                    Text(sort.title)
-                                }
-                            }
-                        }
-                    } label: {
-                        FilterChip(
-                            title: selectedSort.title,
-                            systemImage: "arrow.up.arrow.down",
-                            isSelected: true
-                        )
-                    }
-                    .accessibilityLabel("Sorter kampanjer")
+                    sortFilterControl
+                    categoryFilterControl
+                    programScopeControl
+                }
 
-                    Menu {
-                        Button {
-                            selectedCategoryID = nil
-                        } label: {
-                            if selectedCategoryID == nil {
-                                Label("Alle kategorier", systemImage: "checkmark")
-                            } else {
-                                Text("Alle kategorier")
-                            }
-                        }
-
-                        ForEach(categories) { category in
-                            Button {
-                                selectedCategoryID = category.id
-                            } label: {
-                                if selectedCategoryID == category.id {
-                                    Label(category.name, systemImage: "checkmark")
-                                } else {
-                                    Text(category.name)
-                                }
-                            }
-                        }
-                    } label: {
-                        FilterChip(
-                            title: selectedCategoryName,
-                            systemImage: "tag",
-                            isSelected: selectedCategoryID != nil
-                        )
-                    }
-                    .accessibilityLabel("Velg kategori")
-
-                    if hasSelectedPrograms {
-                        Button {
-                            onToggleShowsAllPrograms()
-                        } label: {
-                            FilterChip(
-                                title: showsAllPrograms ? "Alle" : "Mine valg",
-                                systemImage: showsAllPrograms ? "person.2" : "person.crop.circle",
-                                isSelected: showsAllPrograms
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(showsAllPrograms ? "Viser alle programmer" : "Viser dine programmer")
-                    }
+                VStack(alignment: .leading, spacing: 8) {
+                    sortFilterControl
+                    categoryFilterControl
+                    programScopeControl
                 }
             }
         }
@@ -296,6 +240,79 @@ private struct FeedControlHeader: View {
         .background(.ultraThinMaterial)
         .overlay(alignment: .bottom) {
             Divider()
+        }
+    }
+
+    private var sortFilterControl: some View {
+        Menu {
+            ForEach(FeedSort.allCases) { sort in
+                Button {
+                    selectedSort = sort
+                } label: {
+                    if selectedSort == sort {
+                        Label(sort.title, systemImage: "checkmark")
+                    } else {
+                        Text(sort.title)
+                    }
+                }
+            }
+        } label: {
+            FilterChip(
+                title: selectedSort.title,
+                systemImage: "arrow.up.arrow.down",
+                isSelected: true
+            )
+        }
+        .accessibilityLabel("Sorter kampanjer")
+    }
+
+    private var categoryFilterControl: some View {
+        Menu {
+            Button {
+                selectedCategoryID = nil
+            } label: {
+                if selectedCategoryID == nil {
+                    Label("Alle kategorier", systemImage: "checkmark")
+                } else {
+                    Text("Alle kategorier")
+                }
+            }
+
+            ForEach(categories) { category in
+                Button {
+                    selectedCategoryID = category.id
+                } label: {
+                    if selectedCategoryID == category.id {
+                        Label(category.name, systemImage: "checkmark")
+                    } else {
+                        Text(category.name)
+                    }
+                }
+            }
+        } label: {
+            FilterChip(
+                title: selectedCategoryName,
+                systemImage: "tag",
+                isSelected: selectedCategoryID != nil
+            )
+        }
+        .accessibilityLabel("Velg kategori")
+    }
+
+    @ViewBuilder
+    private var programScopeControl: some View {
+        if hasSelectedPrograms {
+            Button {
+                onToggleShowsAllPrograms()
+            } label: {
+                FilterChip(
+                    title: showsAllPrograms ? "Alle" : "Mine valg",
+                    systemImage: showsAllPrograms ? "person.2" : "person.crop.circle",
+                    isSelected: showsAllPrograms
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showsAllPrograms ? "Viser alle programmer" : "Viser dine programmer")
         }
     }
 

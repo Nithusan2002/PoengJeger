@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import Poengjeger
 
+@Suite(.serialized)
 struct ScannableFeedUseCaseTests {
     @Test
     func displaySummaryPrefersEditorialSummaryWhenPresent() {
@@ -45,6 +46,103 @@ struct ScannableFeedUseCaseTests {
         let decoded = try JSONDecoder().decode(UserSession.self, from: data)
 
         #expect(decoded == session)
+    }
+
+    @MainActor
+    @Test
+    func appEnvironmentRefreshLoadsBootstrapDataAndPrunesUnavailableSelections() async {
+        let staleProgramID = UUID()
+        let availableCampaign = makeCampaign(linkedProgramIDs: [SampleData.trumf.id])
+        let repository = StaticCampaignRepository(
+            data: CampaignBootstrapData(
+                programs: [SampleData.trumf],
+                programGuides: SampleData.programGuides.filter { $0.programID == SampleData.trumf.id },
+                campaigns: [availableCampaign],
+                dataSource: .supabase
+            )
+        )
+        let environment = AppEnvironment(
+            campaignRepository: repository,
+            adminRepository: MockAdminRepository(),
+            userSession: UserSession(
+                selectedProgramIDs: [SampleData.trumf.id, staleProgramID],
+                favoriteCampaignIDs: [availableCampaign.id]
+            ),
+            userSessionStore: InMemoryUserSessionStore()
+        )
+
+        await environment.refresh()
+
+        #expect(environment.loadState == .loaded)
+        #expect(environment.programs.map(\.id) == [SampleData.trumf.id])
+        #expect(environment.programGuides.map(\.programID) == [SampleData.trumf.id])
+        #expect(environment.campaigns.map(\.id) == [availableCampaign.id])
+        #expect(environment.dataSource == .supabase)
+        #expect(environment.userSession.selectedProgramIDs == [SampleData.trumf.id])
+        #expect(environment.favoriteCampaigns.map(\.id) == [availableCampaign.id])
+    }
+
+    @MainActor
+    @Test
+    func appEnvironmentUsesPersistedSessionAndSavesSessionChanges() {
+        let persistedSession = UserSession(
+            selectedProgramIDs: [SampleData.euroBonus.id],
+            favoriteCampaignIDs: [],
+            notificationsEnabled: false
+        )
+        let store = InMemoryUserSessionStore(session: persistedSession)
+        let environment = AppEnvironment(
+            campaignRepository: MockCampaignRepository(),
+            adminRepository: MockAdminRepository(),
+            userSession: UserSession(selectedProgramIDs: [SampleData.trumf.id], favoriteCampaignIDs: []),
+            userSessionStore: store
+        )
+
+        #expect(environment.userSession == persistedSession)
+
+        let updatedSession = UserSession(
+            selectedProgramIDs: [SampleData.trumf.id],
+            favoriteCampaignIDs: [SampleData.campaigns[0].id],
+            notificationsEnabled: true
+        )
+        environment.userSession = updatedSession
+
+        #expect(store.load() == updatedSession)
+    }
+
+    @MainActor
+    @Test
+    func appEnvironmentLimitsFirstPhaseCampaignsToActiveEuroBonusAndTrumfPrograms() {
+        let environment = AppEnvironment.mock()
+        environment.programs = SampleData.programs
+        environment.campaigns = SampleData.campaigns
+
+        #expect(environment.firstPhasePrograms.map(\.slug) == ["sas-eurobonus", "trumf"])
+        #expect(Set(environment.firstPhaseCampaigns.compactMap(\.primaryProgramID)) == [SampleData.euroBonus.id, SampleData.trumf.id])
+        #expect(!environment.firstPhaseCampaigns.contains { $0.primaryProgramID == SampleData.spann.id })
+    }
+
+    @Test
+    func fallbackCampaignRepositoryReturnsFallbackDataWithErrorReason() async throws {
+        let fallbackCampaign = makeCampaign(title: "Fallback")
+        let repository = FallbackCampaignRepository(
+            primary: FailingCampaignRepository(error: TestRepositoryError.offline),
+            fallback: StaticCampaignRepository(
+                data: CampaignBootstrapData(
+                    programs: [SampleData.trumf],
+                    programGuides: [],
+                    campaigns: [fallbackCampaign],
+                    dataSource: .mock(reason: nil)
+                )
+            )
+        )
+
+        let data = try await repository.fetchBootstrapData()
+
+        #expect(data.programs.map(\.id) == [SampleData.trumf.id])
+        #expect(data.campaigns.map(\.title) == ["Fallback"])
+        #expect(data.dataSource.isFallback)
+        #expect(data.dataSource.label == "Mock-data (Nettverk utilgjengelig)")
     }
 
     @Test
@@ -137,6 +235,186 @@ struct ScannableFeedUseCaseTests {
 
         #expect(data.campaigns.map(\.id) == [campaignID])
         #expect(data.campaigns.first?.sources.first?.checkedAt.timeIntervalSince1970 != nil)
+    }
+
+    @Test
+    func supabaseRepositorySendsAuthHeadersAndMapsCampaignFallbacks() async throws {
+        let programID = UUID()
+        let campaignID = UUID()
+        let categoryID = UUID()
+        let sourceReferenceID = UUID()
+        let requirementID = UUID()
+        let geoRestrictionID = UUID()
+        let headerLock = NSLock()
+        var capturedHeadersByPath: [String: [String: String]] = [:]
+
+        SupabaseURLProtocol.requestHandler = { request in
+            let path = request.url?.path ?? ""
+            headerLock.lock()
+            capturedHeadersByPath[path] = request.allHTTPHeaderFields ?? [:]
+            headerLock.unlock()
+            let json: String
+
+            if path.hasSuffix("/bonus_programs") {
+                json = """
+                [
+                  {
+                    "id": "\(programID.uuidString)",
+                    "slug": "trumf",
+                    "name": "Trumf",
+                    "issuer_name": "NorgesGruppen",
+                    "country_code": "NO",
+                    "is_active": true
+                  }
+                ]
+                """
+            } else if path.hasSuffix("/program_guides") {
+                json = """
+                [
+                  {
+                    "id": "\(UUID().uuidString)",
+                    "program_id": "\(programID.uuidString)",
+                    "status": "published",
+                    "intro_text": "Intro",
+                    "strategy": "Strategi",
+                    "value_estimate_label": "1 kr",
+                    "value_estimate_detail": "Detalj",
+                    "expiration_summary": "Løpende",
+                    "expiration_detail": "Detalj",
+                    "earning_tips": ["Aktiver først"],
+                    "redemption_tips": ["Bruk smart"],
+                    "risk_notes": ["Sjekk vilkår"],
+                    "last_reviewed_at": "2026-08-16T08:00:00Z"
+                  },
+                  {
+                    "id": "\(UUID().uuidString)",
+                    "program_id": "\(programID.uuidString)",
+                    "status": "unknown",
+                    "intro_text": null,
+                    "strategy": "Ignoreres",
+                    "value_estimate_label": null,
+                    "value_estimate_detail": null,
+                    "expiration_summary": null,
+                    "expiration_detail": null,
+                    "earning_tips": [],
+                    "redemption_tips": [],
+                    "risk_notes": [],
+                    "last_reviewed_at": null
+                  }
+                ]
+                """
+            } else if path.hasSuffix("/campaigns") {
+                json = """
+                [
+                  {
+                    "id": "\(campaignID.uuidString)",
+                    "title": "Kampanje med fallback",
+                    "summary": "Kort sammendrag",
+                    "details": "Detaljer",
+                    "status": "published",
+                    "start_date": null,
+                    "end_date": null,
+                    "last_verified_at": "2026-08-16T08:00:00Z",
+                    "primary_program_id": "\(programID.uuidString)",
+                    "editorial_score": 79.6,
+                    "editorial_summary": null,
+                    "is_featured": true,
+                    "campaign_categories": {
+                      "id": "\(categoryID.uuidString)",
+                      "slug": "dagligvare",
+                      "name": "Dagligvare"
+                    },
+                    "campaign_requirements": [
+                      {
+                        "id": "\(requirementID.uuidString)",
+                        "text": "Andre krav",
+                        "sort_order": 2
+                      },
+                      {
+                        "id": "\(UUID().uuidString)",
+                        "text": "Forste krav",
+                        "sort_order": 1
+                      }
+                    ],
+                    "campaign_source_references": [
+                      {
+                        "id": "\(sourceReferenceID.uuidString)",
+                        "url": "https://example.com/kampanje",
+                        "title": null,
+                        "checked_at": "2026-08-16T08:00:01Z",
+                        "evidence_note": "Kontrollert",
+                        "campaign_sources": { "name": "Eksempelkilde" }
+                      },
+                      {
+                        "id": "\(UUID().uuidString)",
+                        "url": "https://[ugyldig",
+                        "title": "Ugyldig",
+                        "checked_at": "2026-08-16T08:00:01Z",
+                        "evidence_note": null,
+                        "campaign_sources": { "name": "Feilkilde" }
+                      }
+                    ],
+                    "campaign_editorial_assessments": {
+                      "score": 79.6,
+                      "reason_why_it_matters": "Redaksjonell vurdering",
+                      "estimated_value_text": "Høy verdi",
+                      "difficulty_level": "medium",
+                      "availability_scope": "broad",
+                      "risk_note": "Kan ha butikkunntak"
+                    },
+                    "campaign_geo_restrictions": [
+                      {
+                        "id": "\(geoRestrictionID.uuidString)",
+                        "country_code": "NO"
+                      }
+                    ],
+                    "campaign_programs": []
+                  }
+                ]
+                """
+            } else {
+                json = "[]"
+            }
+
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(json.utf8))
+        }
+        defer { SupabaseURLProtocol.requestHandler = nil }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [SupabaseURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let repository = SupabaseCampaignRepository(
+            configuration: SupabaseConfiguration(
+                url: URL(string: "https://example.supabase.co")!,
+                publishableKey: "test-key"
+            ),
+            session: session
+        )
+
+        let data = try await repository.fetchBootstrapData()
+        let campaign = try #require(data.campaigns.first)
+
+        #expect(capturedHeadersByPath.values.allSatisfy { headers in
+            headers["apikey"] == "test-key"
+                && headers["Authorization"] == "Bearer test-key"
+                && headers["Accept"] == "application/json"
+        })
+        #expect(data.programGuides.count == 1)
+        #expect(campaign.linkedProgramIDs == [programID])
+        #expect(campaign.editorialScore == 80)
+        #expect(campaign.editorialSummary == "Redaksjonell vurdering")
+        #expect(campaign.requirements.map(\.text) == ["Forste krav", "Andre krav"])
+        #expect(campaign.sources.map(\.id) == [sourceReferenceID])
+        #expect(campaign.sources.first?.title == "Eksempelkilde")
+        #expect(campaign.editorialAssessment?.difficultyLevel == .medium)
+        #expect(campaign.editorialAssessment?.availabilityScope == .broad)
+        #expect(campaign.geoRestrictions.map(\.id) == [geoRestrictionID])
     }
 
     @Test
@@ -429,4 +707,31 @@ private final class SupabaseURLProtocol: URLProtocol {
     }
 
     override func stopLoading() {}
+}
+
+private struct StaticCampaignRepository: CampaignRepository {
+    let data: CampaignBootstrapData
+
+    func fetchBootstrapData() async throws -> CampaignBootstrapData {
+        data
+    }
+}
+
+private struct FailingCampaignRepository: CampaignRepository {
+    let error: Error
+
+    func fetchBootstrapData() async throws -> CampaignBootstrapData {
+        throw error
+    }
+}
+
+private enum TestRepositoryError: LocalizedError {
+    case offline
+
+    var errorDescription: String? {
+        switch self {
+        case .offline:
+            return "Nettverk utilgjengelig"
+        }
+    }
 }
