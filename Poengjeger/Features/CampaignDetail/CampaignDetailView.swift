@@ -3,6 +3,7 @@ import SwiftUI
 struct CampaignDetailView: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.dismiss) private var dismiss
+    @State private var isDetailDisclosureExpanded = false
 
     let campaign: Campaign
 
@@ -15,89 +16,36 @@ struct CampaignDetailView: View {
                     campaign: campaign,
                     primaryProgram: primaryProgram,
                     primaryProgramGuide: primaryProgramGuide,
-                    campaigns: environment.campaigns
+                    campaigns: environment.firstPhaseCampaigns
                 )
-
-                if hasEditorialAssessment {
-                    DetailSection(title: "Hvorfor interessant", systemImage: "chart.line.uptrend.xyaxis") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            if !campaign.editorialSummary.isEmpty {
-                                DetailTextBlock(text: campaign.editorialSummary, prominence: .lead)
-                            }
-
-                            if let assessment = campaign.editorialAssessment {
-                                DetailTextBlock(text: assessment.reasonWhyItMatters)
-
-                                if let estimatedValueText = assessment.estimatedValueText {
-                                    DetailFactLine(title: "Estimert verdi", value: estimatedValueText)
-                                }
-
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Divider()
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        editorialMetrics
-                                    }
-                                }
-                            } else if let score = campaign.editorialScore {
-                                DetailFactLine(title: "Redaksjonell vurdering", value: campaign.editorialTierLabel)
-                                DetailFactLine(title: "Scoregrunnlag", value: "\(score)/100")
-                            }
-                        }
-                    }
-                }
-
-                DetailSection(title: "Slik fungerer det", systemImage: "gift") {
-                    DetailTextBlock(text: campaign.details)
-                }
 
                 if !campaign.requirements.isEmpty {
                     DetailSection(title: "Viktigste krav", systemImage: "checklist") {
                         VStack(alignment: .leading, spacing: 10) {
-                            ForEach(campaign.sortedRequirements) { requirement in
+                            ForEach(primaryRequirements) { requirement in
                                 DetailRequirementRow(text: requirement.text)
                             }
                         }
                     }
                 }
 
-                if hasLimitations {
-                    DetailSection(title: "Begrensninger", systemImage: "exclamationmark.triangle") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            if let riskNote = campaign.editorialAssessment?.riskNote {
-                                DetailTextBlock(text: riskNote)
-                            }
-
-                            if !campaign.geoRestrictions.isEmpty {
-                                DetailFactLine(
-                                    title: "Geografi",
-                                    value: campaign.geoRestrictions.map(\.countryCode).joined(separator: ", ")
-                                )
-                            }
-
-                            if let endDate = campaign.endDate {
-                                DetailFactLine(
-                                    title: "Utløper",
-                                    value: endDate.formatted(date: .long, time: .omitted)
-                                )
-                            }
-                        }
-                    }
+                if let primarySource = campaign.sources.first {
+                    CampaignSourceCTA(source: primarySource)
                 }
 
-                DetailSection(title: "Fakta og kilde", systemImage: "link") {
-                    VStack(alignment: .leading, spacing: 14) {
-                        CampaignFactList(campaign: campaign)
+                if let primaryProgram {
+                    ProgramGuideCTA(
+                        program: primaryProgram,
+                        guide: primaryProgramGuide,
+                        campaigns: environment.firstPhaseCampaigns
+                    )
+                }
 
-                        if !campaign.sources.isEmpty {
-                            Divider()
-
-                            VStack(alignment: .leading, spacing: 12) {
-                                ForEach(campaign.sources) { source in
-                                    SourceLinkRow(source: source)
-                                }
-                            }
-                        }
-                    }
+                DetailDisclosure(
+                    isExpanded: $isDetailDisclosureExpanded,
+                    title: "Vilkår og kilde"
+                ) {
+                    detailedContent
                 }
 
             }
@@ -122,7 +70,8 @@ struct CampaignDetailView: View {
             return nil
         }
 
-        return environment.programs.first(where: { $0.id == primaryProgramID })
+        return environment.firstPhasePrograms.first(where: { $0.id == primaryProgramID })
+            ?? environment.programs.first(where: { $0.id == primaryProgramID })
     }
 
     private var primaryProgramGuide: ProgramGuide? {
@@ -136,6 +85,14 @@ struct CampaignDetailView: View {
 
     private var hasLimitations: Bool {
         campaign.editorialAssessment?.riskNote != nil || !campaign.geoRestrictions.isEmpty || campaign.endDate != nil
+    }
+
+    private var primaryRequirements: [CampaignRequirement] {
+        Array(campaign.sortedRequirements.prefix(3))
+    }
+
+    private var hasAdditionalRequirements: Bool {
+        campaign.sortedRequirements.count > primaryRequirements.count
     }
 
     @ViewBuilder
@@ -154,6 +111,91 @@ struct CampaignDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private var detailedContent: some View {
+        if hasEditorialAssessment {
+            DetailSection(title: "Redaksjonell vurdering", systemImage: "chart.line.uptrend.xyaxis") {
+                VStack(alignment: .leading, spacing: 12) {
+                    if !campaign.editorialSummary.isEmpty {
+                        DetailTextBlock(text: campaign.editorialSummary, prominence: .lead)
+                    }
+
+                    if let assessment = campaign.editorialAssessment {
+                        DetailTextBlock(text: assessment.reasonWhyItMatters)
+
+                        if let estimatedValueText = assessment.estimatedValueText {
+                            DetailFactLine(title: "Estimert verdi", value: estimatedValueText)
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Divider()
+                            VStack(alignment: .leading, spacing: 8) {
+                                editorialMetrics
+                            }
+                        }
+                    } else if let score = campaign.editorialScore {
+                        DetailFactLine(title: "Redaksjonell vurdering", value: campaign.editorialTierLabel)
+                        DetailFactLine(title: "Scoregrunnlag", value: "\(score)/100")
+                    }
+                }
+            }
+        }
+
+        DetailSection(title: "Slik fungerer det", systemImage: "gift") {
+            DetailTextBlock(text: campaign.details)
+        }
+
+        if hasAdditionalRequirements {
+            DetailSection(title: "Alle krav", systemImage: "checklist") {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(campaign.sortedRequirements) { requirement in
+                        DetailRequirementRow(text: requirement.text)
+                    }
+                }
+            }
+        }
+
+        if hasLimitations {
+            DetailSection(title: "Begrensninger", systemImage: "exclamationmark.triangle") {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let riskNote = campaign.editorialAssessment?.riskNote {
+                        DetailTextBlock(text: riskNote)
+                    }
+
+                    if !campaign.geoRestrictions.isEmpty {
+                        DetailFactLine(
+                            title: "Geografi",
+                            value: campaign.geoRestrictions.map(\.countryCode).joined(separator: ", ")
+                        )
+                    }
+
+                    if let endDate = campaign.endDate {
+                        DetailFactLine(
+                            title: "Utløper",
+                            value: endDate.formatted(date: .long, time: .omitted)
+                        )
+                    }
+                }
+            }
+        }
+
+        DetailSection(title: "Fakta og kilde", systemImage: "link") {
+            VStack(alignment: .leading, spacing: 14) {
+                CampaignFactList(campaign: campaign)
+
+                if !campaign.sources.isEmpty {
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(campaign.sources) { source in
+                            SourceLinkRow(source: source)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private func toggleFavorite(in favoriteIDs: inout Set<UUID>) {
         if favoriteIDs.contains(campaign.id) {
             favoriteIDs.remove(campaign.id)
@@ -162,6 +204,34 @@ struct CampaignDetailView: View {
         }
     }
 
+}
+
+private struct DetailDisclosure<Content: View>: View {
+    @Binding var isExpanded: Bool
+    let title: String
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            VStack(alignment: .leading, spacing: 16) {
+                content
+            }
+            .padding(.top, 14)
+        } label: {
+            Label(title, systemImage: "doc.text.magnifyingglass")
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityHint(isExpanded ? "Skjuler vilkår, vurdering og kilder." : "Viser vilkår, vurdering og kilder.")
+    }
 }
 
 private struct DetailTopBar: View {
@@ -242,6 +312,11 @@ private struct DetailIntro: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            DetailDecisionSummary(
+                conclusion: campaign.decisionConclusion,
+                nextStep: campaign.decisionNextStep
+            )
+
             VStack(alignment: .leading, spacing: 10) {
                 DetailQuickFactCard(
                     title: "Verdi",
@@ -264,13 +339,48 @@ private struct DetailIntro: View {
                 }
             }
 
-            if let primarySource = campaign.sources.first {
-                CampaignSourceCTA(source: primarySource)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+}
+
+private struct DetailDecisionSummary: View {
+    let conclusion: String
+    let nextStep: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Kort konklusjon", systemImage: "checkmark.seal")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(PoengjegerTheme.accent)
+
+            Text(conclusion)
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let nextStep {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Neste steg")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+
+                    Text(nextStep)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.accentSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
 }
 
 private struct DetailQuickFactCard: View {
@@ -308,29 +418,50 @@ private struct CampaignSourceCTA: View {
     let source: CampaignSourceReference
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Link(destination: source.url) {
-                Label("Åpne kampanjesiden", systemImage: "arrow.up.right.square")
-                    .font(.headline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .tint(PoengjegerTheme.accent)
-            .accessibilityLabel("Åpne kampanjesiden hos \(source.sourceName)")
-
-            Text("Primærkilde: \(source.sourceName)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-
-            Text("Kampanjer er samlet fra offentlige kilder. Sjekk alltid vilkårene hos tilbyder.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        Link(destination: source.url) {
+            Label("Åpne kampanjesiden", systemImage: "arrow.up.right.square")
+                .font(.headline.weight(.semibold))
                 .frame(maxWidth: .infinity)
         }
-        .padding(.top, 2)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .tint(PoengjegerTheme.accent)
+        .accessibilityLabel("Åpne kampanjesiden hos \(source.sourceName)")
+    }
+}
+
+private struct ProgramGuideCTA: View {
+    let program: BonusProgram
+    let guide: ProgramGuide?
+    let campaigns: [Campaign]
+
+    var body: some View {
+        NavigationLink {
+            ProgramDetailView(
+                program: program,
+                guide: guide,
+                campaigns: campaigns
+            )
+        } label: {
+            Label(programGuideTitle, systemImage: "graduationcap")
+                .font(.headline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+        .tint(PoengjegerTheme.accent)
+        .accessibilityLabel("Åpne programguide for \(program.name)")
+    }
+
+    private var programGuideTitle: String {
+        switch program.slug {
+        case "sas-eurobonus":
+            return "Forstå EuroBonus-poeng"
+        case "trumf":
+            return "Forstå Trumf-bonus"
+        default:
+            return "Forstå \(program.name)"
+        }
     }
 }
 
@@ -521,6 +652,31 @@ private extension Campaign {
         }
 
         return "Se vilkår"
+    }
+
+    var decisionConclusion: String {
+        if !editorialSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return editorialSummary
+        }
+
+        if let reason = editorialAssessment?.reasonWhyItMatters,
+           !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return reason
+        }
+
+        return summary
+    }
+
+    var decisionNextStep: String? {
+        if let firstRequirement = sortedRequirements.first?.text {
+            return firstRequirement
+        }
+
+        let normalizedDetails = details.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedDetails.isEmpty else { return nil }
+
+        let firstSentence = normalizedDetails.split(separator: ".").first.map(String.init) ?? normalizedDetails
+        return firstSentence.count <= 120 ? firstSentence : nil
     }
 }
 
