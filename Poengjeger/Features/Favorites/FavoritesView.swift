@@ -4,11 +4,14 @@ struct FavoritesView: View {
     @Environment(AppEnvironment.self) private var environment
 
     private var favorites: [Campaign] {
-        environment.favoriteCampaigns
+        let firstPhaseProgramIDs = Set(environment.firstPhasePrograms.map(\.id))
+        return environment.favoriteCampaigns.filter { campaign in
+            campaign.linkedProgramIDs.contains { firstPhaseProgramIDs.contains($0) }
+        }
     }
 
     private var programNamesByID: [UUID: String] {
-        Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0.name) })
+        Dictionary(uniqueKeysWithValues: environment.firstPhasePrograms.map { ($0.id, $0.name) })
     }
 
     var body: some View {

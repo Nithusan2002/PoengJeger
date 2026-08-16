@@ -124,7 +124,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
         queryItems: [URLQueryItem]
     ) async throws -> Response {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = SupabaseDateDecoder.strategy
 
         guard var components = URLComponents(url: configuration.url, resolvingAgainstBaseURL: false) else {
             throw SupabaseRepositoryError.invalidConfiguration
@@ -474,6 +474,26 @@ private struct CampaignProgramLinkDTO: Decodable {
 
 private struct SupabaseAPIError: Decodable {
     let message: String
+}
+
+private enum SupabaseDateDecoder {
+    static let strategy = JSONDecoder.DateDecodingStrategy.custom { decoder in
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        let fractionalSecondsFormatter = ISO8601DateFormatter()
+        fractionalSecondsFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let standardFormatter = ISO8601DateFormatter()
+        standardFormatter.formatOptions = [.withInternetDateTime]
+
+        if let date = fractionalSecondsFormatter.date(from: value) ?? standardFormatter.date(from: value) {
+            return date
+        }
+
+        throw DecodingError.dataCorruptedError(
+            in: container,
+            debugDescription: "Invalid Supabase timestamp: \(value)"
+        )
+    }
 }
 
 enum SupabaseRepositoryError: LocalizedError {

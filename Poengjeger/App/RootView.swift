@@ -17,7 +17,7 @@ struct RootView: View {
                     description: Text(message)
                 )
             default:
-                if environment.userSession.selectedProgramIDs.isEmpty {
+                if environment.selectedFirstPhaseProgramIDs.isEmpty {
                     OnboardingView()
                 } else {
                     MainTabView()

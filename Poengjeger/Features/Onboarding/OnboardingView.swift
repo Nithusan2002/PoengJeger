@@ -4,6 +4,10 @@ struct OnboardingView: View {
     @Environment(AppEnvironment.self) private var environment
     @State private var draftSelectedProgramIDs: Set<UUID> = []
 
+    private var programs: [BonusProgram] {
+        environment.firstPhasePrograms
+    }
+
     var body: some View {
         @Bindable var environment = environment
 
@@ -12,16 +16,16 @@ struct OnboardingView: View {
                 LazyVStack(alignment: .leading, spacing: 16) {
                     OnboardingHeader(
                         selectedCount: draftSelectedProgramIDs.count,
-                        programCount: environment.programs.count
+                        programCount: programs.count
                     )
 
                     OnboardingProgramControls(
-                        programs: environment.programs,
+                        programs: programs,
                         selectedProgramIDs: $draftSelectedProgramIDs
                     )
 
                     OnboardingProgramList(
-                        programs: environment.programs,
+                        programs: programs,
                         selectedProgramIDs: $draftSelectedProgramIDs
                     )
 
@@ -50,7 +54,9 @@ struct OnboardingView: View {
                 await environment.refresh()
             }
             .onAppear {
-                draftSelectedProgramIDs = environment.userSession.selectedProgramIDs
+                let firstPhaseProgramIDs = Set(programs.map(\.id))
+                let selectedFirstPhaseProgramIDs = environment.userSession.selectedProgramIDs.intersection(firstPhaseProgramIDs)
+                draftSelectedProgramIDs = selectedFirstPhaseProgramIDs.isEmpty ? firstPhaseProgramIDs : selectedFirstPhaseProgramIDs
             }
         }
     }
@@ -63,7 +69,7 @@ private struct OnboardingHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Velg programmene du følger")
+                Text("Få oversikt over EuroBonus og Trumf")
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(.primary)
 
@@ -75,7 +81,7 @@ private struct OnboardingHeader: View {
                     .accessibilityLabel("\(selectedCount) av \(programCount) programmer valgt")
             }
 
-            Text("Feed og varsler bruker valgene dine til å vise kampanjer med relevante frister, vilkår og kildegrunnlag.")
+            Text("Velg programmene du vil følge først. Valget styrer Nå-feeden, guidene og senere varsler.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -118,7 +124,7 @@ private struct OnboardingProgramList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Bonusprogrammer")
+            Text("Første fase")
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 16)
@@ -185,7 +191,7 @@ struct ProgramSelectionControlsSection: View {
             HStack {
                 Text("Valgt nå")
                 Spacer()
-                Text("\(selectedProgramIDs.count) av \(programs.count)")
+                Text("\(selectedProgramCount) av \(programs.count)")
                     .foregroundStyle(.secondary)
             }
 
@@ -195,10 +201,14 @@ struct ProgramSelectionControlsSection: View {
             .disabled(programs.isEmpty)
 
             Button("Tøm valg", role: .destructive) {
-                selectedProgramIDs.removeAll()
+                selectedProgramIDs.subtract(Set(programs.map(\.id)))
             }
-            .disabled(selectedProgramIDs.isEmpty)
+            .disabled(selectedProgramCount == 0)
         }
+    }
+
+    private var selectedProgramCount: Int {
+        selectedProgramIDs.intersection(Set(programs.map(\.id))).count
     }
 }
 

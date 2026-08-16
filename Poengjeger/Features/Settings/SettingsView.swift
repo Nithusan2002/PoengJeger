@@ -3,6 +3,10 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppEnvironment.self) private var environment
 
+    private var programs: [BonusProgram] {
+        environment.firstPhasePrograms
+    }
+
     var body: some View {
         @Bindable var environment = environment
 
@@ -13,18 +17,18 @@ struct SettingsView: View {
             }
 
             ProgramSelectionControlsSection(
-                programs: environment.programs,
+                programs: programs,
                 selectedProgramIDs: $environment.userSession.selectedProgramIDs
             )
 
             ProgramSelectionSection(
                 title: "Valgte programmer",
-                programs: environment.programs,
+                programs: programs,
                 selectedProgramIDs: $environment.userSession.selectedProgramIDs
             )
 
             Section("Programguider") {
-                ForEach(environment.programs) { program in
+                ForEach(programs) { program in
                     NavigationLink {
                         ProgramDetailView(
                             program: program,

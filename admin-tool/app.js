@@ -1028,7 +1028,7 @@
             <button type="button" class="success" data-publish-action="publish">Lagre og publiser</button>
             <button type="button" class="secondary" data-publish-action="archive">Arkiver</button>
           </div>
-          <span class="help">Publisering krever minst én kilde, tittel, beskrivelse og <code>last_verified_at</code>.</span>
+          <span class="help">Publisering krever bonusprogram, https-kilde, tittel, beskrivelse, redaksjonell begrunnelse og <code>last_verified_at</code>.</span>
         </div>
       </form>
     `;
@@ -1441,22 +1441,7 @@
     });
 
     try {
-      const isPublishing = payload.status === "published" && originalCampaign.status !== "published";
-      if (isPublishing) {
-        await updateCampaign({ ...payload, status: "draft" });
-      } else {
-        await updateCampaign(payload);
-      }
-
-      await upsertEditorialAssessment(payload);
-      await replaceCampaignProgramLinks(payload);
-      await replaceCampaignRequirements(payload);
-      await upsertPrimarySource(payload, originalCampaign);
-
-      if (isPublishing) {
-        await updateCampaign(payload);
-      }
-
+      await saveEditorialCampaign(payload);
       setMessage(elements.campaignMessage, "Kampanjen ble lagret.", "success");
       await refreshCampaigns();
     } catch (error) {
@@ -1530,11 +1515,11 @@
   function validateProgramGuidePayload(payload) {
     const errors = [];
 
-    if (!payload.strategy) {
-      errors.push("Strategi mangler.");
-    }
-
     if (payload.status === "published") {
+      if (!payload.strategy) {
+        errors.push("Publisering krever strategi.");
+      }
+
       if (!payload.introText) {
         errors.push("Publisering krever intro på programsiden.");
       }
@@ -1578,7 +1563,6 @@
       primaryProgramId: emptyToNull(formData.get("primaryProgramId")),
       categoryId: emptyToNull(formData.get("categoryId")),
       editorialSummary: emptyToNull(formData.get("editorialSummary")),
-      editorialAssessmentId: originalCampaign.editorialAssessment ? originalCampaign.editorialAssessment.id : null,
       reasonWhyItMatters: String(formData.get("reasonWhyItMatters") || "").trim(),
       estimatedValueText: emptyToNull(formData.get("estimatedValueText")),
       difficultyLevel: emptyToNull(formData.get("difficultyLevel")),
@@ -1590,8 +1574,7 @@
       sourceTitle: sourceTitle || null,
       sourceUrl: sourceUrl || null,
       sourceCheckedAt: sourceCheckedAt ? toISOString(sourceCheckedAt) : null,
-      sourceEvidenceNote: emptyToNull(formData.get("sourceEvidenceNote")),
-      existingSourceReferenceId: originalCampaign.sourceReferences[0] ? originalCampaign.sourceReferences[0].id : null
+      sourceEvidenceNote: emptyToNull(formData.get("sourceEvidenceNote"))
     };
   }
 
@@ -1623,6 +1606,10 @@
     }
 
     if (payload.status === "published") {
+      if (!payload.primaryProgramId) {
+        errors.push("Publisering krever bonusprogram.");
+      }
+
       if (!payload.lastVerifiedAt) {
         errors.push("Publisering krever sist verifisert.");
       }
@@ -1631,12 +1618,46 @@
         errors.push("Publisering krever minst én gyldig kilde.");
       }
 
+      if (payload.sourceUrl && !isHttpsUrl(payload.sourceUrl)) {
+        errors.push("Kildelenke må være en https-URL.");
+      }
+
       if (!payload.reasonWhyItMatters) {
         errors.push("Publisering krever en redaksjonell begrunnelse.");
       }
     }
 
     return errors;
+  }
+
+  async function saveEditorialCampaign(payload) {
+    await apiRequest("/rest/v1/rpc/save_editorial_campaign", {
+      method: "POST",
+      body: {
+        p_campaign_id: payload.id,
+        p_payload: {
+          title: payload.title,
+          summary: payload.summary,
+          details: payload.details,
+          status: payload.status,
+          primaryProgramId: payload.primaryProgramId,
+          categoryId: payload.categoryId,
+          editorialSummary: payload.editorialSummary,
+          reasonWhyItMatters: payload.reasonWhyItMatters,
+          estimatedValueText: payload.estimatedValueText,
+          difficultyLevel: payload.difficultyLevel,
+          availabilityScope: payload.availabilityScope,
+          riskNote: payload.riskNote,
+          lastVerifiedAt: payload.lastVerifiedAt,
+          requirements: payload.requirements,
+          sourceId: payload.sourceId,
+          sourceTitle: payload.sourceTitle,
+          sourceUrl: payload.sourceUrl,
+          sourceCheckedAt: payload.sourceCheckedAt,
+          sourceEvidenceNote: payload.sourceEvidenceNote
+        }
+      }
+    });
   }
 
   async function suggestEditorialAssessment(form, campaign, button) {
@@ -1706,165 +1727,17 @@
       String(formData.get("title") || "").trim()
         && String(formData.get("summary") || "").trim()
         && String(formData.get("details") || "").trim()
+        && String(formData.get("primaryProgramId") || "").trim()
         && String(formData.get("lastVerifiedAt") || "").trim()
         && String(formData.get("sourceId") || "").trim()
-        && String(formData.get("sourceUrl") || "").trim()
+        && isHttpsUrl(String(formData.get("sourceUrl") || "").trim())
         && String(formData.get("reasonWhyItMatters") || "").trim()
     );
 
     publishButton.disabled = !canPublish;
     publishButton.title = canPublish
       ? ""
-      : "Publisering krever tittel, beskrivelse, detaljer, sist verifisert, kilde og redaksjonell begrunnelse.";
-  }
-
-  async function updateCampaign(payload) {
-    await apiRequest(`/rest/v1/campaigns?id=eq.${payload.id}`, {
-      method: "PATCH",
-      body: {
-        title: payload.title,
-        summary: payload.summary,
-        details: payload.details,
-        status: payload.status,
-        primary_program_id: payload.primaryProgramId,
-        category_id: payload.categoryId,
-        editorial_summary: payload.editorialSummary,
-        last_verified_at: payload.lastVerifiedAt
-      },
-      extraHeaders: {
-        Prefer: "return=minimal"
-      }
-    });
-  }
-
-  async function replaceCampaignProgramLinks(payload) {
-    await apiRequest(`/rest/v1/campaign_programs?campaign_id=eq.${payload.id}`, {
-      method: "DELETE"
-    });
-
-    if (!payload.primaryProgramId) {
-      return;
-    }
-
-    await apiRequest("/rest/v1/campaign_programs", {
-      method: "POST",
-      body: [
-        {
-          campaign_id: payload.id,
-          program_id: payload.primaryProgramId
-        }
-      ],
-      extraHeaders: {
-        Prefer: "return=minimal"
-      }
-    });
-  }
-
-  async function replaceCampaignRequirements(payload) {
-    await apiRequest(`/rest/v1/campaign_requirements?campaign_id=eq.${payload.id}`, {
-      method: "DELETE"
-    });
-
-    if (!payload.requirements.length) {
-      return;
-    }
-
-    await apiRequest("/rest/v1/campaign_requirements", {
-      method: "POST",
-      body: payload.requirements.map((text, index) => ({
-        campaign_id: payload.id,
-        text,
-        sort_order: index
-      })),
-      extraHeaders: {
-        Prefer: "return=minimal"
-      }
-    });
-  }
-
-  async function upsertEditorialAssessment(payload) {
-    const hasAssessmentContent =
-      Boolean(payload.reasonWhyItMatters) ||
-      Boolean(payload.estimatedValueText) ||
-      Boolean(payload.difficultyLevel) ||
-      Boolean(payload.availabilityScope) ||
-      Boolean(payload.riskNote);
-
-    if (!hasAssessmentContent) {
-      if (payload.editorialAssessmentId) {
-        await apiRequest(`/rest/v1/campaign_editorial_assessments?id=eq.${payload.editorialAssessmentId}`, {
-          method: "DELETE"
-        });
-      }
-      return;
-    }
-
-    const body = {
-      campaign_id: payload.id,
-      score: null,
-      reason_why_it_matters: payload.reasonWhyItMatters,
-      estimated_value_text: payload.estimatedValueText,
-      difficulty_level: payload.difficultyLevel,
-      availability_scope: payload.availabilityScope,
-      risk_note: payload.riskNote
-    };
-
-    if (payload.editorialAssessmentId) {
-      await apiRequest(`/rest/v1/campaign_editorial_assessments?id=eq.${payload.editorialAssessmentId}`, {
-        method: "PATCH",
-        body,
-        extraHeaders: {
-          Prefer: "return=minimal"
-        }
-      });
-      return;
-    }
-
-    await apiRequest("/rest/v1/campaign_editorial_assessments", {
-      method: "POST",
-      body: [body],
-      extraHeaders: {
-        Prefer: "return=minimal"
-      }
-    });
-  }
-
-  async function upsertPrimarySource(payload, originalCampaign) {
-    const body = {
-      campaign_id: payload.id,
-      source_id: payload.sourceId,
-      url: payload.sourceUrl,
-      title: payload.sourceTitle || payload.title,
-      checked_at: payload.sourceCheckedAt || payload.lastVerifiedAt || new Date().toISOString(),
-      evidence_note: payload.sourceEvidenceNote
-    };
-
-    if (!payload.sourceUrl || !payload.sourceId) {
-      if (payload.existingSourceReferenceId) {
-        return;
-      }
-
-      return;
-    }
-
-    if (payload.existingSourceReferenceId) {
-      await apiRequest(`/rest/v1/campaign_source_references?id=eq.${payload.existingSourceReferenceId}`, {
-        method: "PATCH",
-        body,
-        extraHeaders: {
-          Prefer: "return=minimal"
-        }
-      });
-      return;
-    }
-
-    await apiRequest("/rest/v1/campaign_source_references", {
-      method: "POST",
-      body: [body],
-      extraHeaders: {
-        Prefer: "return=minimal"
-      }
-    });
+      : "Publisering krever tittel, beskrivelse, detaljer, bonusprogram, sist verifisert, https-kilde og redaksjonell begrunnelse.";
   }
 
   async function upsertProgramGuide(payload) {
@@ -1872,7 +1745,7 @@
       program_id: payload.programId,
       status: payload.status,
       intro_text: payload.introText || null,
-      strategy: payload.strategy,
+      strategy: payload.strategy || null,
       value_estimate_label: payload.valueEstimateLabel || null,
       value_estimate_detail: payload.valueEstimateDetail || null,
       expiration_summary: payload.expirationSummary || null,
@@ -2146,6 +2019,15 @@
     }
 
     return Math.min(Math.max(parsed, 1), 50);
+  }
+
+  function isHttpsUrl(value) {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && Boolean(url.hostname);
+    } catch (_error) {
+      return false;
+    }
   }
 
   function ingestSourceLabel(source) {

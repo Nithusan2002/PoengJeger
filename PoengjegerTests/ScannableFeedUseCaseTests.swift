@@ -48,6 +48,98 @@ struct ScannableFeedUseCaseTests {
     }
 
     @Test
+    func supabaseRepositoryDecodesFractionalSecondTimestamps() async throws {
+        let programID = UUID()
+        let campaignID = UUID()
+        let sourceReferenceID = UUID()
+
+        SupabaseURLProtocol.requestHandler = { request in
+            let path = request.url?.path ?? ""
+            let json: String
+
+            if path.hasSuffix("/bonus_programs") {
+                json = """
+                [
+                  {
+                    "id": "\(programID.uuidString)",
+                    "slug": "trumf",
+                    "name": "Trumf",
+                    "issuer_name": "NorgesGruppen",
+                    "country_code": "NO",
+                    "is_active": true
+                  }
+                ]
+                """
+            } else if path.hasSuffix("/program_guides") {
+                json = "[]"
+            } else if path.hasSuffix("/campaigns") {
+                json = """
+                [
+                  {
+                    "id": "\(campaignID.uuidString)",
+                    "title": "Testkampanje",
+                    "summary": "Kort sammendrag",
+                    "details": "Detaljer",
+                    "status": "published",
+                    "start_date": null,
+                    "end_date": null,
+                    "last_verified_at": "2026-08-16T08:00:00.123Z",
+                    "primary_program_id": "\(programID.uuidString)",
+                    "editorial_score": 80,
+                    "editorial_summary": "Redaksjonelt sammendrag",
+                    "is_featured": false,
+                    "campaign_categories": null,
+                    "campaign_requirements": [],
+                    "campaign_source_references": [
+                      {
+                        "id": "\(sourceReferenceID.uuidString)",
+                        "url": "https://example.com/kampanje",
+                        "title": "Kilde",
+                        "checked_at": "2026-08-16T08:00:01.456Z",
+                        "evidence_note": "Kontrollert",
+                        "campaign_sources": { "name": "Eksempelkilde" }
+                      }
+                    ],
+                    "campaign_editorial_assessments": [],
+                    "campaign_geo_restrictions": [],
+                    "campaign_programs": [
+                      { "program_id": "\(programID.uuidString)" }
+                    ]
+                  }
+                ]
+                """
+            } else {
+                json = "[]"
+            }
+
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(json.utf8))
+        }
+        defer { SupabaseURLProtocol.requestHandler = nil }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [SupabaseURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        let repository = SupabaseCampaignRepository(
+            configuration: SupabaseConfiguration(
+                url: URL(string: "https://example.supabase.co")!,
+                publishableKey: "test-key"
+            ),
+            session: session
+        )
+
+        let data = try await repository.fetchBootstrapData()
+
+        #expect(data.campaigns.map(\.id) == [campaignID])
+        #expect(data.campaigns.first?.sources.first?.checkedAt.timeIntervalSince1970 != nil)
+    }
+
+    @Test
     func expiryLabelUsesNorwegianDeadlineText() {
         let referenceDate = Date(timeIntervalSince1970: 10_000)
 
@@ -308,4 +400,33 @@ struct ScannableFeedUseCaseTests {
             linkedProgramIDs: linkedProgramIDs
         )
     }
+}
+
+private final class SupabaseURLProtocol: URLProtocol {
+    nonisolated(unsafe) static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        do {
+            guard let requestHandler = Self.requestHandler else {
+                throw URLError(.badServerResponse)
+            }
+
+            let (response, data) = try requestHandler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
 }

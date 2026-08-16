@@ -15,7 +15,7 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 - `campaign_geo_restrictions`: landbegrensninger.
 - `campaign_audit_log`: statusendringer for kampanjer.
 
-En publisert kampanje krever minst én kildehenvisning og `last_verified_at`. Dette håndheves i databasen.
+En publisert kampanje krever minst én kildehenvisning, `last_verified_at` og minst én kobling til bonusprogram. Nye kildehenvisninger må bruke `https://`-URL. Dette håndheves i databasen.
 
 Publiserte programguider kan leses av klienten for aktive bonusprogrammer. Utkast og arkiverte guider er kun tilgjengelige for redaksjonelle adminbrukere.
 
@@ -37,7 +37,7 @@ Brukerdata er knyttet til Supabase Auth og omfattes av RLS. Appen lagrer ikke bo
 
 En kandidat går fra `new` via redaksjonell vurdering til enten `rejected` eller `promoted`. Promotering oppretter kun en `draft`-kampanje; publisering er et separat redaksjonelt steg.
 
-Adminverktøyet autoriseres via Supabase Auth og databasebaserte roller i `editorial_user_roles`. Eksisterende admin-RLS og RPC-er bruker `public.is_admin()`, som nå kan lese aktiv rolle fra databasen. Rolleendringer kan gå via dedikerte funksjoner for granting og revoking.
+Adminverktøyet autoriseres via Supabase Auth og databasebaserte roller i `editorial_user_roles`. Redaksjonelle innholdsoperasjoner bruker `public.is_editorial_member()`, mens sensitive adminoperasjoner kan bruke `public.is_admin_role()`. `public.is_admin()` finnes fortsatt som bakoverkompatibel alias for redaksjonelt medlemskap. Rolleendringer kan gå via dedikerte funksjoner for granting og revoking.
 
 ## Endringsregler
 

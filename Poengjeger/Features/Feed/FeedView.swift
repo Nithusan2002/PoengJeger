@@ -12,8 +12,8 @@ struct FeedView: View {
 
     private var campaigns: [Campaign] {
         ScannableFeedUseCase().makeFeed(
-            campaigns: environment.campaigns,
-            selectedProgramIDs: environment.userSession.selectedProgramIDs,
+            campaigns: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
             showsAllPrograms: showsAllPrograms,
             selectedCategoryID: selectedCategoryID,
             searchText: searchText,
@@ -23,8 +23,8 @@ struct FeedView: View {
 
     private var activeCampaignCount: Int {
         ScannableFeedUseCase().makeFeed(
-            campaigns: environment.campaigns,
-            selectedProgramIDs: environment.userSession.selectedProgramIDs,
+            campaigns: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
             showsAllPrograms: showsAllPrograms,
             selectedCategoryID: nil,
             searchText: "",
@@ -35,7 +35,7 @@ struct FeedView: View {
 
     private var categories: [CampaignCategory] {
         Dictionary(
-            grouping: environment.campaigns.compactMap(\.category),
+            grouping: environment.firstPhaseCampaigns.compactMap(\.category),
             by: \.id
         )
         .compactMap(\.value.first)
@@ -43,11 +43,11 @@ struct FeedView: View {
     }
 
     private var programsByID: [UUID: BonusProgram] {
-        Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0) })
+        Dictionary(uniqueKeysWithValues: environment.firstPhasePrograms.map { ($0.id, $0) })
     }
 
     private var hasSelectedPrograms: Bool {
-        !environment.userSession.selectedProgramIDs.isEmpty
+        !environment.selectedFirstPhaseProgramIDs.isEmpty
     }
 
     var body: some View {
@@ -127,7 +127,7 @@ struct FeedView: View {
         }
         .sheet(isPresented: $isProgramSheetPresented) {
             ProgramFilterSheet(
-                programs: environment.programs,
+                programs: environment.firstPhasePrograms,
                 selectedProgramIDs: $environment.userSession.selectedProgramIDs
             )
         }
@@ -181,7 +181,7 @@ private struct FeedControlHeader: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Kampanjer")
+                    Text("Nå")
                         .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                         .foregroundStyle(.primary)
 
@@ -471,9 +471,9 @@ private struct ProgramFilterSheet: View {
                     }
 
                     Button("Tøm valg", role: .destructive) {
-                        selectedProgramIDs.removeAll()
+                        selectedProgramIDs.subtract(Set(programs.map(\.id)))
                     }
-                    .disabled(selectedProgramIDs.isEmpty)
+                    .disabled(selectedProgramIDs.intersection(Set(programs.map(\.id))).isEmpty)
                 }
 
                 Section("Programmer") {

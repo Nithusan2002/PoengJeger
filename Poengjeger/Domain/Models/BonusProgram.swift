@@ -8,3 +8,14 @@ struct BonusProgram: Identifiable, Hashable {
     let countryCode: String
     let isActive: Bool
 }
+
+extension BonusProgram {
+    static let firstPhaseSlugs: Set<String> = [
+        "sas-eurobonus",
+        "trumf"
+    ]
+
+    var isFirstPhaseProgram: Bool {
+        Self.firstPhaseSlugs.contains(slug)
+    }
+}

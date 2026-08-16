@@ -102,6 +102,25 @@ final class AppEnvironment {
         campaigns.filter { userSession.favoriteCampaignIDs.contains($0.id) }
     }
 
+    var firstPhasePrograms: [BonusProgram] {
+        programs
+            .filter { $0.isActive && $0.isFirstPhaseProgram }
+            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+
+    var selectedFirstPhaseProgramIDs: Set<UUID> {
+        let firstPhaseProgramIDs = Set(firstPhasePrograms.map(\.id))
+        return userSession.selectedProgramIDs.intersection(firstPhaseProgramIDs)
+    }
+
+    var firstPhaseCampaigns: [Campaign] {
+        let firstPhaseProgramIDs = Set(firstPhasePrograms.map(\.id))
+        guard !firstPhaseProgramIDs.isEmpty else { return [] }
+        return campaigns.filter { campaign in
+            campaign.linkedProgramIDs.contains { firstPhaseProgramIDs.contains($0) }
+        }
+    }
+
     func programGuide(for program: BonusProgram) -> ProgramGuide? {
         programGuides.first { $0.programID == program.id && $0.status == .published }
     }

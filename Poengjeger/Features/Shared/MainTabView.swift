@@ -7,7 +7,7 @@ struct MainTabView: View {
                 FeedView()
             }
             .tabItem {
-                Label("Kampanjer", systemImage: "safari")
+                Label("Nå", systemImage: "clock")
             }
 
             NavigationStack {

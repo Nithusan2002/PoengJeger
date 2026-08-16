@@ -1,5 +1,23 @@
 # Arkitekturbeslutninger
 
+## ADR-019: Appen utformes som et rolig beslutningsverktøy for EuroBonus og Trumf
+- Status: Vedtatt
+- Bakgrunn: Poengjeger må både gi rask oversikt over aktuelle kampanjer og lære brukeren hvordan EuroBonus- og Trumf-økosystemene fungerer. Hvis appen utformes som nyhetsfeed, blogg eller generell programkatalog, blir kjerneløkken svakere og redaksjonelt arbeid øker.
+- Beslutning: Første designretning er et rolig, skannbart beslutningsverktøy. Hovedflaten skal prioritere hva som er relevant nå, mens Lær skal være strukturert programforståelse knyttet til praktiske kampanjebeslutninger. Design- og brukerflytretningen dokumenteres i `docs/design-and-user-flow.md`.
+- Konsekvens: Videre UI-arbeid skal optimalisere onboarding, feed, kampanjedetalj og programguider for rask forståelse, tydelig kildegrunnlag og praktisk læring. Generiske artikler, brede programkataloger og dekorative flater skal ikke prioriteres i MVP.
+
+## ADR-018: Første produktfase begrenses til EuroBonus og Trumf
+- Status: Vedtatt
+- Bakgrunn: Poengjeger skal både prioritere aktuelle kampanjer og lære brukeren hvordan bonusøkosystemer fungerer. Å støtte mange programmer tidlig øker innholdsarbeid, kildekontroll, UX-kompleksitet og risikoen for tynn eller utdatert veiledning.
+- Beslutning: Første produktfase begrenses eksplisitt til EuroBonus og Trumf. Feed, onboarding, programguider, kampanjekilder, redaksjonell vurdering og varslingsarbeid skal optimaliseres for disse to økosystemene før nye poengsystemer legges til.
+- Konsekvens: MVP-en blir smalere og enklere å validere, med bedre sjanse for troverdig innhold og tydelig læringsverdi. Senere programmer som Spenn, Norwegian Reward/CashPoints, Flying Blue, Avios og hotellprogrammer krever ny prioriteringsbeslutning etter at EuroBonus og Trumf er validert.
+
+## ADR-017: Kampanjepublisering skjer atomisk via database-RPC
+- Status: Vedtatt
+- Bakgrunn: Adminverktøyet lagret tidligere kampanjer ved å oppdatere hovedrad, programkobling, krav, kilde og redaksjonell vurdering med separate REST-kall. For publiserte kampanjer kunne feil midt i sekvensen gi halvoppdatert innhold til sluttbrukere.
+- Beslutning: Redaksjonell kampanjelagring samles i `public.save_editorial_campaign(...)`, som oppdaterer kampanjeinnhold, koblinger, krav, primærkilde og redaksjonell vurdering i én database-transaksjon. Publisering krever bonusprogram, `last_verified_at`, https-kilde og redaksjonell begrunnelse før status settes til `published`.
+- Konsekvens: Admin-UI-et blir enklere og publiseringsflyten mer robust. Databasen blir tydeligere sannhetskilde for publiseringsregler, men RPC-en må vedlikeholdes sammen med adminskjemaet.
+
 ## ADR-011: Instruksjoner organiseres i regler, Skills og prosjektdokumentasjon
 - Status: Vedtatt
 - Bakgrunn: Ett omfattende instruksjonsdokument blandet varige regler, prosjektfakta og arbeidsprosedyrer. Det gjør det vanskeligere å finne relevant kontekst og å bruke samme prosess konsekvent.

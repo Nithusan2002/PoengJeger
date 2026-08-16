@@ -4,9 +4,7 @@ struct LearnView: View {
     @Environment(AppEnvironment.self) private var environment
 
     private var programs: [BonusProgram] {
-        environment.programs
-            .filter(\.isActive)
-            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+        environment.firstPhasePrograms
     }
 
     var body: some View {
@@ -17,12 +15,12 @@ struct LearnView: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(PoengjegerTheme.accent)
 
-                    Text("Forstå poengene dine")
+                    Text("Forstå EuroBonus og Trumf")
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("En kort guide per program: hva poengene kan være verdt, hvordan du tjener dem raskere, og hvordan du får mest igjen når du bruker dem.")
+                    Text("Praktiske guider til hvordan økosystemene fungerer, hva du bør se etter, og hvilke aktive kampanjer som passer inn.")
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -46,7 +44,8 @@ struct LearnView: View {
                         } label: {
                             LearnProgramCard(
                                 program: program,
-                                guide: environment.programGuide(for: program)
+                                guide: environment.programGuide(for: program),
+                                activeCampaignCount: activeCampaignCount(for: program)
                             )
                         }
                         .buttonStyle(.plain)
@@ -62,11 +61,16 @@ struct LearnView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
     }
+
+    private func activeCampaignCount(for program: BonusProgram) -> Int {
+        environment.firstPhaseCampaigns.filter { $0.isActive && $0.linkedProgramIDs.contains(program.id) }.count
+    }
 }
 
 private struct LearnProgramCard: View {
     let program: BonusProgram
     let guide: ProgramGuide?
+    let activeCampaignCount: Int
 
     private var previewText: String {
         guide?.introText?.nonEmpty
@@ -90,6 +94,10 @@ private struct LearnProgramCard: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Label("\(activeCampaignCount) aktive kampanjer nå", systemImage: "ticket")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(PoengjegerTheme.accent)
             }
 
             Spacer(minLength: 8)
@@ -117,7 +125,7 @@ private struct LearnEmptyState: View {
             Text("Ingen programmer ennå")
                 .font(.headline.weight(.semibold))
 
-            Text("Når bonusprogrammer er publisert, vises de her med redaksjonelle guider og aktive kampanjer.")
+            Text("Når EuroBonus og Trumf er publisert, vises de her med redaksjonelle guider og aktive kampanjer.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

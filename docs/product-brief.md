@@ -4,10 +4,15 @@
 
 Poengjeger er en mobilapp som samler og prioriterer aktuelle kampanjer for bonus- og lojalitetsprogrammer.
 
-Eksempler på programmer:
+Første produktfase skal konsentreres om:
 
 * EuroBonus
 * Trumf
+
+Andre poengsystemer kan vurderes senere, men skal ikke prioriteres før EuroBonus- og Trumf-opplevelsen er forståelig, nyttig og redaksjonelt håndterbar.
+
+Eksempler på senere programmer:
+
 * Spenn
 * Norwegian Reward og CashPoints
 * Flying Blue
@@ -60,12 +65,13 @@ MVP-en skal vurderes strengt.
 
 Foreløpig kjerne:
 
-1. Velge relevante bonusprogrammer.
+1. Velge relevante bonusprogrammer innen første fase: EuroBonus og Trumf.
 2. Se en personlig feed med aktive kampanjer.
 3. Åpne en kampanje og lese vilkår, vurdering og kilde.
 4. Filtrere kampanjer.
 5. Lagre favoritter.
 6. Motta et begrenset antall relevante varsler.
+7. Lære hvordan EuroBonus- og Trumf-økosystemene fungerer, inkludert opptjening, bruk, vanlige feller og hvordan aktuelle kampanjer passer inn.
 
 Et enkelt administrasjonsverktøy må gjøre det mulig å opprette, kontrollere, oppdatere og arkivere kampanjer.
 
@@ -81,6 +87,7 @@ Disse funksjonene skal ikke bygges uten en ny prioriteringsbeslutning:
 * omfattende gamification
 * avanserte AI-assistenter
 * støtte for alle bonusprogrammer ved lansering
+* nye bonusprogrammer før EuroBonus og Trumf er validert som første fase
 
 ## Innholdsmodell
 
