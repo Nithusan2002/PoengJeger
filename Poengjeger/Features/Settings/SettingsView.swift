@@ -12,7 +12,7 @@ struct SettingsView: View {
 
         Form {
             Section("Varsler") {
-                Label("Varsler kommer etter at push-flyten er koblet opp.", systemImage: "bell.slash")
+                Label("Varsler er ikke klare ennå.", systemImage: "bell.slash")
                     .foregroundStyle(.secondary)
             }
 
@@ -39,7 +39,7 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(program.name)
                                 .foregroundStyle(.primary)
-                            Text("Strategi, feller og aktive kampanjer")
+                            Text("Tips, feller og aktive kampanjer")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -48,13 +48,13 @@ struct SettingsView: View {
                 }
             }
 
+            #if DEBUG
             if let dataSource = environment.dataSource {
                 Section("Datakilde") {
                     Text(dataSource.label)
                 }
             }
 
-            #if DEBUG
             Section {
                 NavigationLink("Admin-kø") {
                     AdminQueueView()

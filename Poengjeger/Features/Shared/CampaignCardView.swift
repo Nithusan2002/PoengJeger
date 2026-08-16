@@ -84,6 +84,7 @@ struct CampaignCardView: View {
             .padding(16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
         .background(campaign.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
@@ -200,11 +201,11 @@ extension Campaign {
         let valueText: String
         switch editorialScore {
         case let score? where score >= 80:
-            valueText = "Sterk mulighet"
+            valueText = "God deal"
         case let score? where score >= 65:
-            valueText = "Relevant"
+            valueText = "Verdt å sjekke"
         case .some:
-            valueText = "Nisjetilbud"
+            valueText = "For spesielt interesserte"
         case nil:
             valueText = "Mangler vurdering"
         }
@@ -228,11 +229,11 @@ extension DifficultyLevel {
     var signalText: String {
         switch self {
         case .low:
-            return "lav friksjon"
+            return "lett å bruke"
         case .medium:
-            return "middels friksjon"
+            return "sjekk kravene"
         case .high:
-            return "høy friksjon"
+            return "krevende"
         }
     }
 }

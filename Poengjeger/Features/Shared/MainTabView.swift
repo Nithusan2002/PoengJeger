@@ -28,7 +28,7 @@ struct MainTabView: View {
                 SettingsView()
             }
             .tabItem {
-                Label("Profil", systemImage: "person")
+                Label("Innstillinger", systemImage: "gearshape")
             }
         }
         .tint(PoengjegerTheme.accent)

@@ -51,7 +51,7 @@ struct ProgramDetailView: View {
                             systemImage: "centsign.circle",
                             eyebrow: "Verdi",
                             title: guide?.valueEstimateLabel?.nonEmpty ?? "Ukjent",
-                            detail: guide?.valueEstimateDetail?.nonEmpty ?? "Legg inn redaksjonelt estimat når verdien er kontrollert."
+                            detail: guide?.valueEstimateDetail?.nonEmpty ?? "Verdien legges inn når den er kontrollert."
                         ),
                         ProgramInsight(
                             systemImage: "hourglass",
@@ -73,15 +73,15 @@ struct ProgramDetailView: View {
                 }
 
                 ProgramTipSection(
-                    title: "Slik tjener du raskere",
-                    subtitle: "Start her før du jakter nye kampanjer.",
+                    title: "Slik tjener du poeng",
+                    subtitle: "Start her før du går for en kampanje.",
                     systemImage: "plus.circle",
                     items: guide?.earningTips ?? []
                 )
 
                 ProgramTipSection(
-                    title: "Slik får du mest ut av poengene",
-                    subtitle: "Bruk poengene der alternativverdien er tydelig.",
+                    title: "Slik bruker du poengene smart",
+                    subtitle: "Bruk poengene der du ser hva du får igjen.",
                     systemImage: "arrow.up.right.circle",
                     items: guide?.redemptionTips ?? []
                 )
@@ -234,7 +234,7 @@ private struct ProgramStrategyCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Strategi", systemImage: "target")
+            Label("Slik bør du bruke det", systemImage: "target")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(PoengjegerTheme.accent)
 
@@ -411,6 +411,7 @@ private struct ProgramCampaignPreview: View {
                 .lineLimit(2)
         }
         .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -456,7 +457,7 @@ private struct ProgramReviewNote: View {
             return "Sist redaksjonelt kontrollert \(lastReviewedAt.formatted(date: .long, time: .omitted)). Sjekk alltid gjeldende programvilkår og kampanjekilde før større valg."
         }
 
-        return "Guiden vises med begrenset innhold til den er publisert og kontrollert redaksjonelt."
+        return "Guiden vises med begrenset innhold til den er kontrollert."
     }
 }
 

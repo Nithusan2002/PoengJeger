@@ -52,11 +52,11 @@ struct Campaign: Identifiable, Hashable {
 
         switch editorialScore {
         case 80...:
-            return "Sterk mulighet"
+            return "God deal"
         case 65...:
-            return "Relevant"
+            return "Verdt å sjekke"
         default:
-            return "Nisjetilbud"
+            return "For spesielt interesserte"
         }
     }
 
@@ -107,11 +107,11 @@ enum DifficultyLevel: String, Hashable {
     var displayName: String {
         switch self {
         case .low:
-            return "Lav"
+            return "Lett å bruke"
         case .medium:
-            return "Middels"
+            return "Sjekk vilkårene"
         case .high:
-            return "Høy"
+            return "Krevende"
         }
     }
 }

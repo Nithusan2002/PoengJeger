@@ -20,7 +20,7 @@ struct CampaignDetailView: View {
                 )
 
                 if !campaign.requirements.isEmpty {
-                    DetailSection(title: "Viktigste krav", systemImage: "checklist") {
+                    DetailSection(title: "Dette må du gjøre", systemImage: "checklist") {
                         VStack(alignment: .leading, spacing: 10) {
                             ForEach(primaryRequirements) { requirement in
                                 DetailRequirementRow(text: requirement.text)
@@ -43,7 +43,7 @@ struct CampaignDetailView: View {
 
                 DetailDisclosure(
                     isExpanded: $isDetailDisclosureExpanded,
-                    title: "Vilkår og kilde"
+                    title: "Detaljer og kilde"
                 ) {
                     detailedContent
                 }
@@ -96,25 +96,9 @@ struct CampaignDetailView: View {
     }
 
     @ViewBuilder
-    private var editorialMetrics: some View {
-        if let score = campaign.editorialScore {
-            DetailFactLine(title: "Vurdering", value: campaign.editorialTierLabel)
-            DetailFactLine(title: "Scoregrunnlag", value: "\(score)/100")
-        }
-
-        if let difficultyLevel = campaign.editorialAssessment?.difficultyLevel {
-            DetailFactLine(title: "Friksjon", value: difficultyLevel.displayName)
-        }
-
-        if let availabilityScope = campaign.editorialAssessment?.availabilityScope {
-            DetailFactLine(title: "Tilgjengelighet", value: availabilityScope.displayName)
-        }
-    }
-
-    @ViewBuilder
     private var detailedContent: some View {
         if hasEditorialAssessment {
-            DetailSection(title: "Redaksjonell vurdering", systemImage: "chart.line.uptrend.xyaxis") {
+            DetailSection(title: "Hvorfor vi viser den", systemImage: "chart.line.uptrend.xyaxis") {
                 VStack(alignment: .leading, spacing: 12) {
                     if !campaign.editorialSummary.isEmpty {
                         DetailTextBlock(text: campaign.editorialSummary, prominence: .lead)
@@ -124,18 +108,10 @@ struct CampaignDetailView: View {
                         DetailTextBlock(text: assessment.reasonWhyItMatters)
 
                         if let estimatedValueText = assessment.estimatedValueText {
-                            DetailFactLine(title: "Estimert verdi", value: estimatedValueText)
+                            DetailFactLine(title: "Hva kan du få?", value: estimatedValueText)
                         }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Divider()
-                            VStack(alignment: .leading, spacing: 8) {
-                                editorialMetrics
-                            }
-                        }
-                    } else if let score = campaign.editorialScore {
-                        DetailFactLine(title: "Redaksjonell vurdering", value: campaign.editorialTierLabel)
-                        DetailFactLine(title: "Scoregrunnlag", value: "\(score)/100")
+                    } else if campaign.editorialScore != nil {
+                        DetailTextBlock(text: campaign.editorialTierLabel)
                     }
                 }
             }
@@ -164,8 +140,8 @@ struct CampaignDetailView: View {
 
                     if !campaign.geoRestrictions.isEmpty {
                         DetailFactLine(
-                            title: "Geografi",
-                            value: campaign.geoRestrictions.map(\.countryCode).joined(separator: ", ")
+                            title: "Gjelder",
+                            value: campaign.geoRestrictions.map(\.displayName).joined(separator: ", ")
                         )
                     }
 
@@ -230,7 +206,7 @@ private struct DetailDisclosure<Content: View>: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
-        .accessibilityHint(isExpanded ? "Skjuler vilkår, vurdering og kilder." : "Viser vilkår, vurdering og kilder.")
+        .accessibilityHint(isExpanded ? "Skjuler detaljer og kilder." : "Viser detaljer og kilder.")
     }
 }
 
@@ -312,14 +288,16 @@ private struct DetailIntro: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            DetailDecisionSummary(
-                conclusion: campaign.decisionConclusion,
-                nextStep: campaign.decisionNextStep
+            DetailDecisionSummary(conclusion: campaign.decisionConclusion)
+
+            CampaignFitSummary(
+                fitText: campaign.suitabilityFitText,
+                caveatText: campaign.suitabilityCaveatText
             )
 
             VStack(alignment: .leading, spacing: 10) {
                 DetailQuickFactCard(
-                    title: "Verdi",
+                    title: "Mulig verdi",
                     value: campaign.detailValueLabel,
                     systemImage: "chart.line.uptrend.xyaxis"
                 )
@@ -332,9 +310,9 @@ private struct DetailIntro: View {
                     )
 
                     DetailQuickFactCard(
-                        title: "Friksjon",
-                        value: campaign.editorialAssessment?.difficultyLevel?.displayName ?? "Ukjent",
-                        systemImage: "gauge.with.dots.needle.50percent"
+                        title: "Krav",
+                        value: campaign.requirementSignal,
+                        systemImage: "checklist"
                     )
                 }
             }
@@ -347,11 +325,10 @@ private struct DetailIntro: View {
 
 private struct DetailDecisionSummary: View {
     let conclusion: String
-    let nextStep: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Kort konklusjon", systemImage: "checkmark.seal")
+            Label("Kort sagt", systemImage: "checkmark.seal")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(PoengjegerTheme.accent)
 
@@ -359,27 +336,74 @@ private struct DetailDecisionSummary: View {
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
-
-            if let nextStep {
-                Divider()
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Neste steg")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-
-                    Text(nextStep)
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(PoengjegerTheme.accentSoft)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct CampaignFitSummary: View {
+    let fitText: String
+    let caveatText: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FitLine(
+                systemImage: "person.crop.circle.badge.checkmark",
+                title: "Passer for",
+                text: fitText,
+                tint: PoengjegerTheme.accent
+            )
+
+            if let caveatText {
+                Divider()
+
+                FitLine(
+                    systemImage: "exclamationmark.triangle",
+                    title: "Passer ikke for",
+                    text: caveatText,
+                    tint: PoengjegerTheme.warning
+                )
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct FitLine: View {
+    let systemImage: String
+    let title: String
+    let text: String
+    let tint: Color
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+
+                Text(text)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(tint)
+        }
+        .labelStyle(.titleAndIcon)
     }
 }
 
@@ -554,7 +578,7 @@ private struct CampaignFactList: View {
         if let firstSource = campaign.sources.first {
             FactRow(
                 systemImage: "link",
-                title: "Primærkilde",
+                title: "Kilde",
                 value: firstSource.sourceName
             )
         }
@@ -567,31 +591,19 @@ private struct SourceLinkRow: View {
 
     var body: some View {
         Link(destination: source.url) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(source.title)
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Åpne kilde", systemImage: "arrow.up.right.square")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(PoengjegerTheme.accent)
+
+                Text(source.title)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(source.sourceName)
+                Text("Sjekket hos \(source.sourceName) \(source.checkedAt.formatted(date: .abbreviated, time: .omitted))")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-
-                Text(source.url.absoluteString)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Text("Kontrollert \(source.checkedAt.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-
-                if let evidenceNote = source.evidenceNote {
-                    Text(evidenceNote)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -648,10 +660,58 @@ private extension Campaign {
         }
 
         if editorialScore != nil {
-            return editorialTierLabel
+            return "Varierer"
         }
 
         return "Se vilkår"
+    }
+
+    var requirementSignal: String {
+        let requirementsText = sortedRequirements
+            .map(\.text)
+            .joined(separator: " ")
+            .lowercased()
+
+        if requirementsText.contains("kort") && requirementsText.contains("bruk") {
+            return "Krever kortbruk"
+        }
+
+        if requirementsText.contains("søk om kort") || category?.slug == "kredittkort" {
+            return "Krever nytt kort"
+        }
+
+        if requirementsText.contains("aktiver") {
+            return "Må aktiveres"
+        }
+
+        if requirementsText.contains("ny ") || requirementsText.contains("nye ") {
+            return "Kun nye kunder"
+        }
+
+        return editorialAssessment?.difficultyLevel?.displayName ?? "Sjekk vilkårene"
+    }
+
+    var suitabilityFitText: String {
+        switch category?.slug {
+        case "kredittkort":
+            return "Deg som allerede vurderer kortet."
+        case "dagligvare":
+            return "Deg som uansett skal handle hos butikkene."
+        default:
+            if let reason = editorialAssessment?.reasonWhyItMatters.firstSentence {
+                return reason
+            }
+
+            return "Deg som uansett skulle bruke leverandøren."
+        }
+    }
+
+    var suitabilityCaveatText: String? {
+        if category?.slug == "kredittkort" {
+            return "Deg som vil unngå kredittsjekk eller faste gebyrer."
+        }
+
+        return editorialAssessment?.riskNote?.firstSentence
     }
 
     var decisionConclusion: String {
@@ -680,7 +740,26 @@ private extension Campaign {
     }
 }
 
+private extension GeoRestriction {
+    var displayName: String {
+        switch countryCode.uppercased() {
+        case "NO":
+            return "Norge"
+        default:
+            return countryCode.uppercased()
+        }
+    }
+}
+
 private extension String {
+    var firstSentence: String? {
+        let normalized = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+
+        let sentence = normalized.split(separator: ".").first.map(String.init) ?? normalized
+        return sentence.isEmpty ? nil : sentence + (normalized.contains(".") ? "." : "")
+    }
+
     var detailValueLabel: String? {
         let normalized = trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else { return nil }

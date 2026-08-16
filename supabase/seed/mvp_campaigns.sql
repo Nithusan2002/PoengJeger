@@ -162,14 +162,14 @@ from (
     (
       '4a99a49d-3a3d-40ab-af4d-eade4d0f0401'::uuid,
       'SAS Amex Elite: 50 000 EuroBonus-poeng i velkomstbonus',
-      'Offisiell SAS-kampanje for Amex Elite i Norge med 50 000 EuroBonus-poeng i velkomstbonus.',
-      'SAS oppgir at Amex Elite i Norge gir 50 000 EuroBonus-poeng i velkomstbonus. Kortet gir også 20 poeng per 100 kr brukt og 2 for 1-reiser med SAS og SkyTeam.',
+      '50 000 EuroBonus-poeng i velkomstbonus for SAS Amex Elite i Norge.',
+      'SAS oppgir at Amex Elite i Norge gir 50 000 EuroBonus-poeng i velkomstbonus. Kortet gir også 20 poeng per 100 kr og 2 for 1-reiser med SAS og SkyTeam.',
       null::timestamptz,
       null::timestamptz,
       (select id from public.bonus_programs where slug = 'sas-eurobonus'),
       '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0101'::uuid,
       88.0::numeric,
-      'Høy engangsverdi for brukere som faktisk kan oppfylle kortkravene og har nytte av 2 for 1-fordelen.',
+      'Stor bonus, men bare verdt det hvis du faktisk vil bruke kortet og 2 for 1-fordelen.',
       true
     ),
     (
@@ -182,7 +182,7 @@ from (
       (select id from public.bonus_programs where slug = 'sas-eurobonus'),
       '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102'::uuid,
       72.0::numeric,
-      'Bra som påfyllskampanje når du allerede skal handle, men faktisk verdi avhenger av butikk og rate den dagen du kjøper.',
+      'Bra når du uansett skal handle på nett. Sjekk poengsatsen i butikken før du kjøper.',
       false
     ),
     (
@@ -195,7 +195,7 @@ from (
       (select id from public.bonus_programs where slug = 'trumf'),
       '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0103'::uuid,
       84.0::numeric,
-      'Sterk kortsiktig verdi fordi bonusen er kontantnær og kan kombineres med senere poengoverføring fra Trumf.',
+      'Sterk bonus hvis du uansett kan bytte mobilabonnement. Trumf-bonus kan brukes som penger eller overføres videre.',
       true
     ),
     (
@@ -208,7 +208,7 @@ from (
       (select id from public.bonus_programs where slug = 'norwegian-reward'),
       '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0104'::uuid,
       66.0::numeric,
-      'Lav terskel og enkel gevinst for brukere som uansett vurderer lydboktjeneste, men totalverdien er begrenset.',
+      'Enkel bonus hvis du uansett vil prøve lydbøker, men verdien er begrenset.',
       false
     ),
     (
@@ -221,7 +221,7 @@ from (
       (select id from public.bonus_programs where slug = 'spenn'),
       '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0105'::uuid,
       63.0::numeric,
-      'Relevant for brukere som faktisk booker hotell i Norden, men Spenn-verdien er mindre eksplisitt enn i en ren velkomstbonus.',
+      'Relevant hvis du faktisk skal booke hotell i Norden. Verdien er mindre tydelig enn i en vanlig velkomstbonus.',
       false
     )
 ) as seeded_campaigns (
@@ -349,17 +349,17 @@ values
     '7dcc7cc0-6c60-43de-d270-1d0d7d0f0701',
     '4a99a49d-3a3d-40ab-af4d-eade4d0f0401',
     88,
-    'Stor velkomstbonus i et program mange norske bonusjegere faktisk bruker aktivt.',
-    'Høy verdi hvis du kan utnytte både velkomstbonus og 2 for 1-fordel.',
+    'Mange poeng i et program norske bonusjegere ofte bruker.',
+    '50 000 EuroBonus-poeng, pluss 2 for 1-fordel hvis du får brukt den.',
     'medium',
     'regional',
-    'Månedsavgiften er høy, så denne passer best for brukere som kan realisere reisefordelene.'
+    'Månedsavgiften er høy, så denne passer best for brukere som faktisk får brukt reisefordelene.'
   ),
   (
     '7dcc7cc0-6c60-43de-d270-1d0d7d0f0702',
     '4a99a49d-3a3d-40ab-af4d-eade4d0f0402',
     72,
-    'Gir enkel, lavfriksjons opptjening på kjøp brukeren kanskje allerede planlegger.',
+    'Gir ekstra poeng på kjøp brukeren kanskje allerede hadde planlagt.',
     'Middels verdi; faktisk uttelling varierer mye mellom butikker.',
     'low',
     'broad',

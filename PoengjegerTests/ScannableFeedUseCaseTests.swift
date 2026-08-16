@@ -15,9 +15,9 @@ struct ScannableFeedUseCaseTests {
 
     @Test
     func editorialTierLabelUsesUserFacingBuckets() {
-        #expect(makeCampaign(editorialScore: 80).editorialTierLabel == "Sterk mulighet")
-        #expect(makeCampaign(editorialScore: 65).editorialTierLabel == "Relevant")
-        #expect(makeCampaign(editorialScore: 64).editorialTierLabel == "Nisjetilbud")
+        #expect(makeCampaign(editorialScore: 80).editorialTierLabel == "God deal")
+        #expect(makeCampaign(editorialScore: 65).editorialTierLabel == "Verdt å sjekke")
+        #expect(makeCampaign(editorialScore: 64).editorialTierLabel == "For spesielt interesserte")
         #expect(makeCampaign(editorialScore: nil).editorialTierLabel == "Uten vurdering")
     }
 

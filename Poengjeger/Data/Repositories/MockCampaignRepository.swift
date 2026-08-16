@@ -69,7 +69,7 @@ enum SampleData {
             earningTips: [
                 "Prioriter kampanjer der du uansett skal kjøpe reisen, varen eller tjenesten.",
                 "Se etter kombinasjoner av kort, partner og tidsbegrenset kampanje, men kontroller vilkårene før du handler.",
-                "Vær ekstra kritisk til tilbud som krever nytt kredittkort eller høyt minimumsforbruk."
+                "Vær ekstra kritisk til tilbud som krever nytt kredittkort eller høyt kortbruk."
             ],
             redemptionTips: [
                 "Bruk poeng der kontantprisen er høy og tilgjengeligheten passer dine datoer.",
@@ -87,11 +87,11 @@ enum SampleData {
             id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A702")!,
             programID: trumf.id,
             status: .published,
-            introText: "Trumf er kontantnært og lett å forstå, men totalprisen bør fortsatt styre valget. Bonus er best når den kommer på kjøp du allerede ville gjort.",
+            introText: "Trumf er lett å forstå fordi bonusen kan brukes som penger. Totalprisen bør likevel styre valget.",
             strategy: "Trumf er ofte mest nyttig når bonusen kommer fra dagligvarekjøp du allerede ville gjort. Høy prosentbonus er mindre verdt hvis varen er dyrere enn alternativet.",
             valueEstimateLabel: "1 kr = 1 kr",
             valueEstimateDetail: "Trumf-bonus er konkret kroneverdi, men kampanjeverdi må vurderes mot totalpris.",
-            expirationSummary: "Lav friksjon",
+            expirationSummary: "Lett å bruke",
             expirationDetail: "Sjekk saldo og overføringsvilkår før du flytter bonus til andre programmer.",
             earningTips: [
                 "Aktiver kampanjer før kjøp når det kreves.",
@@ -100,7 +100,7 @@ enum SampleData {
             ],
             redemptionTips: [
                 "Bruk saldoen der den gir konkret verdi for deg, eller overfør bare når vilkårene passer.",
-                "Følg med på kampanjer som gjør ordinære kjøp mer lønnsomme uten ekstra friksjon.",
+                "Se etter kampanjer som gir ekstra bonus på kjøp du uansett skulle gjøre.",
                 "Hold oversikt over aktiveringskrav og kampanjeperioder."
             ],
             riskNotes: [
@@ -114,8 +114,8 @@ enum SampleData {
             id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A703")!,
             programID: spann.id,
             status: .published,
-            introText: "Spenn bør vurderes ut fra partnerne du faktisk bruker. Kampanjer med planlagt kjøp og lav friksjon er normalt mest relevante.",
-            strategy: "Spenn bør vurderes som et partnerprogram der verdien avhenger av om du allerede bruker relevante partnere. Kampanjer med lav friksjon og planlagt kjøp er mest interessante.",
+            introText: "Spenn er mest nyttig når du allerede bruker partnerne. Start med kampanjer som passer et kjøp du faktisk skal gjøre.",
+            strategy: "Bruk Spenn når partneren allerede passer planene dine. Ikke jag små poeng hvis du må kjøpe noe ekstra.",
             valueEstimateLabel: "Partnerverdi",
             valueEstimateDetail: "Verdien styres av hvor du kan opptjene og bruke poengene.",
             expirationSummary: "Følg saldo",
@@ -127,8 +127,8 @@ enum SampleData {
             ],
             redemptionTips: [
                 "Sammenlign poengbruk med kontantpris før du bruker saldo.",
-                "Bruk poeng på kjøp der alternativverdien er tydelig for deg.",
-                "Unngå å spre opptjening hvis du ikke når nyttige innløsningsnivåer."
+                "Bruk poeng der du enkelt ser hva du får igjen.",
+                "Ikke spre poengene for mye hvis saldoen aldri blir stor nok til noe nyttig."
             ],
             riskNotes: [
                 "Partnerkrav kan gjøre en enkel kampanje mindre enkel i praksis.",
@@ -155,8 +155,8 @@ enum SampleData {
         Campaign(
             id: UUID(uuidString: "BA1E58DE-4B08-49CC-B3E9-20DB4460A101")!,
             title: "15 % Trumf-bonus på utvalgte varer",
-            summary: "Tidsbegrenset dagligvarekampanje med lav terskel for bruk.",
-            details: "Kampanjen gir 15 % Trumf-bonus på utvalgte varer hos Kiwi og Meny. Tilbudet er bredt tilgjengelig og enkelt å benytte for eksisterende medlemmer.",
+            summary: "15 % Trumf-bonus på utvalgte dagligvarer i en kort periode.",
+            details: "Du får 15 % Trumf-bonus på utvalgte varer hos Kiwi og Meny. For Trumf-medlemmer er dette enkelt: aktiver kampanjen før du handler.",
             status: .published,
             startDate: Calendar.current.date(byAdding: .day, value: -2, to: .now),
             endDate: Calendar.current.date(byAdding: .day, value: 4, to: .now),
@@ -185,8 +185,8 @@ enum SampleData {
             ],
             editorialAssessment: EditorialAssessment(
                 score: 82,
-                reasonWhyItMatters: "Gir konkret verdi uten nytt kundeforhold eller kompliserte vilkår.",
-                estimatedValueText: "Høy verdi for husholdninger som allerede handler i NorgesGruppen.",
+                reasonWhyItMatters: "Bra hvis du uansett handler hos Kiwi eller Meny denne uken.",
+                estimatedValueText: "Kan gi god rabatt på vanlige dagligvarer.",
                 difficultyLevel: .low,
                 availabilityScope: .broad,
                 riskNote: "Utvalget kan variere mellom butikker."
@@ -197,8 +197,8 @@ enum SampleData {
         Campaign(
             id: UUID(uuidString: "268C2389-7558-4E10-B241-3A250281A102")!,
             title: "Ekstrapoeng på SAS Mastercard-aktivering",
-            summary: "Kortkampanje med høy poengverdi, men litt høyere terskel.",
-            details: "Nye eller reaktiverte kortholdere kan få en engangsbonus i EuroBonus ved å oppnå minimumsforbruk i kampanjeperioden.",
+            summary: "Mange EuroBonus-poeng, men bare hvis kortet faktisk passer deg.",
+            details: "Nye eller tidligere kortholdere kan få en engangsbonus i EuroBonus. Du må bruke kortet for et bestemt beløp innen kampanjeperioden.",
             status: .published,
             startDate: Calendar.current.date(byAdding: .day, value: -5, to: .now),
             endDate: Calendar.current.date(byAdding: .day, value: 10, to: .now),
@@ -227,7 +227,7 @@ enum SampleData {
             ],
             editorialAssessment: EditorialAssessment(
                 score: 76,
-                reasonWhyItMatters: "Høy poengverdi, men krever aktivt valg og minimumsforbruk.",
+                reasonWhyItMatters: "Kan være verdifullt, men bare hvis du vil ha kortet og klarer kravet uten ekstra kjøp.",
                 estimatedValueText: "Best for brukere som allerede vurderer nytt kort.",
                 difficultyLevel: .medium,
                 availabilityScope: .regional,
@@ -273,7 +273,7 @@ enum SampleData {
             ],
             editorialAssessment: EditorialAssessment(
                 score: 71,
-                reasonWhyItMatters: "Lav friksjon for eksisterende reiser, men smalere relevans enn dagligvare og kort.",
+                reasonWhyItMatters: "Nyttig hvis du allerede skal bestille hotell. Mindre relevant hvis du ikke har en reiseplan.",
                 estimatedValueText: "Moderat verdi ved allerede planlagt opphold.",
                 difficultyLevel: .low,
                 availabilityScope: .narrow,

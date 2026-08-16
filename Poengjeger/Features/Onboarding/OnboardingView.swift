@@ -19,11 +19,6 @@ struct OnboardingView: View {
                         programCount: programs.count
                     )
 
-                    OnboardingProgramControls(
-                        programs: programs,
-                        selectedProgramIDs: $draftSelectedProgramIDs
-                    )
-
                     OnboardingProgramList(
                         programs: programs,
                         selectedProgramIDs: $draftSelectedProgramIDs
@@ -43,7 +38,7 @@ struct OnboardingView: View {
                 .padding(.vertical, 18)
             }
             .background(PoengjegerTheme.background)
-            .navigationTitle("Dine programmer")
+            .navigationTitle("")
             .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
             .overlay {
                 if case .loading = environment.loadState, environment.programs.isEmpty {
@@ -67,54 +62,26 @@ private struct OnboardingHeader: View {
     let programCount: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Få oversikt over EuroBonus og Trumf")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
-
-                Spacer(minLength: 12)
-
-                Text("\(selectedCount)/\(programCount)")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.accent)
-                    .accessibilityLabel("\(selectedCount) av \(programCount) programmer valgt")
-            }
-
-            Text("Velg programmene du vil følge først. Valget styrer Nå-feeden, guidene og senere varsler.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Hva samler du på?")
+                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
+                .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            Text("Velg programmene du bruker, så viser vi kampanjer og tips som passer deg.")
+                .font(.title3.weight(.medium))
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Label("\(selectedCount) av \(programCount) valgt", systemImage: "checkmark.circle")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PoengjegerTheme.accent)
+                .accessibilityLabel("\(selectedCount) av \(programCount) programmer valgt")
         }
-        .padding(.top, 2)
+        .padding(.top, 72)
+        .padding(.bottom, 4)
         .accessibilityElement(children: .combine)
-    }
-}
-
-private struct OnboardingProgramControls: View {
-    let programs: [BonusProgram]
-    @Binding var selectedProgramIDs: Set<UUID>
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Button {
-                selectedProgramIDs = Set(programs.map(\.id))
-            } label: {
-                Label("Velg alle", systemImage: "checkmark.circle")
-                    .frame(maxWidth: .infinity)
-            }
-            .disabled(programs.isEmpty)
-
-            Button(role: .destructive) {
-                selectedProgramIDs.removeAll()
-            } label: {
-                Label("Tøm", systemImage: "xmark.circle")
-                    .frame(maxWidth: .infinity)
-            }
-            .disabled(selectedProgramIDs.isEmpty)
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
     }
 }
 
@@ -124,13 +91,6 @@ private struct OnboardingProgramList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Første fase")
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
-
             ForEach(programs) { program in
                 ProgramSelectionRow(
                     program: program,
@@ -138,8 +98,6 @@ private struct OnboardingProgramList: View {
                 ) {
                     toggleProgramSelection(program.id)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
 
                 if program.id != programs.last?.id {
                     Divider()
@@ -171,7 +129,7 @@ private struct OnboardingContinueButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label("Fortsett", systemImage: "arrow.right.circle.fill")
+            Label("Vis kampanjer", systemImage: "arrow.right.circle.fill")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
@@ -264,6 +222,10 @@ private struct ProgramSelectionRow: View {
 
                 Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)

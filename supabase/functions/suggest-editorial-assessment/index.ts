@@ -115,7 +115,7 @@ async function generateOpenAISuggestion(
             {
               type: "input_text",
               text:
-                "Du er redaksjonell assistent for Poengjeger. Lag korte forslag på norsk bokmål. Skill dokumenterte fakta fra vurderinger. Ikke finn på utløpsdato, vilkår, geografi eller bonusverdi. Marker usikkerhet tydelig.",
+                "Du er redaksjonell assistent for Poengjeger. Skriv kort og tydelig norsk bokmål for vanlige bonusbrukere. Bruk dagligspråk, ikke rapport- eller konsulentspråk. Skriv som en nyttig person ville forklart tilbudet til en venn. Unngå ord som friksjon, kundeforhold, realisere, kontantnær, uttelling, estimert verdi, regional og bredt tilgjengelig. Skriv heller lett å bruke, nytt kort/abonnement, bruke fordelen, nesten som penger, hva du får igjen, gjelder i Norge og gjelder mange. Skill dokumenterte fakta fra vurderinger. Ikke finn på utløpsdato, vilkår, geografi eller bonusverdi. Marker usikkerhet tydelig.",
             },
           ],
         },
@@ -191,15 +191,15 @@ function buildFallbackSuggestion(
 
   return {
     editorialSummary:
-      `${summary}. Må kvalitetssikres manuelt før publisering.`,
+      `${summary}. Må sjekkes av redaksjonen før publisering.`,
     reasonWhyItMatters:
-      `${title} kan være relevant${programText} dersom brukeren uansett skal benytte leverandøren. Verdien bør vurderes opp mot ordinære priser, eventuelle vilkår og om bonusen faktisk registreres hos kilden.`,
+      `${title} kan være nyttig${programText} hvis brukeren uansett skulle handle hos denne leverandøren. Sjekk pris, vilkår og at bonusen faktisk blir registrert.`,
     estimatedValueText:
-      `${summary}. Faktisk verdi avhenger av kjøpsbeløp, kategori og vilkår hos kilden.`,
+      `${summary}. Hva du får igjen avhenger av beløp, kategori og vilkår hos kilden.`,
     difficultyLevel: "medium",
     availabilityScope: "broad",
     riskNote:
-      `AI-forslag basert på begrenset kandidatdata. Kontroller bonusverdi, vilkår, eventuell målretting og oppdatert kilde før publisering.${sourceText}`,
+      `Forslag basert på begrenset informasjon. Sjekk bonusverdi, vilkår, hvem tilbudet gjelder for og oppdatert kilde før publisering.${sourceText}`,
     generatedBy: "fallback",
   };
 }

@@ -25,7 +25,7 @@ values
     array[
       'Prioriter kampanjer der du uansett skal kjøpe reisen, varen eller tjenesten.',
       'Se etter kombinasjoner av kort, partner og tidsbegrenset kampanje, men kontroller vilkårene før du handler.',
-      'Vær ekstra kritisk til tilbud som krever nytt kredittkort eller høyt minimumsforbruk.'
+      'Vær ekstra kritisk til tilbud som krever nytt kredittkort eller høyt kortbruk.'
     ],
     array[
       'Bruk poeng der kontantprisen er høy og tilgjengeligheten passer dine datoer.',
@@ -42,11 +42,11 @@ values
   (
     (select id from public.bonus_programs where slug = 'trumf'),
     'published',
-    'Trumf er kontantnært og lett å forstå, men totalprisen bør fortsatt styre valget. Bonus er best når den kommer på kjøp du allerede ville gjort.',
+    'Trumf er lett å forstå fordi bonusen kan brukes som penger. Totalprisen bør likevel styre valget.',
     'Trumf er ofte mest nyttig når bonusen kommer fra dagligvarekjøp du allerede ville gjort. Høy prosentbonus er mindre verdt hvis varen er dyrere enn alternativet.',
     '1 kr = 1 kr',
     'Trumf-bonus er konkret kroneverdi, men kampanjeverdi må vurderes mot totalpris.',
-    'Lav friksjon',
+    'Lett å bruke',
     'Sjekk saldo og overføringsvilkår før du flytter bonus til andre programmer.',
     array[
       'Aktiver kampanjer før kjøp når det kreves.',
@@ -55,7 +55,7 @@ values
     ],
     array[
       'Bruk saldoen der den gir konkret verdi for deg, eller overfør bare når vilkårene passer.',
-      'Følg med på kampanjer som gjør ordinære kjøp mer lønnsomme uten ekstra friksjon.',
+      'Se etter kampanjer som gir ekstra bonus på kjøp du uansett skulle gjøre.',
       'Hold oversikt over aktiveringskrav og kampanjeperioder.'
     ],
     array[
@@ -68,8 +68,8 @@ values
   (
     (select id from public.bonus_programs where slug = 'spenn'),
     'published',
-    'Spenn bør vurderes ut fra partnerne du faktisk bruker. Kampanjer med planlagt kjøp og lav friksjon er normalt mest relevante.',
-    'Spenn bør vurderes som et partnerprogram der verdien avhenger av om du allerede bruker relevante partnere. Kampanjer med lav friksjon og planlagt kjøp er mest interessante.',
+    'Spenn er mest nyttig når du allerede bruker partnerne. Start med kampanjer som passer et kjøp du faktisk skal gjøre.',
+    'Bruk Spenn når partneren allerede passer planene dine. Ikke jag små poeng hvis du må kjøpe noe ekstra.',
     'Partnerverdi',
     'Verdien styres av hvor du kan opptjene og bruke poengene.',
     'Følg saldo',
@@ -81,8 +81,8 @@ values
     ],
     array[
       'Sammenlign poengbruk med kontantpris før du bruker saldo.',
-      'Bruk poeng på kjøp der alternativverdien er tydelig for deg.',
-      'Unngå å spre opptjening hvis du ikke når nyttige innløsningsnivåer.'
+      'Bruk poeng der du enkelt ser hva du får igjen.',
+      'Ikke spre poengene for mye hvis saldoen aldri blir stor nok til noe nyttig.'
     ],
     array[
       'Partnerkrav kan gjøre en enkel kampanje mindre enkel i praksis.',

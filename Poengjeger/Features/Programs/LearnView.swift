@@ -20,7 +20,7 @@ struct LearnView: View {
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Praktiske guider til hvordan økosystemene fungerer, hva du bør se etter, og hvilke aktive kampanjer som passer inn.")
+                    Text("Lær hvordan du tjener og bruker poeng smartere, og hva du bør sjekke før du går for en kampanje.")
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -75,7 +75,7 @@ private struct LearnProgramCard: View {
     private var previewText: String {
         guide?.introText?.nonEmpty
             ?? guide?.strategy.nonEmpty
-            ?? "Programguide kommer. Aktive kampanjer vises likevel."
+            ?? "Guide kommer. Aktive kampanjer vises likevel."
     }
 
     var body: some View {
@@ -109,6 +109,7 @@ private struct LearnProgramCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
+        .contentShape(Rectangle())
         .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
@@ -125,7 +126,7 @@ private struct LearnEmptyState: View {
             Text("Ingen programmer ennå")
                 .font(.headline.weight(.semibold))
 
-            Text("Når EuroBonus og Trumf er publisert, vises de her med redaksjonelle guider og aktive kampanjer.")
+            Text("Når EuroBonus og Trumf er klare, vises de her med guider og aktive kampanjer.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

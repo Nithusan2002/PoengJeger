@@ -185,7 +185,7 @@ private struct FeedControlHeader: View {
                         .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                         .foregroundStyle(.primary)
 
-                    Text("\(campaignCount) aktive · \(showsAllPrograms ? "alle programmer" : "dine programmer")")
+                    Text("\(campaignCount) aktive · \(showsAllPrograms ? "alle" : "dine valg")")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -279,7 +279,7 @@ private struct FeedControlHeader: View {
                             onToggleShowsAllPrograms()
                         } label: {
                             FilterChip(
-                                title: showsAllPrograms ? "Alle programmer" : "Mine programmer",
+                                title: showsAllPrograms ? "Alle" : "Mine valg",
                                 systemImage: showsAllPrograms ? "person.2" : "person.crop.circle",
                                 isSelected: showsAllPrograms
                             )
@@ -496,6 +496,8 @@ private struct ProgramFilterSheet: View {
 
                                 Spacer()
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
                         .accessibilityLabel(program.name)
                         .accessibilityValue(selectedProgramIDs.contains(program.id) ? "Valgt" : "Ikke valgt")

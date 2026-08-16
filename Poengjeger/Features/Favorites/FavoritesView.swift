@@ -32,7 +32,7 @@ struct FavoritesView: View {
             .padding(.vertical, 18)
         }
         .background(PoengjegerTheme.background)
-        .navigationTitle("Favoritter")
+        .navigationTitle("Lagret")
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
@@ -43,9 +43,9 @@ struct FavoritesView: View {
         .overlay {
             if favorites.isEmpty {
                 ContentUnavailableView(
-                    "Ingen favoritter",
+                    "Ingen lagrede kampanjer",
                     systemImage: "star",
-                    description: Text("Lagrede kampanjer dukker opp her.")
+                    description: Text("Trykk på stjernen på kampanjer du vil sjekke senere.")
                 )
             }
         }
