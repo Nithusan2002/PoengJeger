@@ -220,18 +220,10 @@ private struct FeedControlHeader: View {
                     .accessibilityLabel("Søk i kampanjer")
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) {
-                    sortFilterControl
-                    categoryFilterControl
-                    programScopeControl
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    sortFilterControl
-                    categoryFilterControl
-                    programScopeControl
-                }
+            HStack(spacing: 8) {
+                sortFilterControl
+                categoryFilterControl
+                programScopeControl
             }
         }
         .padding(.horizontal, 16)
@@ -258,7 +250,7 @@ private struct FeedControlHeader: View {
             }
         } label: {
             FilterChip(
-                title: selectedSort.title,
+                title: selectedSort.shortTitle,
                 systemImage: "arrow.up.arrow.down",
                 isSelected: true
             )
@@ -335,13 +327,27 @@ private struct FilterChip: View {
 
     var body: some View {
         Label(title, systemImage: systemImage)
-            .font(.subheadline.weight(.semibold))
+            .font(.callout.weight(.semibold))
             .lineLimit(1)
-            .padding(.horizontal, 10)
-            .frame(minHeight: 34)
+            .minimumScaleFactor(0.86)
+            .padding(.horizontal, 9)
+            .frame(minHeight: 36)
             .background(isSelected ? PoengjegerTheme.accentSoft : PoengjegerTheme.surface)
             .foregroundStyle(isSelected ? PoengjegerTheme.accent : Color.primary)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+private extension FeedSort {
+    var shortTitle: String {
+        switch self {
+        case .expiringFirst:
+            return "Frist"
+        case .newest:
+            return "Nyeste"
+        case .alphabetic:
+            return "A-Å"
+        }
     }
 }
 
