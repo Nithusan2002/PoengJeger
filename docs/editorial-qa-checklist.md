@@ -73,3 +73,31 @@ Registrer for hver testkampanje:
 - om SQL Editor måtte brukes
 - antall felter som måtte korrigeres etter iOS-kontroll
 - om kampanjen kunne forstås i feeden uten å åpne detaljsiden
+
+## QA-logg
+
+### 2026-08-17 lokal admin- og feedkontroll
+
+Omfang:
+
+- Lokal Supabase mot `http://127.0.0.1:54321`.
+- Fem representative QA-kandidater merket med `metadata.qa_run = editorial-five-campaigns-2026-08-16`.
+- Fire kandidater promotert til draft og publisert.
+- En kandidat avvist på grunn av uklar kilde, uklare vilkår og mulig målretting.
+- Adminverktøyet ble åpnet lokalt i browser og viste fem kandidater i køen og fire publiserte kampanjer.
+- Feed-API med publishable key returnerte de fire publiserte QA-kampanjene og ikke den avviste kandidaten.
+- `PoengjegerTests/ScannableFeedUseCaseTests` passerte på `iPhone 16 Pro, iOS 18.6`.
+
+Resultat:
+
+- Redaksjonell flyt fungerer lokalt fra kandidat til publisert kampanje via samme RPC-er som adminverktøyet bruker.
+- Publiserte QA-kampanjer hadde programkobling, kilde, krav, `last_verified_at` og redaksjonell vurdering.
+- Kort-frist-kampanjen hadde `end_date = 2026-08-18`.
+
+Begrensninger:
+
+- Dette var lokal QA, ikke staging eller produksjon.
+- QA-data ble opprettet direkte med SQL/RPC-er og deretter kontrollert i adminverktøyet; alle klikk for manuell redigering ble ikke gjennomført i browser.
+- Lokal QA-data står igjen for videre visuell kontroll med mindre den ryddes manuelt.
+
+Se også `docs/local-admin-qa.md`.
