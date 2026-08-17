@@ -1,3 +1,14 @@
+insert into public.bonus_programs (slug, name, issuer_name, country_code)
+values
+  ('sas-eurobonus', 'SAS EuroBonus', 'SAS', 'NO'),
+  ('trumf', 'Trumf', 'NorgesGruppen', 'NO'),
+  ('spenn', 'Spenn', 'Spenn', 'NO')
+on conflict (slug) do update
+set
+  name = excluded.name,
+  issuer_name = excluded.issuer_name,
+  country_code = excluded.country_code;
+
 insert into public.program_guides (
   program_id,
   status,

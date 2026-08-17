@@ -1,5 +1,8 @@
 .DS_Store
 
+# Dependencies
+website/node_modules/
+
 # Local Xcode state
 *.xcuserstate
 xcuserdata/
