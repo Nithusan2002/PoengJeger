@@ -13,13 +13,10 @@ struct OnboardingView: View {
 
         NavigationStack {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
-                    OnboardingHeader(
-                        selectedCount: draftSelectedProgramIDs.count,
-                        programCount: programs.count
-                    )
+                VStack(alignment: .leading, spacing: 22) {
+                    OnboardingHeader()
 
-                    OnboardingProgramList(
+                    OnboardingProgramGrid(
                         programs: programs,
                         selectedProgramIDs: $draftSelectedProgramIDs
                     )
@@ -33,9 +30,16 @@ struct OnboardingView: View {
                     ) {
                         environment.userSession.selectedProgramIDs = draftSelectedProgramIDs
                     }
+
+                    Text("Du kan endre dette senere i Profil.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 18)
+                .padding(.top, 76)
+                .padding(.bottom, 28)
             }
             .background(PoengjegerTheme.background)
             .navigationTitle("")
@@ -58,60 +62,44 @@ struct OnboardingView: View {
 }
 
 private struct OnboardingHeader: View {
-    let selectedCount: Int
-    let programCount: Int
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Hva samler du på?")
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Hva samler du i?")
                 .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Velg programmene du bruker, så viser vi kampanjer og tips som passer deg.")
+            Text("Velg programmene dine. Vi bruker valget til å tilpasse kampanjer, guider og varsler.")
                 .font(.title3.weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
-
-            Label("\(selectedCount) av \(programCount) valgt", systemImage: "checkmark.circle")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.accent)
-                .accessibilityLabel("\(selectedCount) av \(programCount) programmer valgt")
         }
-        .padding(.top, 72)
         .padding(.bottom, 4)
         .accessibilityElement(children: .combine)
     }
 }
 
-private struct OnboardingProgramList: View {
+private struct OnboardingProgramGrid: View {
     let programs: [BonusProgram]
     @Binding var selectedProgramIDs: Set<UUID>
 
+    private let columns = [
+        GridItem(.adaptive(minimum: 150), spacing: 14)
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
             ForEach(programs) { program in
-                ProgramSelectionRow(
+                OnboardingProgramCard(
                     program: program,
                     isSelected: selectedProgramIDs.contains(program.id)
                 ) {
                     toggleProgramSelection(program.id)
                 }
-
-                if program.id != programs.last?.id {
-                    Divider()
-                        .padding(.leading, 52)
-                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
     }
 
     private func toggleProgramSelection(_ programID: UUID) {
@@ -123,13 +111,70 @@ private struct OnboardingProgramList: View {
     }
 }
 
+private struct OnboardingProgramCard: View {
+    let program: BonusProgram
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .top) {
+                    Circle()
+                        .fill(program.programColor)
+                        .frame(width: 11, height: 11)
+                        .accessibilityHidden(true)
+
+                    Spacer()
+
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(isSelected ? program.programColor : Color(uiColor: .tertiaryLabel))
+                        .accessibilityHidden(true)
+                }
+
+                Spacer(minLength: 18)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(program.name)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.86)
+
+                    Text(program.onboardingDescription)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, minHeight: 168, alignment: .leading)
+            .background(PoengjegerTheme.elevatedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(isSelected ? program.programColor.opacity(0.72) : PoengjegerTheme.border, lineWidth: isSelected ? 1.5 : 1)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(program.name)
+        .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
+        .accessibilityHint(program.onboardingDescription)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+}
+
 private struct OnboardingContinueButton: View {
     let isEnabled: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Label("Vis kampanjer", systemImage: "arrow.right.circle.fill")
+            Label(isEnabled ? "Vis mine kampanjer" : "Velg minst ett program", systemImage: "arrow.right.circle.fill")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
@@ -230,6 +275,19 @@ private struct ProgramSelectionRow: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
+    }
+}
+
+private extension BonusProgram {
+    var onboardingDescription: String {
+        switch slug {
+        case "sas-eurobonus":
+            return "Fly, kort og partnere"
+        case "trumf":
+            return "Dagligvarer, netthandel og overføring"
+        default:
+            return issuerName
+        }
     }
 }
 

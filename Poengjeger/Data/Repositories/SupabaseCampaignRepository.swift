@@ -104,7 +104,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
             "campaign_categories(id,slug,name)",
             "campaign_requirements(id,text,sort_order)",
             "campaign_source_references(id,url,title,checked_at,evidence_note,campaign_sources(name))",
-            "campaign_editorial_assessments(score,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
+            "campaign_editorial_assessments(score,decision_label,decision_summary,best_for,not_for,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
             "campaign_geo_restrictions(id,country_code)",
             "campaign_programs(program_id)"
         ].joined(separator: ",")
@@ -423,6 +423,10 @@ private struct CampaignSourceDTO: Decodable {
 
 private struct EditorialAssessmentDTO: Decodable {
     let score: Double?
+    let decisionLabel: String?
+    let decisionSummary: String?
+    let bestFor: String?
+    let notFor: String?
     let reasonWhyItMatters: String
     let estimatedValueText: String?
     let difficultyLevel: String?
@@ -431,6 +435,10 @@ private struct EditorialAssessmentDTO: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case score
+        case decisionLabel = "decision_label"
+        case decisionSummary = "decision_summary"
+        case bestFor = "best_for"
+        case notFor = "not_for"
         case reasonWhyItMatters = "reason_why_it_matters"
         case estimatedValueText = "estimated_value_text"
         case difficultyLevel = "difficulty_level"
@@ -441,6 +449,10 @@ private struct EditorialAssessmentDTO: Decodable {
     var domainModel: EditorialAssessment {
         EditorialAssessment(
             score: score.map { Int($0.rounded()) },
+            decisionLabel: decisionLabel.flatMap(EditorialDecisionLabel.init(rawValue:)),
+            decisionSummary: decisionSummary,
+            bestFor: bestFor,
+            notFor: notFor,
             reasonWhyItMatters: reasonWhyItMatters,
             estimatedValueText: estimatedValueText,
             difficultyLevel: difficultyLevel.flatMap(DifficultyLevel.init(rawValue:)),

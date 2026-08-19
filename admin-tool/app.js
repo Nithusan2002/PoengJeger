@@ -429,7 +429,7 @@
         "category_id",
         "editorial_summary",
         "updated_at",
-        "campaign_editorial_assessments(id,score,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
+        "campaign_editorial_assessments(id,score,decision_label,decision_summary,best_for,not_for,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
         "campaign_source_references(id,source_id,url,title,checked_at,evidence_note)",
         "campaign_requirements(id,text,sort_order)",
         "campaign_programs(program_id)"
@@ -514,6 +514,10 @@
         ? {
             id: editorialAssessment.id,
             score: editorialAssessment.score,
+            decisionLabel: editorialAssessment.decision_label || "",
+            decisionSummary: editorialAssessment.decision_summary || "",
+            bestFor: editorialAssessment.best_for || "",
+            notFor: editorialAssessment.not_for || "",
             reasonWhyItMatters: editorialAssessment.reason_why_it_matters || "",
             estimatedValueText: editorialAssessment.estimated_value_text || "",
             difficultyLevel: editorialAssessment.difficulty_level || "",
@@ -922,6 +926,49 @@
           </div>
           <div class="detail-grid">
             <label class="field">
+              <span>Beslutning</span>
+              <select name="decisionLabel">
+                <option value="">Ikke satt</option>
+                ${renderEnumOptions(
+                  [
+                    { value: "worth_checking", label: "Verdt å sjekke" },
+                    { value: "niche", label: "Kun relevant for noen" },
+                    { value: "low_value", label: "Lav verdi" },
+                    { value: "uncertain", label: "Usikker / vent" }
+                  ],
+                  editorialAssessment ? editorialAssessment.decisionLabel : ""
+                )}
+              </select>
+              <span class="hint">Kort fasit for om brukeren bør bry seg.</span>
+            </label>
+
+            <label class="field">
+              <span>Kort konklusjon</span>
+              <textarea name="decisionSummary" rows="4">${escapeHtml(
+                editorialAssessment ? editorialAssessment.decisionSummary : ""
+              )}</textarea>
+              <span class="hint">Vises høyt i feed og kampanjedetalj.</span>
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Passer for</span>
+              <textarea name="bestFor" rows="3">${escapeHtml(
+                editorialAssessment ? editorialAssessment.bestFor : ""
+              )}</textarea>
+            </label>
+
+            <label class="field">
+              <span>Passer ikke for</span>
+              <textarea name="notFor" rows="3">${escapeHtml(
+                editorialAssessment ? editorialAssessment.notFor : ""
+              )}</textarea>
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
               <span>Hvorfor interessant</span>
               <textarea name="reasonWhyItMatters" rows="4">${escapeHtml(
                 editorialAssessment ? editorialAssessment.reasonWhyItMatters : ""
@@ -1028,7 +1075,7 @@
             <button type="button" class="success" data-publish-action="publish">Lagre og publiser</button>
             <button type="button" class="secondary" data-publish-action="archive">Arkiver</button>
           </div>
-          <span class="help">Publisering krever bonusprogram, https-kilde, tittel, beskrivelse, redaksjonell begrunnelse og <code>last_verified_at</code>.</span>
+          <span class="help">Publisering krever bonusprogram, https-kilde, tittel, beskrivelse, beslutning, kort konklusjon, redaksjonell begrunnelse og <code>last_verified_at</code>.</span>
         </div>
       </form>
     `;
@@ -1563,6 +1610,10 @@
       primaryProgramId: emptyToNull(formData.get("primaryProgramId")),
       categoryId: emptyToNull(formData.get("categoryId")),
       editorialSummary: emptyToNull(formData.get("editorialSummary")),
+      decisionLabel: emptyToNull(formData.get("decisionLabel")),
+      decisionSummary: emptyToNull(formData.get("decisionSummary")),
+      bestFor: emptyToNull(formData.get("bestFor")),
+      notFor: emptyToNull(formData.get("notFor")),
       reasonWhyItMatters: String(formData.get("reasonWhyItMatters") || "").trim(),
       estimatedValueText: emptyToNull(formData.get("estimatedValueText")),
       difficultyLevel: emptyToNull(formData.get("difficultyLevel")),
@@ -1595,6 +1646,10 @@
 
     if (
       payload.reasonWhyItMatters ||
+      payload.decisionLabel ||
+      payload.decisionSummary ||
+      payload.bestFor ||
+      payload.notFor ||
       payload.estimatedValueText ||
       payload.difficultyLevel ||
       payload.availabilityScope ||
@@ -1625,6 +1680,14 @@
       if (!payload.reasonWhyItMatters) {
         errors.push("Publisering krever en redaksjonell begrunnelse.");
       }
+
+      if (!payload.decisionLabel) {
+        errors.push("Publisering krever en beslutning.");
+      }
+
+      if (!payload.decisionSummary) {
+        errors.push("Publisering krever en kort konklusjon.");
+      }
     }
 
     return errors;
@@ -1643,6 +1706,10 @@
           primaryProgramId: payload.primaryProgramId,
           categoryId: payload.categoryId,
           editorialSummary: payload.editorialSummary,
+          decisionLabel: payload.decisionLabel,
+          decisionSummary: payload.decisionSummary,
+          bestFor: payload.bestFor,
+          notFor: payload.notFor,
           reasonWhyItMatters: payload.reasonWhyItMatters,
           estimatedValueText: payload.estimatedValueText,
           difficultyLevel: payload.difficultyLevel,
@@ -1701,6 +1768,10 @@
 
   function applyEditorialSuggestion(form, suggestion) {
     setFieldValue(form, "editorialSummary", suggestion.editorialSummary);
+    setFieldValue(form, "decisionLabel", suggestion.decisionLabel);
+    setFieldValue(form, "decisionSummary", suggestion.decisionSummary);
+    setFieldValue(form, "bestFor", suggestion.bestFor);
+    setFieldValue(form, "notFor", suggestion.notFor);
     setFieldValue(form, "reasonWhyItMatters", suggestion.reasonWhyItMatters);
     setFieldValue(form, "estimatedValueText", suggestion.estimatedValueText);
     setFieldValue(form, "difficultyLevel", suggestion.difficultyLevel);
@@ -1731,13 +1802,15 @@
         && String(formData.get("lastVerifiedAt") || "").trim()
         && String(formData.get("sourceId") || "").trim()
         && isHttpsUrl(String(formData.get("sourceUrl") || "").trim())
+        && String(formData.get("decisionLabel") || "").trim()
+        && String(formData.get("decisionSummary") || "").trim()
         && String(formData.get("reasonWhyItMatters") || "").trim()
     );
 
     publishButton.disabled = !canPublish;
     publishButton.title = canPublish
       ? ""
-      : "Publisering krever tittel, beskrivelse, detaljer, bonusprogram, sist verifisert, https-kilde og redaksjonell begrunnelse.";
+      : "Publisering krever tittel, beskrivelse, detaljer, bonusprogram, sist verifisert, https-kilde, beslutning, kort konklusjon og redaksjonell begrunnelse.";
   }
 
   async function upsertProgramGuide(payload) {

@@ -185,6 +185,10 @@ enum SampleData {
             ],
             editorialAssessment: EditorialAssessment(
                 score: 82,
+                decisionLabel: .worthChecking,
+                decisionSummary: "Verdt å sjekke hvis du uansett handler dagligvarer hos Kiwi eller Meny denne uken.",
+                bestFor: "Deg som allerede skal handle hos Kiwi eller Meny.",
+                notFor: "Deg som må bytte butikk eller kjøpe ekstra for å bruke tilbudet.",
                 reasonWhyItMatters: "Bra hvis du uansett handler hos Kiwi eller Meny denne uken.",
                 estimatedValueText: "Kan gi god rabatt på vanlige dagligvarer.",
                 difficultyLevel: .low,
@@ -227,6 +231,10 @@ enum SampleData {
             ],
             editorialAssessment: EditorialAssessment(
                 score: 76,
+                decisionLabel: .niche,
+                decisionSummary: "Kun relevant hvis du allerede vurderer kortet og klarer brukskravet uten ekstra kjøp.",
+                bestFor: "Deg som faktisk trenger kortet og tåler kredittsjekken.",
+                notFor: "Deg som vil unngå nytt kort, gebyrer eller ekstra kortbruk.",
                 reasonWhyItMatters: "Kan være verdifullt, men bare hvis du vil ha kortet og klarer kravet uten ekstra kjøp.",
                 estimatedValueText: "Best for brukere som allerede vurderer nytt kort.",
                 difficultyLevel: .medium,
@@ -273,6 +281,10 @@ enum SampleData {
             ],
             editorialAssessment: EditorialAssessment(
                 score: 71,
+                decisionLabel: .niche,
+                decisionSummary: "Kun relevant hvis du allerede har et hotellopphold som passer partneren.",
+                bestFor: "Deg som allerede skal bestille hotell hos en partner.",
+                notFor: "Deg som må endre reiseplan eller betale mer for å få bonusen.",
                 reasonWhyItMatters: "Nyttig hvis du allerede skal bestille hotell. Mindre relevant hvis du ikke har en reiseplan.",
                 estimatedValueText: "Moderat verdi ved allerede planlagt opphold.",
                 difficultyLevel: .low,

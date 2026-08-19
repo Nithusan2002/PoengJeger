@@ -15,7 +15,7 @@ Les `docs/product-brief.md` før produktrelaterte eller arkitektoniske endringer
 - Ikke publiser automatisk innhold med usikker kilde eller uklare vilkår.
 - Ikke legg hemmeligheter i repositoryet.
 - Bruk migrasjoner for databaseendringer; vurder relasjoner, constraints, indekser og RLS.
-- Kjør relevante tester før en oppgave anses som ferdig. Ikke påstå at tester er kjørt når de ikke er det.
+- Vurder tester ut fra risiko og omfang. Kjør relevante tester ved kodeendringer, skjemaendringer, sikkerhetskritiske endringer, større brukerflyter eller når brukeren ber om det. Ikke bruk tid eller tokens på testkjøring for rene dokumentasjons-/instruksjonsendringer, små analyser eller statusspørsmål. Ikke påstå at tester er kjørt når de ikke er det; rapporter kort når tester bevisst er hoppet over.
 - Oppdater `docs/decisions.md` ved større tekniske eller produktmessige beslutninger, og `docs/roadmap.md` når planlagt omfang påvirkes.
 
 ## Teknisk utgangspunkt
@@ -55,4 +55,4 @@ Forklar situasjonen før irreversible databaseendringer, sletting av vesentlig k
 
 ## Ferdigdefinisjon
 
-Rapporter hva som ble endret, berørte filer, Skills brukt, tester og resultater, antakelser samt gjenværende risiko eller oppfølging.
+Rapporter hva som ble endret, berørte filer, Skills brukt når relevant, tester kjørt eller hvorfor tester ble hoppet over, antakelser samt gjenværende risiko eller oppfølging.

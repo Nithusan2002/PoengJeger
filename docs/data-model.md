@@ -11,11 +11,11 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 - `campaign_programs`: kobler en kampanje til flere programmer.
 - `campaign_requirements`: ordnede krav for en kampanje.
 - `campaign_sources` og `campaign_source_references`: kildeidentitet, URL, kontrolltidspunkt og bevisnotat.
-- `campaign_editorial_assessments`: redaksjonell begrunnelse, estimat, vanskelighetsgrad, tilgjengelighet og risiko.
+- `campaign_editorial_assessments`: redaksjonell beslutningslabel, kort konklusjon, hvem kampanjen passer/ikke passer for, begrunnelse, estimat, vanskelighetsgrad, tilgjengelighet og risiko.
 - `campaign_geo_restrictions`: landbegrensninger.
 - `campaign_audit_log`: statusendringer for kampanjer.
 
-En publisert kampanje krever minst én kildehenvisning, `last_verified_at` og minst én kobling til bonusprogram. Nye kildehenvisninger må bruke `https://`-URL. Dette håndheves i databasen.
+En publisert kampanje krever minst én kildehenvisning, `last_verified_at`, minst én kobling til bonusprogram og redaksjonell beslutning med kort konklusjon. Nye kildehenvisninger må bruke `https://`-URL. Dette håndheves i databasen for redaksjonell lagring.
 
 Publiserte programguider kan leses av klienten for aktive bonusprogrammer. Utkast og arkiverte guider er kun tilgjengelige for redaksjonelle adminbrukere.
 

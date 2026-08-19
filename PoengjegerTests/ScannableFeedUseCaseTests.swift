@@ -356,6 +356,10 @@ struct ScannableFeedUseCaseTests {
                     ],
                     "campaign_editorial_assessments": {
                       "score": 79.6,
+                      "decision_label": "worth_checking",
+                      "decision_summary": "Verdt å sjekke for helgehandel.",
+                      "best_for": "Deg som uansett skal handle.",
+                      "not_for": "Deg som må kjøpe ekstra.",
                       "reason_why_it_matters": "Redaksjonell vurdering",
                       "estimated_value_text": "Høy verdi",
                       "difficulty_level": "medium",
@@ -412,6 +416,10 @@ struct ScannableFeedUseCaseTests {
         #expect(campaign.requirements.map(\.text) == ["Forste krav", "Andre krav"])
         #expect(campaign.sources.map(\.id) == [sourceReferenceID])
         #expect(campaign.sources.first?.title == "Eksempelkilde")
+        #expect(campaign.editorialAssessment?.decisionLabel == .worthChecking)
+        #expect(campaign.editorialAssessment?.decisionSummary == "Verdt å sjekke for helgehandel.")
+        #expect(campaign.editorialAssessment?.bestFor == "Deg som uansett skal handle.")
+        #expect(campaign.editorialAssessment?.notFor == "Deg som må kjøpe ekstra.")
         #expect(campaign.editorialAssessment?.difficultyLevel == .medium)
         #expect(campaign.editorialAssessment?.availabilityScope == .broad)
         #expect(campaign.geoRestrictions.map(\.id) == [geoRestrictionID])
@@ -547,6 +555,34 @@ struct ScannableFeedUseCaseTests {
     }
 
     @Test
+    func scannableFeedSearchesDecisionFields() {
+        let matchingCampaign = makeCampaign(
+            title: "Trumf netthandel",
+            summary: "Vanlig sammendrag",
+            decisionSummary: "Verdt for planlagt elektronikkjop",
+            linkedProgramIDs: [SampleData.trumf.id]
+        )
+        let noMatch = makeCampaign(
+            title: "Trumf dagligvare",
+            summary: "Vanlig sammendrag",
+            decisionSummary: "Relevant for helgehandel",
+            linkedProgramIDs: [SampleData.trumf.id]
+        )
+
+        let campaigns = ScannableFeedUseCase().makeFeed(
+            campaigns: [noMatch, matchingCampaign],
+            selectedProgramIDs: [SampleData.trumf.id],
+            showsAllPrograms: false,
+            selectedCategoryID: nil,
+            searchText: "elektronikkjop",
+            sort: .alphabetic,
+            referenceDate: Date(timeIntervalSince1970: 10_000)
+        )
+
+        #expect(campaigns.map(\.title) == ["Trumf netthandel"])
+    }
+
+    @Test
     func scannableFeedSortsByExpiryNewestAndTitle() {
         let referenceDate = Date(timeIntervalSince1970: 10_000)
         let earliest = makeCampaign(
@@ -645,9 +681,14 @@ struct ScannableFeedUseCaseTests {
         lastVerifiedAt: Date = Date(timeIntervalSince1970: 100),
         category: CampaignCategory? = nil,
         requirements: [CampaignRequirement] = [],
+        decisionSummary: String? = nil,
+        bestFor: String? = nil,
+        notFor: String? = nil,
         difficultyLevel: DifficultyLevel? = nil,
         linkedProgramIDs: [UUID] = [SampleData.trumf.id]
     ) -> Campaign {
+        let hasAssessment = decisionSummary != nil || bestFor != nil || notFor != nil || difficultyLevel != nil
+
         Campaign(
             id: UUID(),
             title: title,
@@ -664,16 +705,20 @@ struct ScannableFeedUseCaseTests {
             isFeatured: false,
             requirements: requirements,
             sources: [],
-            editorialAssessment: difficultyLevel.map {
-                EditorialAssessment(
+            editorialAssessment: hasAssessment
+                ? EditorialAssessment(
                     score: editorialScore,
+                    decisionLabel: decisionSummary == nil ? nil : .worthChecking,
+                    decisionSummary: decisionSummary,
+                    bestFor: bestFor,
+                    notFor: notFor,
                     reasonWhyItMatters: "Testvurdering",
                     estimatedValueText: nil,
-                    difficultyLevel: $0,
+                    difficultyLevel: difficultyLevel,
                     availabilityScope: nil,
                     riskNote: nil
                 )
-            },
+                : nil,
             geoRestrictions: [],
             linkedProgramIDs: linkedProgramIDs
         )

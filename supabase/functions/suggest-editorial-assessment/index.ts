@@ -11,6 +11,10 @@ type EditorialSuggestionRequest = {
 
 type EditorialSuggestion = {
   editorialSummary: string;
+  decisionLabel: "worth_checking" | "niche" | "low_value" | "uncertain";
+  decisionSummary: string;
+  bestFor: string;
+  notFor: string;
   reasonWhyItMatters: string;
   estimatedValueText: string;
   difficultyLevel: "low" | "medium" | "high";
@@ -115,7 +119,7 @@ async function generateOpenAISuggestion(
             {
               type: "input_text",
               text:
-                "Du er redaksjonell assistent for Poengjeger. Skriv kort og tydelig norsk bokmål for vanlige bonusbrukere. Bruk dagligspråk, ikke rapport- eller konsulentspråk. Skriv som en nyttig person ville forklart tilbudet til en venn. Unngå ord som friksjon, kundeforhold, realisere, kontantnær, uttelling, estimert verdi, regional og bredt tilgjengelig. Skriv heller lett å bruke, nytt kort/abonnement, bruke fordelen, nesten som penger, hva du får igjen, gjelder i Norge og gjelder mange. Skill dokumenterte fakta fra vurderinger. Ikke finn på utløpsdato, vilkår, geografi eller bonusverdi. Marker usikkerhet tydelig.",
+                "Du er redaksjonell assistent for Poengjeger. Skriv kort og tydelig norsk bokmål for vanlige bonusbrukere. Bruk dagligspråk, ikke rapport- eller konsulentspråk. Skriv som en nyttig person ville forklart tilbudet til en venn. Beslutningsfeltene skal hjelpe brukeren å avgjøre raskt om kampanjen er relevant: decisionSummary skal være én konkret konklusjon, bestFor skal si hvem tilbudet passer for, og notFor skal si hvem som bør la være. Unngå ord som friksjon, kundeforhold, realisere, kontantnær, uttelling, estimert verdi, regional og bredt tilgjengelig. Skriv heller lett å bruke, nytt kort/abonnement, bruke fordelen, nesten som penger, hva du får igjen, gjelder i Norge og gjelder mange. Skill dokumenterte fakta fra vurderinger. Ikke finn på utløpsdato, vilkår, geografi eller bonusverdi. Marker usikkerhet tydelig.",
             },
           ],
         },
@@ -139,6 +143,13 @@ async function generateOpenAISuggestion(
             additionalProperties: false,
             properties: {
               editorialSummary: { type: "string" },
+              decisionLabel: {
+                type: "string",
+                enum: ["worth_checking", "niche", "low_value", "uncertain"],
+              },
+              decisionSummary: { type: "string" },
+              bestFor: { type: "string" },
+              notFor: { type: "string" },
               reasonWhyItMatters: { type: "string" },
               estimatedValueText: { type: "string" },
               difficultyLevel: {
@@ -153,6 +164,10 @@ async function generateOpenAISuggestion(
             },
             required: [
               "editorialSummary",
+              "decisionLabel",
+              "decisionSummary",
+              "bestFor",
+              "notFor",
               "reasonWhyItMatters",
               "estimatedValueText",
               "difficultyLevel",
@@ -192,6 +207,13 @@ function buildFallbackSuggestion(
   return {
     editorialSummary:
       `${summary}. Må sjekkes av redaksjonen før publisering.`,
+    decisionLabel: "uncertain",
+    decisionSummary:
+      "Usikker verdi inntil redaksjonen har kontrollert bonusverdi, vilkår og hvem tilbudet gjelder for.",
+    bestFor:
+      "Brukere som allerede skulle handle hos leverandøren og kan kontrollere vilkårene før kjøp.",
+    notFor:
+      "Brukere som må kjøpe noe ekstra, bytte leverandør eller akseptere uklare vilkår for å få bonusen.",
     reasonWhyItMatters:
       `${title} kan være nyttig${programText} hvis brukeren uansett skulle handle hos denne leverandøren. Sjekk pris, vilkår og at bonusen faktisk blir registrert.`,
     estimatedValueText:
@@ -221,12 +243,22 @@ function sanitizeRequest(input: unknown): EditorialSuggestionRequest {
 function normalizeSuggestion(input: Record<string, unknown>): Omit<EditorialSuggestion, "generatedBy"> {
   return {
     editorialSummary: sanitizeText(input.editorialSummary) || "Må vurderes redaksjonelt før publisering.",
+    decisionLabel: normalizeDecisionLabel(input.decisionLabel),
+    decisionSummary: sanitizeText(input.decisionSummary) || "Må vurderes redaksjonelt før publisering.",
+    bestFor: sanitizeText(input.bestFor) || "Brukere som allerede skulle gjøre kjøpet.",
+    notFor: sanitizeText(input.notFor) || "Brukere som må kjøpe noe ekstra for å få bonusen.",
     reasonWhyItMatters: sanitizeText(input.reasonWhyItMatters) || "Må vurderes redaksjonelt før publisering.",
     estimatedValueText: sanitizeText(input.estimatedValueText) || "Verdi må verifiseres mot kilden.",
     difficultyLevel: normalizeDifficulty(input.difficultyLevel),
     availabilityScope: normalizeAvailability(input.availabilityScope),
     riskNote: sanitizeText(input.riskNote) || "Kontroller kilde og vilkår før publisering.",
   };
+}
+
+function normalizeDecisionLabel(value: unknown): EditorialSuggestion["decisionLabel"] {
+  return value === "worth_checking" || value === "niche" || value === "low_value"
+    ? value
+    : "uncertain";
 }
 
 function sanitizeText(value: unknown): string {

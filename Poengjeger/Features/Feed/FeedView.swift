@@ -21,7 +21,19 @@ struct FeedView: View {
         )
     }
 
+    private var feedSections: [FeedSectionModel] {
+        FeedSectionModel.makeSections(from: campaigns)
+    }
+
+    private var priorityStats: FeedPriorityStats {
+        FeedPriorityStats(campaigns: activeCampaignsWithoutSearch)
+    }
+
     private var activeCampaignCount: Int {
+        activeCampaignsWithoutSearch.count
+    }
+
+    private var activeCampaignsWithoutSearch: [Campaign] {
         ScannableFeedUseCase().makeFeed(
             campaigns: environment.firstPhaseCampaigns,
             selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
@@ -30,7 +42,6 @@ struct FeedView: View {
             searchText: "",
             sort: selectedSort
         )
-        .count
     }
 
     private var categories: [CampaignCategory] {
@@ -66,17 +77,23 @@ struct FeedView: View {
                         .redacted(reason: .placeholder)
                 }
             } else {
-                ForEach(campaigns) { campaign in
-                    NavigationLink(value: campaign) {
-                        FeedCampaignRow(
-                            campaign: campaign,
-                            programs: programs(for: campaign)
-                        )
+                ForEach(feedSections) { section in
+                    Section {
+                        ForEach(section.campaigns) { campaign in
+                            NavigationLink(value: campaign) {
+                                FeedCampaignRow(
+                                    campaign: campaign,
+                                    programs: programs(for: campaign)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .listRowInsets(EdgeInsets(top: 11, leading: 16, bottom: 11, trailing: 16))
+                            .listRowBackground(PoengjegerTheme.background)
+                            .accessibilityLabel(accessibilityLabel(for: campaign))
+                        }
+                    } header: {
+                        FeedSectionHeader(title: section.title, detail: section.detail)
                     }
-                    .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 11, leading: 16, bottom: 11, trailing: 16))
-                    .listRowBackground(PoengjegerTheme.background)
-                    .accessibilityLabel(accessibilityLabel(for: campaign))
                 }
             }
         }
@@ -92,6 +109,7 @@ struct FeedView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             FeedControlHeader(
                 campaignCount: activeCampaignCount,
+                priorityStats: priorityStats,
                 showsAllPrograms: showsAllPrograms || !hasSelectedPrograms,
                 isSearchVisible: isSearchVisible,
                 searchText: $searchText,
@@ -165,6 +183,7 @@ struct FeedView: View {
 
 private struct FeedControlHeader: View {
     let campaignCount: Int
+    let priorityStats: FeedPriorityStats
     let showsAllPrograms: Bool
     let isSearchVisible: Bool
     @Binding var searchText: String
@@ -178,16 +197,17 @@ private struct FeedControlHeader: View {
     let isSearchFocused: FocusState<Bool>.Binding
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Nå")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Kampanjer")
                         .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                         .foregroundStyle(.primary)
 
-                    Text("\(campaignCount) aktive · \(showsAllPrograms ? "alle" : "dine valg")")
+                    Text(summaryText)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: 8)
@@ -233,6 +253,22 @@ private struct FeedControlHeader: View {
         .overlay(alignment: .bottom) {
             Divider()
         }
+    }
+
+    private var summaryText: String {
+        if campaignCount == 0 {
+            return showsAllPrograms ? "Ingen aktive kampanjer" : "Ingen aktive kampanjer for dine valg"
+        }
+
+        var parts = ["\(campaignCount) aktive"]
+        if priorityStats.urgentCount > 0 {
+            parts.append("\(priorityStats.urgentCount) haster")
+        }
+        if priorityStats.highValueCount > 0 {
+            parts.append("\(priorityStats.highValueCount) høy verdi")
+        }
+        parts.append(showsAllPrograms ? "alle programmer" : "dine programmer")
+        return parts.joined(separator: " · ")
     }
 
     private var sortFilterControl: some View {
@@ -320,6 +356,72 @@ private struct FeedControlHeader: View {
 
 }
 
+private struct FeedPriorityStats {
+    let urgentCount: Int
+    let highValueCount: Int
+
+    init(campaigns: [Campaign]) {
+        urgentCount = campaigns.filter(\.isFeedUrgent).count
+        highValueCount = campaigns.filter { $0.isFeedHighValue && !$0.isFeedUrgent }.count
+    }
+}
+
+private struct FeedSectionModel: Identifiable {
+    let id: String
+    let title: String
+    let detail: String
+    let campaigns: [Campaign]
+
+    static func makeSections(from campaigns: [Campaign]) -> [FeedSectionModel] {
+        let urgent = campaigns.filter(\.isFeedUrgent)
+        let highValue = campaigns.filter { $0.isFeedHighValue && !$0.isFeedUrgent }
+        let other = campaigns.filter { !$0.isFeedUrgent && !$0.isFeedHighValue }
+
+        return [
+            FeedSectionModel(
+                id: "urgent",
+                title: "Haster",
+                detail: "Frister du bør sjekke først",
+                campaigns: urgent
+            ),
+            FeedSectionModel(
+                id: "high-value",
+                title: "Høy verdi",
+                detail: "Redaksjonelt vurdert som mest interessant",
+                campaigns: highValue
+            ),
+            FeedSectionModel(
+                id: "other",
+                title: "Flere muligheter",
+                detail: "Aktive kampanjer for videre vurdering",
+                campaigns: other
+            )
+        ]
+        .filter { !$0.campaigns.isEmpty }
+    }
+}
+
+private struct FeedSectionHeader: View {
+    let title: String
+    let detail: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(.primary)
+
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .textCase(nil)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
+}
+
 private struct FilterChip: View {
     let title: String
     let systemImage: String
@@ -392,7 +494,7 @@ private struct FeedCampaignRow: View {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if campaign.editorialScore != nil || !programs.isEmpty {
+            if campaign.feedDecisionLabel != nil || !programs.isEmpty {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) {
                         metadata
@@ -410,8 +512,8 @@ private struct FeedCampaignRow: View {
 
     @ViewBuilder
     private var metadata: some View {
-        if campaign.editorialScore != nil {
-            FeedEditorialTierPill(label: campaign.editorialTierLabel)
+        if let decisionLabel = campaign.feedDecisionLabel {
+            FeedEditorialTierPill(label: decisionLabel)
         }
 
         ForEach(programs) { program in
@@ -549,6 +651,19 @@ private struct ProgramFilterSheet: View {
 }
 
 private extension Campaign {
+    var isFeedUrgent: Bool {
+        guard let days = FeedDateHelper.daysUntil(endDate) else { return false }
+        return days >= 0 && days <= 3
+    }
+
+    var isFeedHighValue: Bool {
+        if editorialAssessment?.decisionLabel == .worthChecking {
+            return true
+        }
+
+        return (editorialScore ?? 0) >= 80
+    }
+
     var feedHeadline: String {
         if let value = editorialAssessment?.estimatedValueText?.feedValueLabel {
             return value
@@ -558,11 +673,24 @@ private extension Campaign {
     }
 
     var feedReason: String {
+        if let decisionSummary = editorialAssessment?.decisionSummary?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !decisionSummary.isEmpty {
+            return decisionSummary
+        }
+
         if let reason = editorialAssessment?.reasonWhyItMatters, !reason.isEmpty {
             return reason
         }
 
         return displaySummary
+    }
+
+    var feedDecisionLabel: String? {
+        if let label = editorialAssessment?.decisionLabel?.displayName {
+            return label
+        }
+
+        return editorialScore == nil ? nil : editorialTierLabel
     }
 }
 

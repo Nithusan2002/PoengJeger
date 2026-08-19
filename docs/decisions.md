@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-020: Kampanjer må ha eksplisitt redaksjonell beslutning
+- Status: Vedtatt
+- Bakgrunn: Poengjegers kjerneverdi er ikke å samle kampanjelenker, men å hjelpe brukeren å avgjøre raskt om en kampanje er relevant. Score, tittel og generell begrunnelse er ikke nok hvis feeden og detaljsiden ikke gir en tydelig konklusjon.
+- Beslutning: Redaksjonelle vurderinger får egne beslutningsfelt: beslutningslabel, kort konklusjon, passer for og passer ikke for. Publisering via admin-RPC krever beslutningslabel, kort konklusjon og redaksjonell begrunnelse. iOS-klienten bruker disse feltene først, men faller tilbake til eksisterende vurderingsfelt for eldre kampanjer.
+- Konsekvens: Redaksjonen må gjøre en tydeligere vurdering før publisering, og appen kan vise mer beslutningsorientert feed og detaljside. Dette øker noe manuelt arbeid per kampanje, men styrker produktets viktigste verdi: raskere og mer troverdig relevansvurdering.
+
 ## ADR-019: Appen utformes som et rolig beslutningsverktøy for EuroBonus og Trumf
 - Status: Vedtatt
 - Bakgrunn: Poengjeger må både gi rask oversikt over aktuelle kampanjer og lære brukeren hvordan EuroBonus- og Trumf-økosystemene fungerer. Hvis appen utformes som nyhetsfeed, blogg eller generell programkatalog, blir kjerneløkken svakere og redaksjonelt arbeid øker.

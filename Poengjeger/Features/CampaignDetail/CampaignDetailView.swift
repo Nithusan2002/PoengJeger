@@ -317,6 +317,8 @@ private struct DetailIntro: View {
                 }
             }
 
+            DetailSourceSummary(campaign: campaign)
+
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -342,6 +344,87 @@ private struct DetailDecisionSummary: View {
         .background(PoengjegerTheme.accentSoft)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DetailSourceSummary: View {
+    let campaign: Campaign
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Fakta og kilde", systemImage: "checkmark.seal")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.primary)
+
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 12) {
+                    sourceItems
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    sourceItems
+                }
+            }
+
+            Text("Kampanjer kvalitetssikres fra offentlige kilder. Sjekk alltid vilkårene hos tilbyder før bruk.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var sourceItems: some View {
+        SourceSummaryItem(
+            title: "Kontrollert",
+            value: campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted),
+            systemImage: "calendar.badge.checkmark"
+        )
+
+        if let primarySource = campaign.sources.first {
+            SourceSummaryItem(
+                title: "Kilde",
+                value: primarySource.sourceName,
+                systemImage: "link"
+            )
+        }
+    }
+}
+
+private struct SourceSummaryItem: View {
+    let title: String
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title.uppercased())
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(PoengjegerTheme.accent)
+        }
+        .labelStyle(.titleAndIcon)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -443,7 +526,7 @@ private struct CampaignSourceCTA: View {
 
     var body: some View {
         Link(destination: source.url) {
-            Label("Åpne kampanjesiden", systemImage: "arrow.up.right.square")
+            Label("Åpne kampanjen hos \(source.sourceName)", systemImage: "arrow.up.right.square")
                 .font(.headline.weight(.semibold))
                 .frame(maxWidth: .infinity)
         }
@@ -692,6 +775,11 @@ private extension Campaign {
     }
 
     var suitabilityFitText: String {
+        if let bestFor = editorialAssessment?.bestFor?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !bestFor.isEmpty {
+            return bestFor
+        }
+
         switch category?.slug {
         case "kredittkort":
             return "Deg som allerede vurderer kortet."
@@ -707,6 +795,11 @@ private extension Campaign {
     }
 
     var suitabilityCaveatText: String? {
+        if let notFor = editorialAssessment?.notFor?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !notFor.isEmpty {
+            return notFor
+        }
+
         if category?.slug == "kredittkort" {
             return "Deg som vil unngå kredittsjekk eller faste gebyrer."
         }
@@ -715,6 +808,11 @@ private extension Campaign {
     }
 
     var decisionConclusion: String {
+        if let decisionSummary = editorialAssessment?.decisionSummary?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !decisionSummary.isEmpty {
+            return decisionSummary
+        }
+
         if !editorialSummary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return editorialSummary
         }

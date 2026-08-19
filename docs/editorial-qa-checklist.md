@@ -28,8 +28,9 @@ For hver publiserbar kampanje:
 6. Rediger tittel, sammendrag, detaljer og krav.
 7. Registrer minst en kildehenvisning og `last_verified_at`.
 8. Legg inn redaksjonell vurdering som tydelig skiller fakta fra vurdering.
-9. Publiser kampanjen.
-10. Last iOS-appen på nytt og bekreft at kampanjen vises i feeden for riktig program.
+9. Sett beslutning, kort konklusjon, hvem kampanjen passer for og eventuelt hvem den ikke passer for.
+10. Publiser kampanjen.
+11. Last iOS-appen på nytt og bekreft at kampanjen vises i feeden for riktig program.
 
 ## Avvisningsflyt
 
@@ -49,6 +50,7 @@ En publisert kampanje skal ha:
 - tydelig gyldighetsperiode eller eksplisitt løpende status
 - minst ett krav eller en tydelig forklaring på hvorfor krav ikke er kjent
 - programtilknytning
+- redaksjonell beslutning og kort konklusjon
 - redaksjonell begrunnelse
 - ingen kommersiell merking skjult i vurderingsteksten
 
@@ -62,6 +64,7 @@ Bekreft i appen:
 - Søk finner tekst i tittel, sammendrag og redaksjonelt sammendrag.
 - Kategori-filter viser bare valgt kategori.
 - Kampanjedetalj viser kilde, kontrolltidspunkt, krav og redaksjonell vurdering.
+- Kampanjedetalj viser kort konklusjon og hvem kampanjen passer for uten at brukeren må åpne kilde-/detaljseksjonen.
 - Favorittknappen lagrer og fjerner kampanjen lokalt.
 
 ## Måling

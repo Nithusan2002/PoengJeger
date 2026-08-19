@@ -92,11 +92,35 @@ struct CampaignSourceReference: Identifiable, Hashable {
 
 struct EditorialAssessment: Hashable {
     let score: Int?
+    let decisionLabel: EditorialDecisionLabel?
+    let decisionSummary: String?
+    let bestFor: String?
+    let notFor: String?
     let reasonWhyItMatters: String
     let estimatedValueText: String?
     let difficultyLevel: DifficultyLevel?
     let availabilityScope: AvailabilityScope?
     let riskNote: String?
+}
+
+enum EditorialDecisionLabel: String, Hashable {
+    case worthChecking = "worth_checking"
+    case niche = "niche"
+    case lowValue = "low_value"
+    case uncertain = "uncertain"
+
+    var displayName: String {
+        switch self {
+        case .worthChecking:
+            return "Verdt å sjekke"
+        case .niche:
+            return "Kun relevant for noen"
+        case .lowValue:
+            return "Lav verdi"
+        case .uncertain:
+            return "Usikker / vent"
+        }
+    }
 }
 
 enum DifficultyLevel: String, Hashable {

@@ -83,7 +83,19 @@ struct ScannableFeedUseCase {
             }
             .filter { campaign in
                 guard !normalizedSearchText.isEmpty else { return true }
-                let searchableText = "\(campaign.title) \(campaign.summary) \(campaign.editorialSummary)".lowercased()
+                let searchableText = [
+                    campaign.title,
+                    campaign.summary,
+                    campaign.editorialSummary,
+                    campaign.editorialAssessment?.decisionSummary,
+                    campaign.editorialAssessment?.bestFor,
+                    campaign.editorialAssessment?.notFor,
+                    campaign.editorialAssessment?.reasonWhyItMatters,
+                    campaign.editorialAssessment?.estimatedValueText
+                ]
+                    .compactMap { $0 }
+                    .joined(separator: " ")
+                    .lowercased()
                 return searchableText.contains(normalizedSearchText)
             }
             .sorted { lhs, rhs in
