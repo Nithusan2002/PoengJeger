@@ -15,7 +15,7 @@ struct HowToEarnView: View {
                         .foregroundStyle(PoengjegerTheme.warning)
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(PoengjegerTheme.highlightSoft)
+                        .background(PoengjegerTheme.warningSoft)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
 
@@ -31,7 +31,7 @@ struct HowToEarnView: View {
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(.white)
                                 .frame(width: 24, height: 24)
-                                .background(PoengjegerTheme.accent)
+                                .background(PoengjegerTheme.primary)
                                 .clipShape(Circle())
                                 .accessibilityHidden(true)
 
@@ -65,7 +65,7 @@ struct HowToEarnView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(store.name.uppercased())
                 .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.accent)
+                .foregroundStyle(PoengjegerTheme.primary)
 
             Text("Beste valg nå")
                 .font(.subheadline.weight(.semibold))
@@ -93,7 +93,7 @@ struct HowToEarnView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(PoengjegerTheme.accent)
+            .tint(PoengjegerTheme.primary)
             .accessibilityHint("Åpner ekstern portal eller butikk.")
         } else {
             ContentUnavailableView(

@@ -31,6 +31,6 @@ struct MainTabView: View {
                 Label("Profil", systemImage: "person.crop.circle")
             }
         }
-        .tint(PoengjegerTheme.accent)
+        .tint(PoengjegerTheme.primary)
     }
 }

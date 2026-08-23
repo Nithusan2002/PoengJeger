@@ -24,10 +24,10 @@ struct HomeView: View {
                 if environment.dataSource?.isFallback == true {
                     Text(environment.dataSource?.label ?? "Mock-data")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.accent)
+                        .foregroundStyle(PoengjegerTheme.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(PoengjegerTheme.accentSoft)
+                        .background(PoengjegerTheme.primarySoft)
                         .clipShape(Capsule())
                 }
 
@@ -60,12 +60,12 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass.circle.fill")
-                    .foregroundStyle(PoengjegerTheme.accent)
+                    .foregroundStyle(PoengjegerTheme.primary)
                     .accessibilityHidden(true)
 
                 Text("SJEKK FØR DU HANDLER")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.accent)
+                    .foregroundStyle(PoengjegerTheme.primary)
             }
 
             Text("Finn beste opptjening før kjøpet")
@@ -163,7 +163,7 @@ struct HomeView: View {
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: iconName(for: category))
-                                    .foregroundStyle(PoengjegerTheme.accent)
+                                    .foregroundStyle(PoengjegerTheme.primary)
                                     .accessibilityHidden(true)
 
                                 Text(category)
@@ -242,7 +242,7 @@ struct StoreResultRow: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 3)
-                            .background(PoengjegerTheme.highlight)
+                            .background(PoengjegerTheme.campaign)
                             .clipShape(Capsule())
                     }
                 }
@@ -254,7 +254,7 @@ struct StoreResultRow: View {
                 if let bestCombination = store.bestCombination {
                     Label(bestCombination.totalValueLabel, systemImage: "sparkles")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.accent)
+                        .foregroundStyle(PoengjegerTheme.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
                 }
@@ -285,9 +285,9 @@ private struct StoreInitialMark: View {
     var body: some View {
         Text(String(name.prefix(1)))
             .font(.headline.weight(.bold))
-            .foregroundStyle(PoengjegerTheme.accent)
+            .foregroundStyle(PoengjegerTheme.primary)
             .frame(width: 42, height: 42)
-            .background(PoengjegerTheme.accentSoft)
+            .background(PoengjegerTheme.primarySoft)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .accessibilityHidden(true)
     }

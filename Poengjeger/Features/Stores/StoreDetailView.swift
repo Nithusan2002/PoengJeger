@@ -36,7 +36,7 @@ struct StoreDetailView: View {
             HStack(spacing: 8) {
                 Text(store.category?.name.uppercased() ?? "BUTIKK")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.accent)
+                    .foregroundStyle(PoengjegerTheme.primary)
 
                 if !store.activePromotions.isEmpty {
                     Text("\(store.activePromotions.count) AKTIV")
@@ -44,7 +44,7 @@ struct StoreDetailView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 4)
-                        .background(PoengjegerTheme.highlight)
+                        .background(PoengjegerTheme.campaign)
                         .clipShape(Capsule())
                 }
             }
@@ -117,7 +117,7 @@ struct StoreDetailView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Label("Redaksjonelt valgt", systemImage: "checkmark.seal.fill")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.accent)
+                        .foregroundStyle(PoengjegerTheme.success)
 
                     Text(combination.totalValueLabel)
                         .font(.system(.title2, design: .rounded).weight(.bold))
@@ -151,7 +151,7 @@ struct StoreDetailView: View {
                     if let easierAlternativeLabel = combination.easierAlternativeLabel {
                         Label(easierAlternativeLabel, systemImage: "arrow.triangle.branch")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(PoengjegerTheme.accent)
+                            .foregroundStyle(PoengjegerTheme.primary)
                     }
 
                     NavigationLink(value: combination) {
@@ -160,7 +160,7 @@ struct StoreDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(PoengjegerTheme.accent)
+                    .tint(PoengjegerTheme.primary)
                 }
                 .padding(16)
                 .background(PoengjegerTheme.elevatedSurface)
@@ -218,7 +218,7 @@ private struct EarningRateCard: View {
 
                     Text(rate.rateLabel)
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.accent)
+                        .foregroundStyle(PoengjegerTheme.primary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -282,7 +282,7 @@ private struct EarningMethodRow: View {
 
                     Text(rate.rateLabel)
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.accent)
+                        .foregroundStyle(PoengjegerTheme.primary)
                         .multilineTextAlignment(.trailing)
                 }
 
@@ -305,9 +305,9 @@ private struct MethodIcon: View {
     var body: some View {
         Image(systemName: iconName)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(PoengjegerTheme.accent)
+            .foregroundStyle(PoengjegerTheme.primary)
             .frame(width: 30, height: 30)
-            .background(PoengjegerTheme.accentSoft)
+            .background(PoengjegerTheme.primarySoft)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .accessibilityHidden(true)
     }
