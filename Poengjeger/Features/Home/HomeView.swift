@@ -176,22 +176,22 @@ struct HomeView: View {
                         NavigationLink(value: StoreCategoryRoute(name: category)) {
                             VStack(spacing: 16) {
                                 Image(systemName: iconName(for: category))
-                                    .font(.title2.weight(.semibold))
+                                    .font(.title3.weight(.semibold))
                                     .foregroundStyle(.primary)
-                                    .frame(width: 58, height: 58)
+                                    .frame(width: 52, height: 52)
                                     .background(PoengjegerTheme.neutralSoft)
                                     .clipShape(Circle())
                                     .accessibilityHidden(true)
 
                                 VStack(spacing: 6) {
                                     Text(category)
-                                        .font(.title3.weight(.semibold))
+                                        .font(.headline.weight(.semibold))
                                         .foregroundStyle(.primary)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.82)
 
                                     Text(categorySubtitle(for: category))
-                                        .font(.title3)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.center)
@@ -199,8 +199,8 @@ struct HomeView: View {
                                 }
                             }
                             .padding(.horizontal, 16)
-                            .padding(.vertical, 28)
-                            .frame(minHeight: 174, alignment: .center)
+                            .padding(.vertical, 24)
+                            .frame(minHeight: 158, alignment: .center)
                             .frame(maxWidth: .infinity)
                             .background(PoengjegerTheme.elevatedSurface)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -391,12 +391,12 @@ private struct HomeEarningPromotionRow: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(item.store.name)
-                    .font(.headline.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
                 Text(rateText)
-                    .font(.subheadline.weight(.bold))
+                    .font(.callout.weight(.bold))
                     .foregroundStyle(PoengjegerTheme.campaign)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -427,8 +427,8 @@ private struct HomeEarningPromotionRow: View {
                 .padding(.top, 20)
                 .accessibilityHidden(true)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 108, alignment: .leading)
+        .padding(13)
+        .frame(maxWidth: .infinity, minHeight: 98, alignment: .leading)
         .background(PoengjegerTheme.campaignSoft)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
