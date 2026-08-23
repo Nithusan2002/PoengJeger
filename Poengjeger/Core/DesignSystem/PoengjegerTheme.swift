@@ -35,13 +35,13 @@ enum PoengjegerTheme {
         return UIColor(red: 0.98, green: 0.91, blue: 0.92, alpha: 1)
     })
 
-    static let campaign = Color(red: 0.71, green: 0.33, blue: 0.04)
+    static let campaign = Color(red: 0.33, green: 0.43, blue: 0.29)
     static let campaignSoft = Color(uiColor: UIColor { traits in
         if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.22, green: 0.13, blue: 0.02, alpha: 1)
+            return UIColor(red: 0.10, green: 0.15, blue: 0.10, alpha: 1)
         }
 
-        return UIColor(red: 1.00, green: 0.95, blue: 0.88, alpha: 1)
+        return UIColor(red: 0.95, green: 0.96, blue: 0.91, alpha: 1)
     })
 
     static let warning = Color(red: 0.71, green: 0.14, blue: 0.09)
