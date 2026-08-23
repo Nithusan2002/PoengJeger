@@ -159,36 +159,34 @@ struct HomeView: View {
                         Button {
                             searchText = category
                         } label: {
-                            VStack(spacing: 18) {
+                            VStack(alignment: .leading, spacing: 14) {
                                 Image(systemName: iconName(for: category))
-                                    .font(.title2.weight(.semibold))
+                                    .font(.title3.weight(.semibold))
                                     .foregroundStyle(.primary)
-                                    .frame(width: 68, height: 68)
+                                    .frame(width: 48, height: 48)
                                     .background(PoengjegerTheme.neutralSoft)
                                     .clipShape(Circle())
                                     .accessibilityHidden(true)
 
-                                VStack(spacing: 8) {
+                                VStack(alignment: .leading, spacing: 5) {
                                     Text(category)
-                                        .font(.title3.weight(.semibold))
+                                        .font(.headline.weight(.semibold))
                                         .foregroundStyle(.primary)
                                         .lineLimit(1)
-                                        .minimumScaleFactor(0.78)
+                                        .minimumScaleFactor(0.82)
 
                                     Text(categorySubtitle(for: category))
-                                        .font(.title3)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
-                                        .multilineTextAlignment(.center)
+                                        .multilineTextAlignment(.leading)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
 
                                 Spacer(minLength: 0)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 38)
-                            .padding(.bottom, 20)
-                            .frame(height: 186, alignment: .top)
+                            .padding(18)
+                            .frame(height: 148, alignment: .topLeading)
                             .frame(maxWidth: .infinity)
                             .background(PoengjegerTheme.elevatedSurface)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
