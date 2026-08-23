@@ -16,7 +16,7 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 28) {
                 header
 
                 searchField
@@ -38,7 +38,7 @@ struct HomeView: View {
                 popularCampaignsSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 18)
+            .padding(.top, 28)
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
@@ -60,28 +60,23 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass.circle.fill")
-                    .foregroundStyle(PoengjegerTheme.primary)
-                    .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Poengjeger")
+                .font(.system(.headline, design: .serif).weight(.bold))
+                .foregroundStyle(PoengjegerTheme.primary)
 
-                Text("SJEKK FØR DU HANDLER")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.primary)
-            }
-
-            Text("Finn beste opptjening før kjøpet")
+            Text("Sjekk før du handler")
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Søk butikk eller kategori, se kombinasjonen og gå riktig vei videre.")
+            Text("Finn bonusmulighetene du ellers kunne gått glipp av - med EuroBonus og Trumf.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, 2)
+        .padding(.top, 22)
+        .padding(.bottom, -8)
     }
 
     private var searchField: some View {
@@ -104,12 +99,13 @@ struct HomeView: View {
                 .accessibilityLabel("Tøm søk")
             }
         }
-        .padding(14)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
         .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .accessibilityLabel("Søk etter butikk eller kategori")
@@ -117,9 +113,9 @@ struct HomeView: View {
 
     private var storeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeading(
-                title: searchText.isEmpty ? "Populære søk" : "Søkeresultat",
-                subtitle: searchText.isEmpty ? "Butikker og kjøp du kan sjekke raskt." : "\(matchingStores.count) treff"
+            EyebrowSectionHeading(
+                eyebrow: searchText.isEmpty ? "POPULÆRE BUTIKKER" : "SØKERESULTAT",
+                title: searchText.isEmpty ? "Mest sjekket nå" : "\(matchingStores.count) treff"
             )
 
             if environment.loadState == .loading && environment.publishedStores.isEmpty {
@@ -129,7 +125,7 @@ struct HomeView: View {
             } else if shownStores.isEmpty {
                 EmptyStoreSearchView(isSearching: !searchText.isEmpty)
             } else {
-                ForEach(shownStores) { store in
+                ForEach(shownStores.prefix(searchText.isEmpty ? 4 : shownStores.count)) { store in
                     NavigationLink(value: store) {
                         StoreResultRow(store: store)
                     }
@@ -281,29 +277,17 @@ struct StoreResultRow: View {
             StoreInitialMark(name: store.name)
 
             VStack(alignment: .leading, spacing: 5) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(store.name)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-
-                    if !store.activePromotions.isEmpty {
-                        Text("NÅ")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(PoengjegerTheme.campaign)
-                            .clipShape(Capsule())
-                    }
-                }
+                Text(store.name)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
                 Text(store.category?.name ?? "Butikk")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
                 if let bestCombination = store.bestCombination {
-                    Label(bestCombination.totalValueLabel, systemImage: "sparkles")
+                    Text(bestCombination.totalValueLabel)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(PoengjegerTheme.primary)
                         .lineLimit(1)
@@ -328,6 +312,25 @@ struct StoreResultRow: View {
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct EyebrowSectionHeading: View {
+    let eyebrow: String
+    let title: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(eyebrow)
+                .font(.caption.weight(.bold))
+                .tracking(2.2)
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.system(.title2, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
