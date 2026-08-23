@@ -4,98 +4,141 @@ struct HowToEarnView: View {
     let store: Store
     let combination: EarningCombination
 
+    private var sortedSteps: [EarningCombinationStep] {
+        combination.steps.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 22) {
                 header
 
                 if let warningText = combination.warningText {
-                    Label(warningText, systemImage: "exclamationmark.triangle.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.warning)
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(PoengjegerTheme.warningSoft)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    warningCard(warningText)
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
-                    SectionHeading(
-                        title: "Steg før handoff",
-                        subtitle: "Les dette først. Deretter sendes du direkte videre."
-                    )
-
-                    ForEach(combination.steps.sorted { $0.sortOrder < $1.sortOrder }) { step in
-                        HStack(alignment: .top, spacing: 10) {
-                            Text("\((combination.steps.sorted { $0.sortOrder < $1.sortOrder }.firstIndex(of: step) ?? 0) + 1)")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.white)
-                                .frame(width: 24, height: 24)
-                                .background(PoengjegerTheme.primary)
-                                .clipShape(Circle())
-                                .accessibilityHidden(true)
-
-                            Text(step.text)
-                                .font(.body)
-                                .foregroundStyle(.primary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                .padding(16)
-                .background(PoengjegerTheme.elevatedSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(PoengjegerTheme.border, lineWidth: 1)
-                }
+                stepsSection
 
                 handoffButton
+
+                handoffDisclosure
             }
             .padding(.horizontal, 16)
-            .padding(.top, 18)
+            .padding(.top, 12)
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
-        .navigationTitle("Vis steg")
+        .navigationTitle("Slik gjør du det")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(store.name.uppercased())
-                .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.primary)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                StoreInitialMark(name: store.name)
 
-            Text("Beste valg nå")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(store.name)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
 
-            Text(combination.totalValueLabel)
-                .font(.system(.title, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
+                    Text(store.category?.name ?? "Butikk")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
-            Text(combination.summary)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("BESTE KOMBINASJON")
+                    .font(.caption.weight(.bold))
+                    .tracking(2.2)
+                    .foregroundStyle(PoengjegerTheme.primary)
+
+                Text(combination.totalValueLabel)
+                    .font(.system(size: 34, weight: .bold, design: .serif))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(combination.summary)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var stepsSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("HANDLING")
+                    .font(.caption.weight(.bold))
+                    .tracking(2.2)
+                    .foregroundStyle(.secondary)
+
+                Text("Følg stegene i rekkefølge")
+                    .font(.system(.title2, design: .serif).weight(.bold))
+                    .foregroundStyle(.primary)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(Array(sortedSteps.enumerated()), id: \.element.id) { index, step in
+                    StepInstructionRow(index: index + 1, text: step.text)
+
+                    if step.id != sortedSteps.last?.id {
+                        Divider()
+                            .padding(.leading, 44)
+                    }
+                }
+            }
+            .background(PoengjegerTheme.elevatedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(PoengjegerTheme.border, lineWidth: 1)
+            }
+        }
+    }
+
+    private func warningCard(_ text: String) -> some View {
+        Label(text, systemImage: "exclamationmark.triangle")
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(PoengjegerTheme.warning)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(PoengjegerTheme.warningSoft)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(PoengjegerTheme.warning.opacity(0.18), lineWidth: 1)
+            }
+            .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
     private var handoffButton: some View {
         if let url = combination.primaryHandoffURL {
             Link(destination: url) {
-                Label("Start hos \(handoffDestinationName(for: url))", systemImage: "arrow.up.forward.app.fill")
+                Label("Start handelen", systemImage: "arrow.up.forward.app.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .tint(PoengjegerTheme.primary)
-            .accessibilityHint("Åpner ekstern portal eller butikk.")
+            .accessibilityHint("Åpner \(handoffDestinationName(for: url)) eksternt.")
         } else {
             ContentUnavailableView(
                 "Ingen handoff-lenke ennå",
@@ -103,6 +146,24 @@ struct HowToEarnView: View {
                 description: Text("Redaksjonen må legge inn riktig portal før direkte handoff kan brukes.")
             )
         }
+    }
+
+    private var handoffDisclosure: some View {
+        VStack(alignment: .center, spacing: 6) {
+            Text("Du sendes videre til \(handoffDestinationNameForDisclosure).")
+
+            Text("Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 10)
+    }
+
+    private var handoffDestinationNameForDisclosure: String {
+        guard let url = combination.primaryHandoffURL else { return "riktig portal" }
+        return handoffDestinationName(for: url)
     }
 
     private func handoffDestinationName(for url: URL) -> String {
@@ -119,6 +180,34 @@ struct HowToEarnView: View {
         }
 
         return store.name
+    }
+}
+
+private struct StepInstructionRow: View {
+    let index: Int
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("\(index)")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(PoengjegerTheme.primary)
+                .frame(width: 26, height: 26)
+                .background(PoengjegerTheme.primarySoft)
+                .clipShape(Circle())
+                .accessibilityHidden(true)
+
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 13)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Steg \(index). \(text)")
     }
 }
 
