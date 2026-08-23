@@ -56,7 +56,7 @@ struct HomeView: View {
                 popularCampaignsSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 28)
+            .padding(.top, 12)
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
@@ -93,7 +93,6 @@ struct HomeView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.top, 22)
         .padding(.bottom, -8)
     }
 
