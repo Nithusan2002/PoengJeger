@@ -50,7 +50,7 @@ struct StoreDetailView: View {
             }
 
             Text(store.name)
-                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -120,7 +120,7 @@ struct StoreDetailView: View {
                         .foregroundStyle(PoengjegerTheme.success)
 
                     Text(combination.totalValueLabel)
-                        .font(.system(.title2, design: .rounded).weight(.bold))
+                        .font(.system(.largeTitle, design: .serif).weight(.bold))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -163,11 +163,12 @@ struct StoreDetailView: View {
                     .tint(PoengjegerTheme.primary)
                 }
                 .padding(16)
-                .background(PoengjegerTheme.elevatedSurface)
+                .background(PoengjegerTheme.primaryTint)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(PoengjegerTheme.border, lineWidth: 1)
+                        .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
                 }
             }
         }
@@ -254,11 +255,12 @@ private struct EarningRateCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
+        .background(rate.isBaseRate ? PoengjegerTheme.elevatedSurface : PoengjegerTheme.campaignSoft)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+                .stroke(rate.isBaseRate ? PoengjegerTheme.border : PoengjegerTheme.campaign.opacity(0.28), lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
     }

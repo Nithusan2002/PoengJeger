@@ -9,6 +9,13 @@ enum PoengjegerTheme {
 
         return UIColor(red: 0.87, green: 0.95, blue: 0.94, alpha: 1)
     })
+    static let primaryTint = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.05, green: 0.14, blue: 0.13, alpha: 1)
+        }
+
+        return UIColor(red: 0.95, green: 0.98, blue: 0.96, alpha: 1)
+    })
 
     static let euroBonus = Color(red: 0.15, green: 0.39, blue: 0.65)
     static let euroBonusSoft = Color(uiColor: UIColor { traits in
@@ -68,7 +75,21 @@ enum PoengjegerTheme {
 
         return UIColor.white
     })
-    static let border = Color(uiColor: .separator).opacity(0.22)
+    static let border = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.22, green: 0.25, blue: 0.23, alpha: 1)
+        }
+
+        return UIColor(red: 0.89, green: 0.87, blue: 0.83, alpha: 1)
+    })
+    static let primaryBorder = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.19, green: 0.42, blue: 0.39, alpha: 1)
+        }
+
+        return UIColor(red: 0.67, green: 0.78, blue: 0.72, alpha: 1)
+    })
+    static let shadow = Color.black.opacity(0.04)
 
     static let accent = primary
     static let accentSoft = primarySoft

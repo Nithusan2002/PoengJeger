@@ -45,6 +45,7 @@ struct HowToEarnView: View {
                 .padding(16)
                 .background(PoengjegerTheme.elevatedSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .stroke(PoengjegerTheme.border, lineWidth: 1)
@@ -72,7 +73,7 @@ struct HowToEarnView: View {
                 .foregroundStyle(.secondary)
 
             Text(combination.totalValueLabel)
-                .font(.system(.title, design: .rounded).weight(.heavy))
+                .font(.system(.title, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 

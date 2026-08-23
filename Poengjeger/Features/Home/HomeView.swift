@@ -69,7 +69,7 @@ struct HomeView: View {
             }
 
             Text("Finn beste opptjening før kjøpet")
-                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -104,6 +104,7 @@ struct HomeView: View {
         .padding(14)
         .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
@@ -161,9 +162,13 @@ struct HomeView: View {
                         Button {
                             searchText = category
                         } label: {
-                            HStack(spacing: 8) {
+                            VStack(alignment: .leading, spacing: 9) {
                                 Image(systemName: iconName(for: category))
+                                    .font(.headline.weight(.semibold))
                                     .foregroundStyle(PoengjegerTheme.primary)
+                                    .frame(width: 34, height: 34)
+                                    .background(PoengjegerTheme.primarySoft)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                     .accessibilityHidden(true)
 
                                 Text(category)
@@ -174,11 +179,12 @@ struct HomeView: View {
 
                                 Spacer(minLength: 0)
                             }
-                            .padding(.horizontal, 12)
-                            .frame(height: 44)
+                            .padding(14)
+                            .frame(height: 104, alignment: .topLeading)
                             .frame(maxWidth: .infinity)
                             .background(PoengjegerTheme.elevatedSurface)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
                             .overlay {
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .stroke(PoengjegerTheme.border, lineWidth: 1)
@@ -271,6 +277,7 @@ struct StoreResultRow: View {
         .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
         .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
@@ -312,6 +319,7 @@ private struct CompactCampaignRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
@@ -326,7 +334,7 @@ struct SectionHeading: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title)
-                .font(.headline.weight(.semibold))
+                .font(.system(.title3, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
             Text(subtitle)
