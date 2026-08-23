@@ -142,11 +142,8 @@ struct HomeView: View {
         )
         .sorted { $0.localizedCompare($1) == .orderedAscending }
 
-        return VStack(alignment: .leading, spacing: 10) {
-            SectionHeading(
-                title: "Kategorier",
-                subtitle: "Bruk når du vet hva du skal kjøpe, men ikke hvilken butikk."
-            )
+        return VStack(alignment: .leading, spacing: 14) {
+            CategorySectionHeader()
 
             if categories.isEmpty {
                 Text("Kategorier vises når butikkdata er publisert.")
@@ -157,30 +154,38 @@ struct HomeView: View {
                     .background(PoengjegerTheme.elevatedSurface)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 10)], spacing: 10) {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                     ForEach(categories, id: \.self) { category in
                         Button {
                             searchText = category
                         } label: {
-                            VStack(alignment: .leading, spacing: 9) {
+                            VStack(alignment: .leading, spacing: 10) {
                                 Image(systemName: iconName(for: category))
                                     .font(.headline.weight(.semibold))
-                                    .foregroundStyle(PoengjegerTheme.primary)
-                                    .frame(width: 34, height: 34)
-                                    .background(PoengjegerTheme.primarySoft)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                    .foregroundStyle(.primary)
+                                    .frame(width: 42, height: 42)
+                                    .background(PoengjegerTheme.neutralSoft)
+                                    .clipShape(Circle())
                                     .accessibilityHidden(true)
 
-                                Text(category)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(category)
+                                        .font(.headline.weight(.semibold))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.82)
+
+                                    Text(categorySubtitle(for: category))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
 
                                 Spacer(minLength: 0)
                             }
-                            .padding(14)
-                            .frame(height: 104, alignment: .topLeading)
+                            .padding(16)
+                            .frame(height: 136, alignment: .topLeading)
                             .frame(maxWidth: .infinity)
                             .background(PoengjegerTheme.elevatedSurface)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -216,6 +221,8 @@ struct HomeView: View {
 
     private func iconName(for category: String) -> String {
         switch category.localizedLowercase {
+        case let value where value.contains("elektronikk"):
+            return "desktopcomputer"
         case let value where value.contains("daglig"):
             return "basket"
         case let value where value.contains("reise") || value.contains("hotell"):
@@ -225,6 +232,39 @@ struct HomeView: View {
         default:
             return "square.grid.2x2"
         }
+    }
+
+    private func categorySubtitle(for category: String) -> String {
+        switch category.localizedLowercase {
+        case let value where value.contains("elektronikk"):
+            return "TV, lyd, data og hvitevarer"
+        case let value where value.contains("hotell"):
+            return "Overnatting i inn- og utland"
+        case let value where value.contains("reise"):
+            return "Fly, tog og pakkereiser"
+        case let value where value.contains("daglig"):
+            return "Mat og hverdagsvarer"
+        case let value where value.contains("nett") || value.contains("shopping"):
+            return "Mote, skjønnhet og livsstil"
+        default:
+            return "Finn relevante opptjeningsmuligheter"
+        }
+    }
+}
+
+private struct CategorySectionHeader: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("KATEGORIER")
+                .font(.caption.weight(.bold))
+                .tracking(2.2)
+                .foregroundStyle(.secondary)
+
+            Text("Hva skal du kjøpe?")
+                .font(.system(.title2, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

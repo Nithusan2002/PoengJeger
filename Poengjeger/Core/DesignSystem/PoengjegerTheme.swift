@@ -54,6 +54,13 @@ enum PoengjegerTheme {
     })
 
     static let success = Color(red: 0.09, green: 0.50, blue: 0.24)
+    static let neutralSoft = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.15, green: 0.14, blue: 0.12, alpha: 1)
+        }
+
+        return UIColor(red: 0.95, green: 0.94, blue: 0.91, alpha: 1)
+    })
     static let background = Color(uiColor: UIColor { traits in
         if traits.userInterfaceStyle == .dark {
             return UIColor(red: 0.06, green: 0.08, blue: 0.07, alpha: 1)
