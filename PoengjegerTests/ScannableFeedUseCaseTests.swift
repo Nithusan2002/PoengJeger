@@ -702,7 +702,7 @@ struct ScannableFeedUseCaseTests {
     ) -> Campaign {
         let hasAssessment = decisionSummary != nil || bestFor != nil || notFor != nil || difficultyLevel != nil
 
-        Campaign(
+        return Campaign(
             id: UUID(),
             title: title,
             summary: summary,

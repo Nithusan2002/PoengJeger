@@ -5,16 +5,16 @@ struct StoreDetailView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 header
+
+                bestCombinationSection
 
                 rateSection(title: "Vanlig opptjening", rates: store.baseRates)
 
                 rateSection(title: "Akkurat nå", rates: store.activePromotions)
 
                 allMethodsSection
-
-                bestCombinationSection
 
                 sourceSection
             }
@@ -32,17 +32,31 @@ struct StoreDetailView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(store.category?.name.uppercased() ?? "BUTIKK")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.accent)
+            HStack(spacing: 8) {
+                Text(store.category?.name.uppercased() ?? "BUTIKK")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(PoengjegerTheme.accent)
+
+                if !store.activePromotions.isEmpty {
+                    Text("\(store.activePromotions.count) AKTIV")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 4)
+                        .background(PoengjegerTheme.highlight)
+                        .clipShape(Capsule())
+                }
+            }
 
             Text(store.name)
                 .font(.system(.largeTitle, design: .rounded).weight(.heavy))
                 .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text("Sjekk opptjening og krav før du starter handelen.")
                 .font(.body)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -51,7 +65,7 @@ struct StoreDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeading(
                 title: title,
-                subtitle: title == "Vanlig opptjening" ? "Stabil grunnopptjening vises først." : "Tidsbegrensede forbedringer."
+                subtitle: title == "Vanlig opptjening" ? "Stabil grunnopptjening du kan regne med først." : "Tidsbegrensede forbedringer over normalen."
             )
 
             if rates.isEmpty {
@@ -89,12 +103,16 @@ struct StoreDetailView: View {
             VStack(alignment: .leading, spacing: 10) {
                 SectionHeading(
                     title: "Beste kombinasjon",
-                    subtitle: "Redaksjonelt valgt for denne butikken."
+                    subtitle: "Vist først fordi dette er handlingen brukeren kom for."
                 )
 
                 VStack(alignment: .leading, spacing: 12) {
+                    Label(combination.title, systemImage: "checkmark.seal.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PoengjegerTheme.accent)
+
                     Text(combination.totalValueLabel)
-                        .font(.title2.weight(.bold))
+                        .font(.system(.title2, design: .rounded).weight(.bold))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -146,17 +164,22 @@ private struct EarningRateCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(rate.method.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
+            HStack(alignment: .top, spacing: 10) {
+                MethodIcon(method: rate.method)
 
-                Spacer(minLength: 8)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(rate.method.name)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
 
-                Text(rate.rateLabel)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.accent)
-                    .multilineTextAlignment(.trailing)
+                    Text(rate.rateLabel)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(PoengjegerTheme.accent)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
             }
 
             if let normalRateLabel = rate.normalRateLabel {
@@ -195,6 +218,35 @@ private struct EarningRateCard: View {
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct MethodIcon: View {
+    let method: EarningMethod
+
+    var body: some View {
+        Image(systemName: iconName)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(PoengjegerTheme.accent)
+            .frame(width: 30, height: 30)
+            .background(PoengjegerTheme.accentSoft)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityHidden(true)
+    }
+
+    private var iconName: String {
+        switch method.type {
+        case .portal:
+            return "arrow.up.forward.app"
+        case .card:
+            return "creditcard"
+        case .loyalty:
+            return "person.text.rectangle"
+        case .campaign:
+            return "tag"
+        case .manual:
+            return "checklist"
+        }
     }
 }
 

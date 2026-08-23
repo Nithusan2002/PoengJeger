@@ -16,7 +16,7 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 16) {
                 header
 
                 searchField
@@ -33,10 +33,12 @@ struct HomeView: View {
 
                 storeSection
 
+                categorySection
+
                 popularCampaignsSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 22)
+            .padding(.top, 18)
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
@@ -56,9 +58,15 @@ struct HomeView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("SJEKK FØR DU HANDLER")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.accent)
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass.circle.fill")
+                    .foregroundStyle(PoengjegerTheme.accent)
+                    .accessibilityHidden(true)
+
+                Text("SJEKK FØR DU HANDLER")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(PoengjegerTheme.accent)
+            }
 
             Text("Finn beste opptjening før kjøpet")
                 .font(.system(.largeTitle, design: .rounded).weight(.heavy))
@@ -70,6 +78,7 @@ struct HomeView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(.bottom, 2)
     }
 
     private var searchField: some View {
@@ -99,6 +108,7 @@ struct HomeView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
+        .accessibilityLabel("Søk etter butikk eller kategori")
     }
 
     private var storeSection: some View {
@@ -125,6 +135,63 @@ struct HomeView: View {
         }
     }
 
+    private var categorySection: some View {
+        let categories = Array(
+            Set(environment.publishedStores.compactMap { $0.category?.name })
+        )
+        .sorted { $0.localizedCompare($1) == .orderedAscending }
+
+        return VStack(alignment: .leading, spacing: 10) {
+            SectionHeading(
+                title: "Kategorier",
+                subtitle: "Bruk når du vet hva du skal kjøpe, men ikke hvilken butikk."
+            )
+
+            if categories.isEmpty {
+                Text("Kategorier vises når butikkdata er publisert.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(PoengjegerTheme.elevatedSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 10)], spacing: 10) {
+                    ForEach(categories, id: \.self) { category in
+                        Button {
+                            searchText = category
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: iconName(for: category))
+                                    .foregroundStyle(PoengjegerTheme.accent)
+                                    .accessibilityHidden(true)
+
+                                Text(category)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 12)
+                            .frame(height: 44)
+                            .frame(maxWidth: .infinity)
+                            .background(PoengjegerTheme.elevatedSurface)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(PoengjegerTheme.border, lineWidth: 1)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Filtrerer butikker i kategorien \(category).")
+                    }
+                }
+            }
+        }
+    }
+
     private var popularCampaignsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeading(
@@ -140,6 +207,19 @@ struct HomeView: View {
             }
         }
     }
+
+    private func iconName(for category: String) -> String {
+        switch category.localizedLowercase {
+        case let value where value.contains("daglig"):
+            return "basket"
+        case let value where value.contains("reise") || value.contains("hotell"):
+            return "bed.double"
+        case let value where value.contains("nett") || value.contains("shopping"):
+            return "bag"
+        default:
+            return "square.grid.2x2"
+        }
+    }
 }
 
 struct StoreResultRow: View {
@@ -147,18 +227,32 @@ struct StoreResultRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            StoreInitialMark(name: store.name)
+
             VStack(alignment: .leading, spacing: 5) {
-                Text(store.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(store.name)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    if !store.activePromotions.isEmpty {
+                        Text("NÅ")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(PoengjegerTheme.highlight)
+                            .clipShape(Capsule())
+                    }
+                }
 
                 Text(store.category?.name ?? "Butikk")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
                 if let bestCombination = store.bestCombination {
-                    Text(bestCombination.totalValueLabel)
+                    Label(bestCombination.totalValueLabel, systemImage: "sparkles")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(PoengjegerTheme.accent)
                         .lineLimit(1)
@@ -182,6 +276,20 @@ struct StoreResultRow: View {
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+private struct StoreInitialMark: View {
+    let name: String
+
+    var body: some View {
+        Text(String(name.prefix(1)))
+            .font(.headline.weight(.bold))
+            .foregroundStyle(PoengjegerTheme.accent)
+            .frame(width: 42, height: 42)
+            .background(PoengjegerTheme.accentSoft)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .accessibilityHidden(true)
     }
 }
 
