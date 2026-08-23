@@ -6,7 +6,7 @@ struct StoreDetailView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: 24) {
                 header
 
                 bestCombinationSection
@@ -20,7 +20,7 @@ struct StoreDetailView: View {
                 sourceSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 18)
+            .padding(.top, 12)
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
@@ -32,38 +32,26 @@ struct StoreDetailView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text(store.category?.name.uppercased() ?? "BUTIKK")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.primary)
+        HStack(alignment: .top, spacing: 14) {
+            StoreInitialMark(name: store.name)
+                .frame(width: 54, height: 54)
 
-                if !store.activePromotions.isEmpty {
-                    Text("\(store.activePromotions.count) AKTIV")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 4)
-                        .background(PoengjegerTheme.campaign)
-                        .clipShape(Capsule())
-                }
-            }
+            VStack(alignment: .leading, spacing: 5) {
+                Text(store.name)
+                    .font(.system(.title, design: .serif).weight(.bold))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-            Text(store.name)
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text("Sjekk opptjening og krav før du starter handelen.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if let lastVerifiedAt = store.lastVerifiedAt {
-                Label("Sist kontrollert \(DateFormatter.localizedString(from: lastVerifiedAt, dateStyle: .medium, timeStyle: .none))", systemImage: "checkmark.seal")
-                    .font(.caption.weight(.semibold))
+                Text(store.category?.name ?? "Butikk")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .padding(.top, 2)
+
+                if let lastVerifiedAt = store.lastVerifiedAt {
+                    Label("Sist kontrollert \(shortDate(lastVerifiedAt))", systemImage: "checkmark")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 2)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,24 +97,21 @@ struct StoreDetailView: View {
     private var bestCombinationSection: some View {
         if let combination = store.bestCombination {
             VStack(alignment: .leading, spacing: 10) {
-                SectionHeading(
-                    title: "Beste valg nå",
-                    subtitle: "Vist først fordi dette er handlingen brukeren kom for."
-                )
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Label("Redaksjonelt valgt", systemImage: "checkmark.seal.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.success)
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("BESTE KOMBINASJON")
+                        .font(.caption.weight(.bold))
+                        .tracking(2.2)
+                        .foregroundStyle(PoengjegerTheme.primary)
 
                     Text(combination.totalValueLabel)
-                        .font(.system(.largeTitle, design: .serif).weight(.bold))
+                        .font(.system(size: 38, weight: .bold, design: .serif))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(combination.summary)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                        .font(.callout)
+                        .foregroundStyle(.primary)
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
 
                     let includedRates = rates(in: combination)
@@ -140,8 +125,8 @@ struct StoreDetailView: View {
                                         .accessibilityHidden(true)
 
                                     Text("\(rate.method.name): \(rate.rateLabel)")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.primary)
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.secondary)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
@@ -149,13 +134,13 @@ struct StoreDetailView: View {
                     }
 
                     if let easierAlternativeLabel = combination.easierAlternativeLabel {
-                        Label(easierAlternativeLabel, systemImage: "arrow.triangle.branch")
-                            .font(.subheadline.weight(.semibold))
+                        Text(easierAlternativeLabel)
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(PoengjegerTheme.primary)
                     }
 
                     NavigationLink(value: combination) {
-                        Label("Vis steg", systemImage: "arrow.right.circle.fill")
+                        Label("Slik gjør du det", systemImage: "arrow.right")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
                     }
@@ -163,7 +148,7 @@ struct StoreDetailView: View {
                     .tint(PoengjegerTheme.primary)
                 }
                 .padding(16)
-                .background(PoengjegerTheme.primaryTint)
+                .background(PoengjegerTheme.elevatedSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
                 .overlay {
@@ -175,9 +160,11 @@ struct StoreDetailView: View {
     }
 
     private var sourceSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Kilde og kontroll")
-                .font(.headline.weight(.semibold))
+        VStack(alignment: .leading, spacing: 10) {
+            Text("KILDE OG KONTROLL")
+                .font(.caption.weight(.bold))
+                .tracking(2.2)
+                .foregroundStyle(.secondary)
 
             Text("Opptjening og beste valg er redaksjonelt kvalitetssikret. Kontroller alltid satsen i portalen før kjøp.")
                 .font(.subheadline)
@@ -188,6 +175,7 @@ struct StoreDetailView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .padding(.top, 2)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -200,6 +188,16 @@ struct StoreDetailView: View {
     private func programSlug(for rate: StoreEarningRate) -> String? {
         guard let programID = rate.method.programID else { return nil }
         return environment.programs.first { $0.id == programID }?.slug
+    }
+
+    private func shortDate(_ date: Date) -> String {
+        date.formatted(
+            .dateTime
+                .day()
+                .month(.abbreviated)
+                .year()
+                .locale(Locale(identifier: "nb_NO"))
+        )
     }
 }
 
