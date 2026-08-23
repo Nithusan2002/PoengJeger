@@ -48,12 +48,15 @@ final class AppEnvironment {
         let adminRepository: AdminRepository
 
         if let configuration = SupabaseConfiguration.fromBundle() {
-            repository = SupabaseCampaignRepository(configuration: configuration)
+            repository = FallbackCampaignRepository(
+                primary: SupabaseCampaignRepository(configuration: configuration),
+                fallback: MockCampaignRepository()
+            )
             adminRepository = UnavailableAdminRepository(
                 reason: "Live admin krever egen admin-innlogging eller et separat adminverktøy. Denne iOS-klienten bruker bare publiserbar nøkkel."
             )
         } else {
-            repository = MissingSupabaseConfigurationRepository()
+            repository = MockCampaignRepository()
             adminRepository = UnavailableAdminRepository(
                 reason: "Admin-kø er utilgjengelig før appkonfigurasjonen og admin-laget er koblet opp."
             )
@@ -184,12 +187,6 @@ final class AppEnvironment {
     }
 }
 
-private struct MissingSupabaseConfigurationRepository: CampaignRepository {
-    func fetchBootstrapData() async throws -> CampaignBootstrapData {
-        throw MissingSupabaseConfigurationError()
-    }
-}
-
 private struct UnavailableAdminRepository: AdminRepository {
     let reason: String
 
@@ -203,12 +200,6 @@ private struct UnavailableAdminRepository: AdminRepository {
 
     func promote(candidateID: UUID, note: String?) async throws -> IngestionCandidate {
         throw AdminRepositoryError.unavailable(reason)
-    }
-}
-
-private struct MissingSupabaseConfigurationError: LocalizedError {
-    var errorDescription: String? {
-        "SUPABASE_HOST eller SUPABASE_PUBLISHABLE_KEY mangler i appkonfigurasjonen."
     }
 }
 
