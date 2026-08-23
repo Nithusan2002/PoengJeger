@@ -14,6 +14,24 @@ struct HomeView: View {
             : matchingStores
     }
 
+    private var highlightedEarningItems: [HomeEarningPromotionItem] {
+        environment.publishedStores
+            .flatMap { store in
+                store.activePromotions.compactMap { rate in
+                    guard rate.endsAt != nil else { return nil }
+                    return HomeEarningPromotionItem(store: store, rate: rate)
+                }
+            }
+            .sorted { first, second in
+                switch (first.rate.endsAt, second.rate.endsAt) {
+                case let (firstDate?, secondDate?) where firstDate != secondDate:
+                    return firstDate < secondDate
+                default:
+                    return first.store.name.localizedCompare(second.store.name) == .orderedAscending
+                }
+            }
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
@@ -201,17 +219,38 @@ struct HomeView: View {
     }
 
     private var popularCampaignsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionHeading(
-                title: "Muligheter nå",
-                subtitle: "Aktuelle kampanjer som kan påvirke valget ditt."
-            )
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                EyebrowSectionHeading(
+                    eyebrow: "AKTUELT AKKURAT NÅ",
+                    title: "Forhøyet opptjening"
+                )
 
-            ForEach(environment.firstPhaseCampaigns.prefix(3)) { campaign in
-                NavigationLink(value: campaign) {
-                    CompactCampaignRow(campaign: campaign)
+                Text("Et lite, utvalgt antall kampanjer med kjent sluttdato.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if highlightedEarningItems.isEmpty {
+                Text("Ingen forhøyede opptjeninger med kjent sluttdato akkurat nå.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(PoengjegerTheme.elevatedSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(PoengjegerTheme.border, lineWidth: 1)
+                    }
+            } else {
+                ForEach(highlightedEarningItems.prefix(3)) { item in
+                    NavigationLink(value: item.store) {
+                        HomeEarningPromotionRow(item: item)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -334,6 +373,90 @@ private struct EyebrowSectionHeading: View {
     }
 }
 
+private struct HomeEarningPromotionItem: Identifiable {
+    let store: Store
+    let rate: StoreEarningRate
+
+    var id: UUID {
+        rate.id
+    }
+}
+
+private struct HomeEarningPromotionRow: View {
+    let item: HomeEarningPromotionItem
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            StoreInitialMark(name: item.store.name)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(item.store.name)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(rateText)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(PoengjegerTheme.campaign)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    if let endsAt = item.rate.endsAt {
+                        Text("Gyldig til \(shortDate(endsAt))")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(PoengjegerTheme.campaign)
+                    }
+
+                    if let checkedAt = item.rate.checkedAt ?? item.store.lastVerifiedAt {
+                        Label("Sist kontrollert \(shortDate(checkedAt))", systemImage: "checkmark")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .padding(.top, 6)
+            }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.top, 20)
+                .accessibilityHidden(true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 108, alignment: .leading)
+        .background(PoengjegerTheme.campaignSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.campaign.opacity(0.24), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var rateText: String {
+        if let normalRateLabel = item.rate.normalRateLabel {
+            return "\(item.rate.rateLabel) · normalt \(normalRateLabel)"
+        }
+
+        return item.rate.rateLabel
+    }
+
+    private func shortDate(_ date: Date) -> String {
+        date.formatted(
+            .dateTime
+                .day()
+                .month(.wide)
+                .locale(Locale(identifier: "nb_NO"))
+        )
+    }
+}
+
 struct StoreInitialMark: View {
     let name: String
 
@@ -345,33 +468,6 @@ struct StoreInitialMark: View {
             .background(PoengjegerTheme.primarySoft)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .accessibilityHidden(true)
-    }
-}
-
-private struct CompactCampaignRow: View {
-    let campaign: Campaign
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(campaign.title)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-
-            Text(campaign.displaySummary)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
     }
 }
 
