@@ -51,6 +51,9 @@ struct HomeView: View {
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign)
         }
+        .navigationDestination(for: StoreCategoryRoute.self) { route in
+            CategoryStoresView(categoryName: route.name)
+        }
         .refreshable {
             await environment.refresh()
         }
@@ -156,9 +159,7 @@ struct HomeView: View {
             } else {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                     ForEach(categories, id: \.self) { category in
-                        Button {
-                            searchText = category
-                        } label: {
+                        NavigationLink(value: StoreCategoryRoute(name: category)) {
                             VStack(spacing: 16) {
                                 Image(systemName: iconName(for: category))
                                     .font(.title2.weight(.semibold))
@@ -196,7 +197,7 @@ struct HomeView: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .accessibilityHint("Filtrerer butikker i kategorien \(category).")
+                        .accessibilityHint("Åpner butikker i kategorien \(category).")
                     }
                 }
             }
@@ -250,6 +251,10 @@ struct HomeView: View {
             return "Finn relevante opptjeningsmuligheter"
         }
     }
+}
+
+struct StoreCategoryRoute: Hashable {
+    let name: String
 }
 
 private struct CategorySectionHeader: View {
@@ -326,7 +331,7 @@ struct StoreResultRow: View {
     }
 }
 
-private struct StoreInitialMark: View {
+struct StoreInitialMark: View {
     let name: String
 
     var body: some View {

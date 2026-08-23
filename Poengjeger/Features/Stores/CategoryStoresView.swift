@@ -1,0 +1,197 @@
+import SwiftUI
+
+struct CategoryStoresView: View {
+    @Environment(AppEnvironment.self) private var environment
+    let categoryName: String
+
+    private var stores: [Store] {
+        environment.publishedStores
+            .filter { $0.category?.name == categoryName }
+            .sorted { first, second in
+                let firstValue = rankingValue(for: first)
+                let secondValue = rankingValue(for: second)
+
+                if firstValue != secondValue {
+                    return firstValue > secondValue
+                }
+
+                return first.name.localizedCompare(second.name) == .orderedAscending
+            }
+    }
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                header
+
+                rankingNote
+
+                if stores.isEmpty {
+                    ContentUnavailableView(
+                        "Ingen butikker ennå",
+                        systemImage: iconName(for: categoryName),
+                        description: Text("Butikker vises her når redaksjonen har publisert opptjeningsdata i kategorien.")
+                    )
+                    .padding(.vertical, 24)
+                } else {
+                    ForEach(stores) { store in
+                        NavigationLink(value: store) {
+                            CategoryStoreRow(store: store)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 18)
+            .padding(.bottom, 28)
+        }
+        .background(PoengjegerTheme.background)
+        .navigationTitle(categoryName)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(categoryName)
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(categorySubtitle(for: categoryName))
+                .font(.body)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var rankingNote: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Rectangle()
+                .fill(PoengjegerTheme.primaryBorder)
+                .frame(width: 3)
+                .clipShape(Capsule())
+
+            Text("Butikkene er rangert etter dokumentert bonusopptjening, ikke pris. Poengjeger er ikke en prisjaktjeneste.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func rankingValue(for store: Store) -> Double {
+        guard let label = store.bestCombination?.totalValueLabel else { return 0 }
+        let normalized = label.replacingOccurrences(of: ",", with: ".")
+        let pattern = #"\d+(\.\d+)?"#
+
+        guard
+            let range = normalized.range(of: pattern, options: .regularExpression),
+            let value = Double(normalized[range])
+        else {
+            return 0
+        }
+
+        return value
+    }
+}
+
+private struct CategoryStoreRow: View {
+    let store: Store
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            StoreInitialMark(name: store.name)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(store.name)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text(store.category?.name ?? "Butikk")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                if let bestCombination = store.bestCombination {
+                    Text(bestCombination.totalValueLabel)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(PoengjegerTheme.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+                }
+
+                if let lastVerifiedAt = store.lastVerifiedAt {
+                    Label(
+                        "Sist kontrollert \(DateFormatter.localizedString(from: lastVerifiedAt, dateStyle: .medium, timeStyle: .none))",
+                        systemImage: "checkmark"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 6)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.top, 15)
+                .accessibilityHidden(true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private func categorySubtitle(for category: String) -> String {
+    switch category.localizedLowercase {
+    case let value where value.contains("elektronikk"):
+        return "TV, lyd, data og hvitevarer"
+    case let value where value.contains("hotell"):
+        return "Overnatting i inn- og utland"
+    case let value where value.contains("reise"):
+        return "Fly, tog og pakkereiser"
+    case let value where value.contains("daglig"):
+        return "Mat og hverdagsvarer"
+    case let value where value.contains("nett") || value.contains("shopping"):
+        return "Mote, skjønnhet og livsstil"
+    default:
+        return "Butikker med dokumentert opptjening"
+    }
+}
+
+private func iconName(for category: String) -> String {
+    switch category.localizedLowercase {
+    case let value where value.contains("elektronikk"):
+        return "desktopcomputer"
+    case let value where value.contains("daglig"):
+        return "basket"
+    case let value where value.contains("reise") || value.contains("hotell"):
+        return "bed.double"
+    case let value where value.contains("nett") || value.contains("shopping"):
+        return "bag"
+    default:
+        return "square.grid.2x2"
+    }
+}
+
+#Preview {
+    NavigationStack {
+        CategoryStoresView(categoryName: "Elektronikk")
+            .environment(AppEnvironment.mock())
+            .navigationDestination(for: Store.self) { store in
+                StoreDetailView(store: store)
+            }
+    }
+}

@@ -40,6 +40,7 @@
 		032 /* StoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136 /* StoreDetailView.swift */; };
 		033 /* HowToEarnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137 /* HowToEarnView.swift */; };
 		034 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138 /* ExploreView.swift */; };
+		035 /* CategoryStoresView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139 /* CategoryStoresView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +92,7 @@
 		136 /* StoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreDetailView.swift; sourceTree = "<group>"; };
 		137 /* HowToEarnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToEarnView.swift; sourceTree = "<group>"; };
 		138 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		139 /* CategoryStoresView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryStoresView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -349,6 +351,7 @@
 			children = (
 				136 /* StoreDetailView.swift */,
 				137 /* HowToEarnView.swift */,
+				139 /* CategoryStoresView.swift */,
 			);
 			path = Stores;
 			sourceTree = "<group>";
@@ -507,6 +510,7 @@
 				032 /* StoreDetailView.swift in Sources */,
 				033 /* HowToEarnView.swift in Sources */,
 				034 /* ExploreView.swift in Sources */,
+				035 /* CategoryStoresView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
