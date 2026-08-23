@@ -2,7 +2,9 @@ import SwiftUI
 
 enum PoengjegerTheme {
     static let accent = Color(red: 0.07, green: 0.38, blue: 0.52)
-    static let editorialBlue = Color(red: 0.12, green: 0.43, blue: 0.66)
+    static let euroBonusBlue = Color(red: 0.12, green: 0.43, blue: 0.66)
+    static let trumfRed = Color(red: 0.73, green: 0.10, blue: 0.14)
+    static let editorialBlue = euroBonusBlue
     static let accentSoft = Color(uiColor: UIColor { traits in
         if traits.userInterfaceStyle == .dark {
             return UIColor(red: 0.07, green: 0.20, blue: 0.25, alpha: 1)
@@ -23,4 +25,15 @@ enum PoengjegerTheme {
     static let surface = Color(uiColor: .secondarySystemBackground)
     static let elevatedSurface = Color(uiColor: .systemBackground)
     static let border = Color(uiColor: .separator).opacity(0.22)
+
+    static func programColor(slug: String?) -> Color {
+        switch slug {
+        case "sas-eurobonus":
+            return euroBonusBlue
+        case "trumf":
+            return trumfRed
+        default:
+            return accent
+        }
+    }
 }

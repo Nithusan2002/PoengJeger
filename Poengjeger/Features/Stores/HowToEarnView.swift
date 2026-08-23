@@ -6,7 +6,7 @@ struct HowToEarnView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 16) {
                 header
 
                 if let warningText = combination.warningText {
@@ -21,8 +21,8 @@ struct HowToEarnView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     SectionHeading(
-                        title: "Slik gjør du det",
-                        subtitle: "Instruksjonene kommer før ekstern handoff."
+                        title: "Steg før handoff",
+                        subtitle: "Les dette først. Deretter sendes du direkte videre."
                     )
 
                     ForEach(combination.steps.sorted { $0.sortOrder < $1.sortOrder }) { step in
@@ -57,7 +57,7 @@ struct HowToEarnView: View {
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
-        .navigationTitle("Slik gjør du det")
+        .navigationTitle("Vis steg")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -66,6 +66,10 @@ struct HowToEarnView: View {
             Text(store.name.uppercased())
                 .font(.caption.weight(.bold))
                 .foregroundStyle(PoengjegerTheme.accent)
+
+            Text("Beste valg nå")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
 
             Text(combination.totalValueLabel)
                 .font(.system(.title, design: .rounded).weight(.heavy))
@@ -84,7 +88,7 @@ struct HowToEarnView: View {
     private var handoffButton: some View {
         if let url = combination.primaryHandoffURL {
             Link(destination: url) {
-                Label("Start handelen", systemImage: "arrow.up.forward.app.fill")
+                Label("Start hos \(handoffDestinationName(for: url))", systemImage: "arrow.up.forward.app.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
             }
@@ -98,6 +102,22 @@ struct HowToEarnView: View {
                 description: Text("Redaksjonen må legge inn riktig portal før direkte handoff kan brukes.")
             )
         }
+    }
+
+    private func handoffDestinationName(for url: URL) -> String {
+        if let matchingRate = store.earningRates.first(where: { $0.handoffURL == url }) {
+            return matchingRate.method.name
+        }
+
+        let host = url.host()?.localizedLowercase ?? ""
+        if host.contains("sas") {
+            return "EuroBonus Shopping"
+        }
+        if host.contains("trumf") {
+            return "Trumf"
+        }
+
+        return store.name
     }
 }
 

@@ -114,8 +114,8 @@ struct HomeView: View {
     private var storeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeading(
-                title: searchText.isEmpty ? "Populære butikker nå" : "Søkeresultat",
-                subtitle: searchText.isEmpty ? "Start her når du faktisk skal handle." : "\(matchingStores.count) treff"
+                title: searchText.isEmpty ? "Populære søk" : "Søkeresultat",
+                subtitle: searchText.isEmpty ? "Butikker og kjøp du kan sjekke raskt." : "\(matchingStores.count) treff"
             )
 
             if environment.loadState == .loading && environment.publishedStores.isEmpty {
@@ -195,8 +195,8 @@ struct HomeView: View {
     private var popularCampaignsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeading(
-                title: "Aktuelt akkurat nå",
-                subtitle: "Kampanjer som fortsatt kan være verdt å sjekke."
+                title: "Muligheter nå",
+                subtitle: "Aktuelle kampanjer som kan påvirke valget ditt."
             )
 
             ForEach(environment.firstPhaseCampaigns.prefix(3)) { campaign in
