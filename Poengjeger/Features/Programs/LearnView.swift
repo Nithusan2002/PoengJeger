@@ -11,16 +11,16 @@ struct LearnView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("LÆR")
+                    Text("GUIDER")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(PoengjegerTheme.accent)
 
-                    Text("Forstå EuroBonus og Trumf")
+                    Text("Læringsstier for EuroBonus og Trumf")
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Lær hvordan du tjener og bruker poeng smartere, og hva du bør sjekke før du går for en kampanje.")
+                    Text("Praktiske guider som støtter kjøpsreisen uten å skjule kjerneverdien bak betaling.")
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -57,7 +57,7 @@ struct LearnView: View {
             .padding(.bottom, 24)
         }
         .background(PoengjegerTheme.background)
-        .navigationTitle("Lær")
+        .navigationTitle("Guider")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
     }

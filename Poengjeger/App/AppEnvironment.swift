@@ -23,6 +23,7 @@ final class AppEnvironment {
     var programs: [BonusProgram] = []
     var programGuides: [ProgramGuide] = []
     var campaigns: [Campaign] = []
+    var stores: [Store] = []
     var loadState: LoadState = .idle
     var dataSource: CampaignDataSource?
     var adminCandidates: [IngestionCandidate] = []
@@ -92,6 +93,7 @@ final class AppEnvironment {
             programs = bootstrapData.programs
             programGuides = bootstrapData.programGuides
             campaigns = bootstrapData.campaigns
+            stores = bootstrapData.stores
             dataSource = bootstrapData.dataSource
             userSession.selectedProgramIDs.formIntersection(Set(programs.map(\.id)))
             loadState = .loaded
@@ -122,6 +124,19 @@ final class AppEnvironment {
         return campaigns.filter { campaign in
             campaign.linkedProgramIDs.contains { firstPhaseProgramIDs.contains($0) }
         }
+    }
+
+    var publishedStores: [Store] {
+        stores
+            .filter(\.isPublished)
+            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+
+    var featuredStores: [Store] {
+        publishedStores
+            .filter { $0.bestCombination != nil }
+            .prefix(3)
+            .map { $0 }
     }
 
     func programGuide(for program: BonusProgram) -> ProgramGuide? {

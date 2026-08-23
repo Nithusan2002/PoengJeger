@@ -4,9 +4,9 @@ Dette dokumentet beskriver ønsket produkt- og designretning for Poengjeger før
 
 ## Produktløfte
 
-Poengjeger skal hjelpe norske bonusbrukere å forstå hva som er relevant nå, og hvordan EuroBonus- og Trumf-økosystemene fungerer.
+Poengjeger skal hjelpe norske bonusbrukere å sjekke beste opptjeningsvei før de handler, og forstå hvordan EuroBonus- og Trumf-økosystemene fungerer.
 
-Appen skal føles som et rolig beslutningsverktøy, ikke som en nyhetsapp, blogg eller affiliate-katalog.
+Appen skal føles som et rolig beslutningsverktøy for kjøpsøyeblikket, ikke som en nyhetsapp, blogg eller affiliate-katalog.
 
 ## Designprinsipper
 
@@ -52,19 +52,19 @@ Farger skal brukes som signaler, ikke som store dekorflater.
 
 Anbefalt tabstruktur:
 
-1. Nå
-   Aktuelle kampanjer og muligheter. Dette er hovedfanen.
+1. Hjem
+   Søk etter butikk eller kategori før kjøp. Dette er hovedfanen.
 
-2. Lær
-   Strukturerte guider for EuroBonus og Trumf.
+2. Utforsk
+   Sekundær flate for kampanjer, kategorier og bredere sammenligning.
 
-3. Lagret
-   Lagrede kampanjer og senere eventuelt lagrede guidepunkter.
+3. Guider
+   Strukturerte læringsstier for EuroBonus og Trumf.
 
 4. Profil
-   Programvalg, varsler og innstillinger.
+   Programvalg, varsler, lagret innhold og senere konto/premium.
 
-Hvis "Nå" oppleves for uvant, kan fanen hete "Kampanjer" i første versjon. Produktmessig er "Nå" sterkere fordi den signaliserer relevans og timing.
+Kjernefunksjonen skal fungere uten konto. Profil introduseres når brukeren ønsker lagring, varsler eller personalisering.
 
 ## Førstegangsflyt
 
@@ -119,15 +119,41 @@ I MVP kan dette lagres lokalt og brukes til tone/innhold senere. Hvis det ikke b
 
 ```text
 Åpne app
-  -> Nå-feed
-  -> Åpne kampanje
-  -> Forstå verdi, krav, frist og kilde
-  -> Lagre, åpne kilde eller lær mer om programmet
+  -> Hjem
+  -> Søk butikk eller kategori
+  -> Åpne butikkside
+  -> Se vanlig opptjening, kampanjer og beste kombinasjon
+  -> Åpne Slik gjør du det
+  -> Start handelen via riktig portal eller destinasjon
 ```
 
 Appens viktigste gjentatte brukerjobb er:
 
-> Finn ut om det finnes en EuroBonus- eller Trumf-mulighet jeg bør bry meg om nå.
+> Jeg skal handle. Hvor bør jeg starte for å tjene mest relevant EuroBonus eller Trumf?
+
+## Hjem
+
+Hjem skal bygge vanen "sjekk før du handler".
+
+Prioritet:
+
+1. Søk etter butikk eller kategori.
+2. Populære butikker eller aktuelle butikkmuligheter.
+3. Et lite utvalg aktuelle kampanjer som sekundær inngang.
+
+Hjem skal ikke bli en artikkelfeed, abonnementsflate eller generell kampanjekatalog.
+
+## Butikkside
+
+Butikksiden skal vise informasjon i denne rekkefølgen:
+
+1. Vanlig opptjening.
+2. Aktuelle kampanjer.
+3. Alle opptjeningsmuligheter.
+4. Beste kombinasjon direkte synlig.
+5. "Slik gjør du det" med korte steg og direkte handoff.
+
+Kritiske advarsler skal vises før handlingsknappen. Det skal ikke ligge en ekstra bekreftelsesskjerm mellom instruksjonene og ekstern handoff.
 
 ## Nå-Feed
 

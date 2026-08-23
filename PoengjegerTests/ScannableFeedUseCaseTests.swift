@@ -58,6 +58,7 @@ struct ScannableFeedUseCaseTests {
                 programs: [SampleData.trumf],
                 programGuides: SampleData.programGuides.filter { $0.programID == SampleData.trumf.id },
                 campaigns: [availableCampaign],
+                stores: SampleData.stores,
                 dataSource: .supabase
             )
         )
@@ -77,6 +78,7 @@ struct ScannableFeedUseCaseTests {
         #expect(environment.programs.map(\.id) == [SampleData.trumf.id])
         #expect(environment.programGuides.map(\.programID) == [SampleData.trumf.id])
         #expect(environment.campaigns.map(\.id) == [availableCampaign.id])
+        #expect(environment.publishedStores.map(\.id) == SampleData.stores.map(\.id))
         #expect(environment.dataSource == .supabase)
         #expect(environment.userSession.selectedProgramIDs == [SampleData.trumf.id])
         #expect(environment.favoriteCampaigns.map(\.id) == [availableCampaign.id])
@@ -132,6 +134,7 @@ struct ScannableFeedUseCaseTests {
                     programs: [SampleData.trumf],
                     programGuides: [],
                     campaigns: [fallbackCampaign],
+                    stores: [SampleData.stores[0]],
                     dataSource: .mock(reason: nil)
                 )
             )
@@ -141,8 +144,18 @@ struct ScannableFeedUseCaseTests {
 
         #expect(data.programs.map(\.id) == [SampleData.trumf.id])
         #expect(data.campaigns.map(\.title) == ["Fallback"])
+        #expect(data.stores.map(\.name) == ["Elkjøp"])
         #expect(data.dataSource.isFallback)
         #expect(data.dataSource.label == "Mock-data (Nettverk utilgjengelig)")
+    }
+
+    @Test
+    func storeSearchMatchesNameCategoryAndKeywords() {
+        let stores = SampleData.stores
+
+        #expect(StoreSearchUseCase().search(stores: stores, query: "elkjøp").map(\.name) == ["Elkjøp"])
+        #expect(StoreSearchUseCase().search(stores: stores, query: "dagligvare").map(\.name) == ["Meny"])
+        #expect(StoreSearchUseCase().search(stores: stores, query: "gaming").map(\.name) == ["Komplett"])
     }
 
     @Test

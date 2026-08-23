@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-021: MVP dreies til butikkorientert "sjekk før du handler"
+- Status: Vedtatt
+- Bakgrunn: Kampanjefeed gir oversikt, men bygger ikke like tydelig vane som å sjekke Poengjeger rett før et kjøp. Den sterkeste brukerjobben er å finne riktig opptjeningsvei hos en butikk eller kategori før brukeren handler.
+- Beslutning: MVP-retningen dreies fra feed-først til butikk-/kategori-søk først. Hjem skal prioritere søk, butikksider skal vise vanlig opptjening, aktive kampanjer, alle mekanismer og beste redaksjonelt definerte kombinasjon, og "Slik gjør du det" skal føre direkte til riktig ekstern portal etter nødvendige advarsler. Kampanjefeeden beholdes som sekundær utforskflate.
+- Konsekvens: Datamodellen må utvides med butikker, opptjeningsmetoder, satser og kombinasjoner. Redaksjonelt arbeid flyttes delvis fra isolerte kampanjer til vedlikehold av butikkopptjening og handoff-steg. Første versjon bruker redaksjonelle kombinasjoner, ikke automatisk optimalisering.
+
 ## ADR-020: Kampanjer må ha eksplisitt redaksjonell beslutning
 - Status: Vedtatt
 - Bakgrunn: Poengjegers kjerneverdi er ikke å samle kampanjelenker, men å hjelpe brukeren å avgjøre raskt om en kampanje er relevant. Score, tittel og generell begrunnelse er ikke nok hvis feeden og detaljsiden ikke gir en tydelig konklusjon.

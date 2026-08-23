@@ -35,6 +35,11 @@
 		027 /* ProgramDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131 /* ProgramDetailView.swift */; };
 		028 /* ProgramGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132 /* ProgramGuide.swift */; };
 		029 /* LearnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133 /* LearnView.swift */; };
+		030 /* StoreEarning.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134 /* StoreEarning.swift */; };
+		031 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 135 /* HomeView.swift */; };
+		032 /* StoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136 /* StoreDetailView.swift */; };
+		033 /* HowToEarnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137 /* HowToEarnView.swift */; };
+		034 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138 /* ExploreView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +86,11 @@
 		131 /* ProgramDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailView.swift; sourceTree = "<group>"; };
 		132 /* ProgramGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramGuide.swift; sourceTree = "<group>"; };
 		133 /* LearnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnView.swift; sourceTree = "<group>"; };
+		134 /* StoreEarning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreEarning.swift; sourceTree = "<group>"; };
+		135 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		136 /* StoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreDetailView.swift; sourceTree = "<group>"; };
+		137 /* HowToEarnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToEarnView.swift; sourceTree = "<group>"; };
+		138 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,8 +176,11 @@
 			isa = PBXGroup;
 			children = (
 				610 /* Shared */,
+				625 /* Home */,
 				611 /* Onboarding */,
 				612 /* Feed */,
+				627 /* Explore */,
+				626 /* Stores */,
 				613,
 				614 /* Settings */,
 			);
@@ -190,6 +203,7 @@
 				107 /* UserSession.swift */,
 				123 /* IngestionCandidate.swift */,
 				132 /* ProgramGuide.swift */,
+				134 /* StoreEarning.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -320,6 +334,31 @@
 				131 /* ProgramDetailView.swift */,
 			);
 			path = Programs;
+			sourceTree = "<group>";
+		};
+		625 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				135 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		626 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				136 /* StoreDetailView.swift */,
+				137 /* HowToEarnView.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		627 /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				138 /* ExploreView.swift */,
+			);
+			path = Explore;
 			sourceTree = "<group>";
 		};
 		700 /* PoengjegerTests */ = {
@@ -463,6 +502,11 @@
 				027 /* ProgramDetailView.swift in Sources */,
 				028 /* ProgramGuide.swift in Sources */,
 				029 /* LearnView.swift in Sources */,
+				030 /* StoreEarning.swift in Sources */,
+				031 /* HomeView.swift in Sources */,
+				032 /* StoreDetailView.swift in Sources */,
+				033 /* HowToEarnView.swift in Sources */,
+				034 /* ExploreView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

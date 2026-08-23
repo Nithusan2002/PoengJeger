@@ -7,9 +7,9 @@ struct RootView: View {
         Group {
             switch environment.loadState {
             case .idle where environment.programs.isEmpty:
-                ProgressView("Henter kampanjer")
+                ProgressView("Henter muligheter")
             case .loading where environment.programs.isEmpty:
-                ProgressView("Henter kampanjer")
+                ProgressView("Henter muligheter")
             case let .failed(message) where environment.programs.isEmpty:
                 ContentUnavailableView(
                     "Kunne ikke laste data",

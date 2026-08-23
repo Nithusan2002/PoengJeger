@@ -4,31 +4,31 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             NavigationStack {
-                FeedView()
+                HomeView()
             }
             .tabItem {
-                Label("Kampanjer", systemImage: "ticket")
+                Label("Hjem", systemImage: "house")
+            }
+
+            NavigationStack {
+                ExploreView()
+            }
+            .tabItem {
+                Label("Utforsk", systemImage: "magnifyingglass")
             }
 
             NavigationStack {
                 LearnView()
             }
             .tabItem {
-                Label("Lær", systemImage: "graduationcap")
-            }
-
-            NavigationStack {
-                FavoritesView()
-            }
-            .tabItem {
-                Label("Lagret", systemImage: "bookmark")
+                Label("Guider", systemImage: "graduationcap")
             }
 
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
-                Label("Innstillinger", systemImage: "gearshape")
+                Label("Profil", systemImage: "person.crop.circle")
             }
         }
         .tint(PoengjegerTheme.accent)

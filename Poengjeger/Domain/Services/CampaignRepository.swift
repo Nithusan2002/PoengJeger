@@ -4,6 +4,7 @@ struct CampaignBootstrapData: Sendable {
     let programs: [BonusProgram]
     let programGuides: [ProgramGuide]
     let campaigns: [Campaign]
+    let stores: [Store]
     let dataSource: CampaignDataSource
 }
 

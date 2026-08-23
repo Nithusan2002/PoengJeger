@@ -37,6 +37,7 @@ struct FallbackCampaignRepository: CampaignRepository {
                 programs: fallbackData.programs,
                 programGuides: fallbackData.programGuides,
                 campaigns: fallbackData.campaigns,
+                stores: fallbackData.stores,
                 dataSource: .mock(reason: error.localizedDescription)
             )
         }
@@ -56,11 +57,13 @@ struct SupabaseCampaignRepository: CampaignRepository {
         async let programs = fetchPrograms()
         async let programGuides = fetchProgramGuides()
         async let campaigns = fetchCampaigns()
+        async let stores = fetchStores()
 
         return try await CampaignBootstrapData(
             programs: programs,
             programGuides: programGuides,
             campaigns: campaigns,
+            stores: stores,
             dataSource: .supabase
         )
     }
@@ -117,6 +120,30 @@ struct SupabaseCampaignRepository: CampaignRepository {
 
         let response: [CampaignDTO] = try await request(path: "campaigns", queryItems: queryItems)
         return response.compactMap(\.domainModel).filter(\.isActive)
+    }
+
+    private func fetchStores() async throws -> [Store] {
+        let select = [
+            "id",
+            "slug",
+            "name",
+            "status",
+            "website_url",
+            "search_keywords",
+            "last_verified_at",
+            "campaign_categories(id,slug,name)",
+            "store_earning_rates(id,status,rate_label,normal_rate_label,value_summary,requirement_summary,warning_text,handoff_url,source_url,source_title,checked_at,starts_at,ends_at,sort_order,is_base_rate,earning_methods(id,slug,name,method_type,program_id,description))",
+            "earning_combinations(id,status,title,total_value_label,summary,easier_alternative_label,warning_text,primary_handoff_url,last_verified_at,sort_order,earning_combination_rates(store_earning_rate_id,sort_order),earning_combination_steps(id,text,sort_order))"
+        ].joined(separator: ",")
+
+        let queryItems = [
+            URLQueryItem(name: "select", value: select),
+            URLQueryItem(name: "status", value: "eq.published"),
+            URLQueryItem(name: "order", value: "name.asc")
+        ]
+
+        let response: [StoreDTO] = try await request(path: "stores", queryItems: queryItems)
+        return response.compactMap(\.domainModel).filter(\.isPublished)
     }
 
     private func request<Response: Decodable>(
@@ -481,6 +508,227 @@ private struct CampaignProgramLinkDTO: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case programID = "program_id"
+    }
+}
+
+private struct StoreDTO: Decodable {
+    let id: UUID
+    let slug: String
+    let name: String
+    let status: String
+    let websiteURL: String?
+    let searchKeywords: [String]
+    let lastVerifiedAt: Date?
+    let category: CampaignCategoryDTO?
+    let earningRates: [StoreEarningRateDTO]
+    let combinations: [EarningCombinationDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case slug
+        case name
+        case status
+        case websiteURL = "website_url"
+        case searchKeywords = "search_keywords"
+        case lastVerifiedAt = "last_verified_at"
+        case category = "campaign_categories"
+        case earningRates = "store_earning_rates"
+        case combinations = "earning_combinations"
+    }
+
+    var domainModel: Store? {
+        guard let storeStatus = Store.Status(rawValue: status) else {
+            return nil
+        }
+
+        return Store(
+            id: id,
+            slug: slug,
+            name: name,
+            category: category?.domainModel,
+            status: storeStatus,
+            websiteURL: websiteURL.flatMap(URL.init(string:)),
+            searchKeywords: searchKeywords,
+            lastVerifiedAt: lastVerifiedAt,
+            earningRates: earningRates.compactMap(\.domainModel),
+            combinations: combinations.compactMap(\.domainModel)
+        )
+    }
+}
+
+private struct StoreEarningRateDTO: Decodable {
+    let id: UUID
+    let status: String
+    let rateLabel: String
+    let normalRateLabel: String?
+    let valueSummary: String?
+    let requirementSummary: String?
+    let warningText: String?
+    let handoffURL: String?
+    let sourceURL: String?
+    let sourceTitle: String?
+    let checkedAt: Date?
+    let startsAt: Date?
+    let endsAt: Date?
+    let sortOrder: Int
+    let isBaseRate: Bool
+    let method: EarningMethodDTO?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case status
+        case rateLabel = "rate_label"
+        case normalRateLabel = "normal_rate_label"
+        case valueSummary = "value_summary"
+        case requirementSummary = "requirement_summary"
+        case warningText = "warning_text"
+        case handoffURL = "handoff_url"
+        case sourceURL = "source_url"
+        case sourceTitle = "source_title"
+        case checkedAt = "checked_at"
+        case startsAt = "starts_at"
+        case endsAt = "ends_at"
+        case sortOrder = "sort_order"
+        case isBaseRate = "is_base_rate"
+        case method = "earning_methods"
+    }
+
+    var domainModel: StoreEarningRate? {
+        guard
+            let rateStatus = StoreEarningRate.Status(rawValue: status),
+            let method = method?.domainModel
+        else {
+            return nil
+        }
+
+        return StoreEarningRate(
+            id: id,
+            method: method,
+            status: rateStatus,
+            rateLabel: rateLabel,
+            normalRateLabel: normalRateLabel,
+            valueSummary: valueSummary,
+            requirementSummary: requirementSummary,
+            warningText: warningText,
+            handoffURL: handoffURL.flatMap(URL.init(string:)),
+            sourceURL: sourceURL.flatMap(URL.init(string:)),
+            sourceTitle: sourceTitle,
+            checkedAt: checkedAt,
+            startsAt: startsAt,
+            endsAt: endsAt,
+            sortOrder: sortOrder,
+            isBaseRate: isBaseRate
+        )
+    }
+}
+
+private struct EarningMethodDTO: Decodable {
+    let id: UUID
+    let slug: String
+    let name: String
+    let methodType: String
+    let programID: UUID?
+    let description: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case slug
+        case name
+        case methodType = "method_type"
+        case programID = "program_id"
+        case description
+    }
+
+    var domainModel: EarningMethod? {
+        guard let type = EarningMethod.MethodType(rawValue: methodType) else {
+            return nil
+        }
+
+        return EarningMethod(
+            id: id,
+            slug: slug,
+            name: name,
+            type: type,
+            programID: programID,
+            description: description
+        )
+    }
+}
+
+private struct EarningCombinationDTO: Decodable {
+    let id: UUID
+    let status: String
+    let title: String
+    let totalValueLabel: String
+    let summary: String
+    let easierAlternativeLabel: String?
+    let warningText: String?
+    let primaryHandoffURL: String?
+    let lastVerifiedAt: Date?
+    let sortOrder: Int
+    let rateLinks: [EarningCombinationRateDTO]
+    let steps: [EarningCombinationStepDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case status
+        case title
+        case totalValueLabel = "total_value_label"
+        case summary
+        case easierAlternativeLabel = "easier_alternative_label"
+        case warningText = "warning_text"
+        case primaryHandoffURL = "primary_handoff_url"
+        case lastVerifiedAt = "last_verified_at"
+        case sortOrder = "sort_order"
+        case rateLinks = "earning_combination_rates"
+        case steps = "earning_combination_steps"
+    }
+
+    var domainModel: EarningCombination? {
+        guard let combinationStatus = EarningCombination.Status(rawValue: status) else {
+            return nil
+        }
+
+        return EarningCombination(
+            id: id,
+            status: combinationStatus,
+            title: title,
+            totalValueLabel: totalValueLabel,
+            summary: summary,
+            easierAlternativeLabel: easierAlternativeLabel,
+            warningText: warningText,
+            primaryHandoffURL: primaryHandoffURL.flatMap(URL.init(string:)),
+            lastVerifiedAt: lastVerifiedAt,
+            sortOrder: sortOrder,
+            rateIDs: rateLinks.sorted { $0.sortOrder < $1.sortOrder }.map(\.storeEarningRateID),
+            steps: steps.map(\.domainModel).sorted { $0.sortOrder < $1.sortOrder }
+        )
+    }
+}
+
+private struct EarningCombinationRateDTO: Decodable {
+    let storeEarningRateID: UUID
+    let sortOrder: Int
+
+    enum CodingKeys: String, CodingKey {
+        case storeEarningRateID = "store_earning_rate_id"
+        case sortOrder = "sort_order"
+    }
+}
+
+private struct EarningCombinationStepDTO: Decodable {
+    let id: UUID
+    let text: String
+    let sortOrder: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case text
+        case sortOrder = "sort_order"
+    }
+
+    var domainModel: EarningCombinationStep {
+        EarningCombinationStep(id: id, text: text, sortOrder: sortOrder)
     }
 }
 

@@ -2,7 +2,19 @@
 
 ## Produktidé
 
-Poengjeger er en mobilapp som samler og prioriterer aktuelle kampanjer for bonus- og lojalitetsprogrammer.
+Poengjeger er en mobilapp som hjelper norske bonusbrukere å sjekke hvordan de kan tjene mest mulig relevante poeng før de handler.
+
+Produktets viktigste vane er:
+
+> Sjekk før du handler.
+
+Kjerneflyten er:
+
+1. Brukeren skal kjøpe noe.
+2. Brukeren søker etter butikk eller kategori i Poengjeger.
+3. Appen viser vanlig opptjening, aktive kampanjer og relevante opptjeningsmekanismer.
+4. Appen viser beste redaksjonelt kvalitetssikrede kombinasjon.
+5. Brukeren får korte steg og sendes videre til riktig portal eller destinasjon.
 
 Første produktfase skal konsentreres om:
 
@@ -38,17 +50,19 @@ Informasjonen kan være ustrukturert, vanskelig å finne og raskt bli utdatert.
 
 ## Verdiforslag
 
-Poengjeger skal gjøre det mulig å forstå de viktigste relevante kampanjene på under ett minutt.
+Poengjeger skal gjøre det mulig å forstå den beste relevante opptjeningsveien før et kjøp på under ett minutt.
 
 Produktet skal ikke bare samle lenker. Det skal:
 
+* vise grunnopptjening hos butikker og partnere
 * filtrere bort irrelevant informasjon
-* prioritere kampanjene
-* forklare hvorfor en kampanje er interessant
+* prioritere kampanjer og opptjeningsmekanismer
+* forklare hvorfor en kombinasjon er interessant
 * vise vilkår og utløpsdato tydelig
+* vise hvordan brukeren faktisk starter handelen riktig
 * varsle brukeren om spesielt relevante muligheter
 
-Tidsbesparelsen og prioriteringen er produktets viktigste verdi.
+Tidsbesparelsen, trygg handoff og prioriteringen er produktets viktigste verdi.
 
 ## Målgruppe
 
@@ -66,12 +80,15 @@ MVP-en skal vurderes strengt.
 Foreløpig kjerne:
 
 1. Velge relevante bonusprogrammer innen første fase: EuroBonus og Trumf.
-2. Se en personlig feed med aktive kampanjer.
-3. Åpne en kampanje og lese vilkår, vurdering og kilde.
-4. Filtrere kampanjer.
-5. Lagre favoritter.
-6. Motta et begrenset antall relevante varsler.
-7. Lære hvordan EuroBonus- og Trumf-økosystemene fungerer, inkludert opptjening, bruk, vanlige feller og hvordan aktuelle kampanjer passer inn.
+2. Søke etter butikker og kategorier før kjøp.
+3. Åpne en butikkside og se vanlig opptjening først.
+4. Se aktive kampanjer og alle relevante opptjeningsmekanismer.
+5. Se beste kombinasjon direkte på butikksiden.
+6. Åpne "Slik gjør du det" og følge korte steg før direkte handoff.
+7. Se en begrenset "Populært akkurat nå"-flate for aktuelle muligheter.
+8. Lære hvordan EuroBonus- og Trumf-økosystemene fungerer gjennom praktiske guider.
+9. Lagre favoritter og senere kjøpsplaner når profilfunksjoner innføres.
+10. Motta et begrenset antall relevante varsler.
 
 Et enkelt administrasjonsverktøy må gjøre det mulig å opprette, kontrollere, oppdatere og arkivere kampanjer.
 
@@ -86,6 +103,8 @@ Disse funksjonene skal ikke bygges uten en ny prioriteringsbeslutning:
 * sosialt nettverk
 * omfattende gamification
 * avanserte AI-assistenter
+* avansert automatisk kombinasjonsmotor
+* betalingsintegrasjon eller komplett abonnementsløsning
 * støtte for alle bonusprogrammer ved lansering
 * nye bonusprogrammer før EuroBonus og Trumf er validert som første fase
 
@@ -153,6 +172,8 @@ Mulige inntektskilder:
 * kommersielle samarbeid
 
 Kommersielt innhold skal merkes tydelig og må ikke svekke troverdigheten til rangeringen.
+
+Kjerneverdien i "sjekk før du handler" skal ikke legges bak betalingsmur. En gratis bruker skal kunne søke, forstå beste relevante opptjeningsvei og følge riktig portal eller lenke videre. Et senere premiumlag kan vurderes for avanserte guider, lagrede kjøpsplaner, mer avanserte varsler og dypere personalisering.
 
 ## Suksesskriterier
 

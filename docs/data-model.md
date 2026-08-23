@@ -7,6 +7,11 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 - `bonus_programs`: støttede bonusprogrammer.
 - `program_guides`: redaksjonelle strategiguider per bonusprogram med publiseringsstatus, intro, nøkkelfelter for verdi/utløp, tipsseksjoner og siste kontrolltidspunkt.
 - `campaign_categories`: kampanjekategorier.
+- `stores`: butikker og partnere brukeren kan søke opp før kjøp, med kategori, publiseringsstatus, URL og siste kontrolltidspunkt.
+- `earning_methods`: opptjeningsmekanismer som EuroBonus Shopping, Trumf, betalingskort eller tidsbegrenset kampanje.
+- `store_earning_rates`: stabil grunnopptjening eller aktiv sats for en butikk og metode, med krav, kilde og handoff-URL.
+- `earning_combinations`: redaksjonelt definerte beste kombinasjoner for en butikk. MVP bruker dette fremfor automatisk optimalisering.
+- `earning_combination_steps`: ordnede steg for "Slik gjør du det".
 - `campaigns`: publiseringslivssyklus, kjerneinnhold, datoer, primærprogram og redaksjonell kortvurdering.
 - `campaign_programs`: kobler en kampanje til flere programmer.
 - `campaign_requirements`: ordnede krav for en kampanje.
@@ -18,6 +23,8 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 En publisert kampanje krever minst én kildehenvisning, `last_verified_at`, minst én kobling til bonusprogram og redaksjonell beslutning med kort konklusjon. Nye kildehenvisninger må bruke `https://`-URL. Dette håndheves i databasen for redaksjonell lagring.
 
 Publiserte programguider kan leses av klienten for aktive bonusprogrammer. Utkast og arkiverte guider er kun tilgjengelige for redaksjonelle adminbrukere.
+
+Publiserte butikker, opptjeningsmetoder, satser og kombinasjoner kan leses av klienten. Utkast, arkiverte rader og redaksjonell administrasjon er begrenset til redaksjonelle roller via RLS.
 
 ## Brukerdata
 
