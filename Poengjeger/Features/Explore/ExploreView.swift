@@ -2,6 +2,11 @@ import SwiftUI
 
 struct ExploreView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var searchText = ""
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     private var campaignItems: [ExplorePromotionItem] {
         environment.publishedStores
@@ -33,16 +38,28 @@ struct ExploreView: View {
         StoreDiscoveryUseCase().storesWithEarning(from: environment.publishedStores)
     }
 
+    private var searchResults: [Store] {
+        StoreDiscoveryUseCase().rankedStores(
+            from: StoreSearchUseCase().search(stores: environment.publishedStores, query: searchText)
+        )
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
                 header
 
-                earningStoresSection
+                searchField
 
-                campaignSection
+                if isSearching {
+                    searchResultsSection
+                } else {
+                    earningStoresSection
 
-                categoryBrowseSection
+                    campaignSection
+
+                    categoryBrowseSection
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 18)
@@ -66,12 +83,89 @@ struct ExploreView: View {
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Kampanjer og bredere oppdagelse når du ikke leter etter en bestemt butikk.")
+            Text("Finn butikker, kategorier og verifiserte opptjeningsmuligheter før du handler.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            TextField("Søk etter Komplett, dagligvare, hotell...", text: $searchText)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+
+            if isSearching {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel("Tøm søk")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityLabel("Søk etter butikk eller kategori")
+    }
+
+    private var searchResultsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("SØKERESULTAT")
+                    .font(.caption.weight(.bold))
+                    .tracking(2.2)
+                    .foregroundStyle(.secondary)
+
+                Text("\(searchResults.count) treff")
+                    .font(.system(.title2, design: .serif).weight(.bold))
+                    .foregroundStyle(.primary)
+            }
+
+            if searchResults.isEmpty {
+                ContentUnavailableView(
+                    "Ingen butikker matcher søket",
+                    systemImage: "magnifyingglass",
+                    description: Text("Prøv en annen butikk eller kategori.")
+                )
+                .padding(.vertical, 18)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(searchResults) { store in
+                        NavigationLink(value: store) {
+                            ExploreStoreMiniRow(store: store)
+                        }
+                        .buttonStyle(.plain)
+
+                        if store.id != searchResults.last?.id {
+                            Divider()
+                                .padding(.leading, 64)
+                        }
+                    }
+                }
+                .background(PoengjegerTheme.elevatedSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(PoengjegerTheme.border, lineWidth: 1)
+                }
+            }
+        }
     }
 
     private var earningStoresSection: some View {
@@ -328,22 +422,39 @@ private struct ExploreStoreMiniRow: View {
         HStack(spacing: 12) {
             StoreInitialMark(name: store.name)
 
-            Text(store.name)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(store.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                if let categoryName = store.category?.name {
+                    Text(categoryName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
 
             Spacer(minLength: 8)
 
-            Text(store.bestCombination?.totalValueLabel ?? "Se opptjening")
+            Text(valueLabel)
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.primary)
+                .foregroundStyle(hasVerifiedEarning ? PoengjegerTheme.primary : .secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
         .padding(.horizontal, 14)
-        .frame(height: 62)
+        .frame(minHeight: 68)
         .accessibilityElement(children: .combine)
+    }
+
+    private var hasVerifiedEarning: Bool {
+        store.bestCombination != nil || !store.sortedEarningRates.isEmpty
+    }
+
+    private var valueLabel: String {
+        store.bestCombination?.totalValueLabel ?? "Ikke verifisert ennå"
     }
 }
 
