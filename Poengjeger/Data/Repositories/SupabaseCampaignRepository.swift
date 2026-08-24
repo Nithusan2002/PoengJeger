@@ -114,7 +114,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
             "campaign_categories(id,slug,name)",
             "campaign_requirements(id,text,sort_order)",
             "campaign_source_references(id,url,title,checked_at,evidence_note,campaign_sources(name))",
-            "campaign_editorial_assessments(score,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
+            "campaign_editorial_assessments(score,decision_label,decision_summary,best_for,not_for,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
             "campaign_geo_restrictions(id,country_code)",
             "campaign_programs(program_id)"
         ].joined(separator: ",")
