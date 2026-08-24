@@ -89,10 +89,10 @@ select public.grant_editorial_role(
 - filtrerer på status
 - setter review-status via `set_ingestion_candidate_status(...)`
 - promoterer kampanjekandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
-- promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)`
+- promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)` og åpner den nye draften direkte
 - viser og redigerer butikkopptjening fra `store_earning_rates`
 - viser review-status for butikkopptjening med blokkerende mangler og gule kontrollpunkter
-- publiserer kontrollerte butikker og satser uten SQL Editor
+- publiserer kontrollerte butikker og satser uten SQL Editor, med egen `Publiser og neste draft`-flyt for rask review
 - viser kampanjer etter status
 - redigerer draft-felt, krav og primærkilde
 - foreslår redaksjonell vurdering via Edge Function uten å lagre automatisk
@@ -131,6 +131,10 @@ Knappen `Publiser kontrollert` setter både butikk og sats til `published`, men
 den er bare aktiv når de blokkerende feltene er fylt ut. Dette er valgt fremfor
 helautomatisk publisering fordi kandidatene fortsatt kan ha uklare vilkår,
 kampanjeperioder eller sporingsforbehold.
+
+For raskere daglig arbeid åpner køen på nye kandidater, kampanjer og
+butikkopptjening åpner på draft, promotering til butikkopptjening hopper direkte
+til den nye draften, og `Publiser og neste draft` velger neste ubehandlede sats.
 
 ## Bevisst ikke med ennå
 

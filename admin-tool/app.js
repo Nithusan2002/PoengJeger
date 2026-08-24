@@ -1029,7 +1029,11 @@
               }
             });
 
-            successMessage = `Butikkopptjening ble opprettet som draft: ${storeEarningRateId}`;
+            state.selectedStoreEarningRateId = storeEarningRateId;
+            elements.storeEarningStatusFilter.value = "draft";
+            await refreshStoreEarningRates();
+            setActivePanel("store-earning-panel");
+            successMessage = "Butikkopptjening ble opprettet som draft. Kontroller og publiser i Butikker.";
           } else {
             await apiRequest("/rest/v1/rpc/set_ingestion_candidate_status", {
               method: "POST",
@@ -1514,9 +1518,10 @@
           <div class="action-row">
             <button type="submit">Lagre endringer</button>
             <button type="button" class="success" data-store-earning-action="publish">Publiser kontrollert</button>
+            <button type="button" class="success" data-store-earning-action="publish_next">Publiser og neste draft</button>
             <button type="button" class="secondary" data-store-earning-action="archive">Arkiver sats</button>
           </div>
-          <span class="help">Knappen setter både butikk og sats til published. Røde punkter blokkerer publisering; gule punkter bør kontrolleres før du trykker.</span>
+          <span class="help">Publisering setter både butikk og sats til published. Røde punkter blokkerer publisering; gule punkter bør kontrolleres før du trykker.</span>
         </div>
       </form>
     `;
@@ -1530,8 +1535,12 @@
     elements.storeEarningDetailPanel.querySelectorAll("[data-store-earning-action]").forEach((button) => {
       button.addEventListener("click", async function () {
         const action = button.getAttribute("data-store-earning-action");
-        const targetRateStatus = action === "publish" ? "published" : "archived";
-        await saveStoreEarningEditor(form, rate, targetRateStatus);
+        if (action === "publish" || action === "publish_next") {
+          await saveStoreEarningEditor(form, rate, "published", { selectNextDraft: action === "publish_next" });
+          return;
+        }
+
+        await saveStoreEarningEditor(form, rate, "archived");
       });
     });
 
@@ -1967,7 +1976,7 @@
     }
   }
 
-  async function saveStoreEarningEditor(form, originalRate, overrideRateStatus) {
+  async function saveStoreEarningEditor(form, originalRate, overrideRateStatus, options = {}) {
     const formData = new FormData(form);
     const payload = collectStoreEarningFormData(formData, originalRate, overrideRateStatus);
     const validationErrors = validateStoreEarningPayload(payload);
@@ -1984,8 +1993,18 @@
 
     try {
       await saveStoreEarningRate(payload);
-      setMessage(elements.storeEarningMessage, "Butikkopptjeningen ble lagret.", "success");
+      if (options.selectNextDraft) {
+        elements.storeEarningStatusFilter.value = "draft";
+      }
       await refreshStoreEarningRates();
+      if (options.selectNextDraft) {
+        const message = state.storeEarningRates.length
+          ? "Publisert. Neste draft er valgt."
+          : "Publisert. Ingen flere draft-satser i filteret.";
+        setMessage(elements.storeEarningMessage, message, "success");
+      } else {
+        setMessage(elements.storeEarningMessage, "Butikkopptjeningen ble lagret.", "success");
+      }
     } catch (error) {
       setMessage(elements.storeEarningMessage, error.message, "error");
     } finally {
@@ -2526,8 +2545,10 @@
   }
 
   function updateStoreEarningPublishButtonState(form, readiness) {
-    const publishButton = form.querySelector('[data-store-earning-action="publish"]');
-    if (!publishButton) {
+    const publishButtons = form.querySelectorAll(
+      '[data-store-earning-action="publish"], [data-store-earning-action="publish_next"]'
+    );
+    if (!publishButtons.length) {
       return;
     }
 
@@ -2536,12 +2557,14 @@
     );
     const canPublish = resolvedReadiness.isPublishReady;
 
-    publishButton.disabled = !canPublish;
-    publishButton.title = canPublish
-      ? resolvedReadiness.warnings.length
-        ? "Kan publiseres, men gule punkter bør være kontrollert manuelt først."
-        : ""
-      : `Publisering blokkert: ${resolvedReadiness.blockers.map((check) => check.label).join(", ")}.`;
+    publishButtons.forEach((publishButton) => {
+      publishButton.disabled = !canPublish;
+      publishButton.title = canPublish
+        ? resolvedReadiness.warnings.length
+          ? "Kan publiseres, men gule punkter bør være kontrollert manuelt først."
+          : ""
+        : `Publisering blokkert: ${resolvedReadiness.blockers.map((check) => check.label).join(", ")}.`;
+    });
   }
 
   async function upsertProgramGuide(payload) {

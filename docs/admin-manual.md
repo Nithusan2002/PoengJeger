@@ -32,6 +32,9 @@ Hvis du får tilgangsfeil, mangler brukeren rolle i `editorial_user_roles`.
 4. Trykk `Hent nye kandidater`.
 5. Se gjennom kandidatene før promotering.
 
+Køen åpner som standard på status `Ny`, slik at du starter på ubehandlede funn.
+Bytt til `Alle` bare når du skal finne gamle, avviste eller promoterte rader.
+
 Kandidater er ikke publisert innhold. De er funn som må vurderes.
 
 ## Kandidatkø
@@ -50,11 +53,14 @@ Vanlige valg:
 For SAS/Trumf-butikkfunn bør du vanligvis promotere til butikkopptjening, ikke
 kampanje, med mindre funnet faktisk er en tidsbegrenset kampanje med egne vilkår.
 
+Når du promoterer til butikkopptjening, åpner adminflaten automatisk den nye
+draften i `Butikker`. Da kan du kontrollere og publisere uten å lete etter raden.
+
 ## Butikkopptjening
 
 Gå til `Butikker` for å kontrollere og publisere butikkrater.
 
-Filtrer på `Draft` for å se nye rader som må behandles.
+Butikkfanen åpner som standard på `Draft`, altså nye rader som må behandles.
 
 Hver sats får en review-status:
 
@@ -84,14 +90,18 @@ Gule kontrollpunkter:
 2. Kontroller butikk, metode, sats, kilde og handoff.
 3. Fjern eller omskriv intern advarsel hvis raden er ferdig kontrollert.
 4. Sett kontrolltidspunkt hvis det mangler.
-5. Trykk `Publiser kontrollert`.
+5. Trykk `Publiser kontrollert` hvis du bare vil publisere raden, eller
+   `Publiser og neste draft` hvis du vil fortsette direkte til neste utkast.
 
-Knappen setter både butikken og satsen til `published`. Etter publisering kan
-innholdet vises i iOS-appen.
+Publisering setter både butikken og satsen til `published`. Etter publisering
+kan innholdet vises i iOS-appen.
 
 ## Kampanjer
 
 Gå til `Kampanjer` for redigering av kampanjeutkast.
+
+Kampanjefanen åpner som standard på `Draft`, slik at du ser upubliserte
+kampanjeutkast først.
 
 Før publisering må kampanjen ha:
 
