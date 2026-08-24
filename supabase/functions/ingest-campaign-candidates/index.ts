@@ -88,6 +88,7 @@ const SAS_SHOPS_FEED_URL =
 const SAS_HANDOFF_BASE_URL = "https://onlineshopping.flysas.com/nb-NO/butikker";
 const REMEMBER_URL = "https://www.remember.no/reward/rabatt";
 const DEFAULT_LIMIT_PER_SOURCE = 50;
+const MAX_LIMIT_PER_SOURCE = 1_000;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 const corsHeaders = {
@@ -639,7 +640,7 @@ function parsePositiveInteger(value: string | null, fallback: number): number {
   if (!Number.isInteger(parsed) || parsed <= 0) {
     return fallback;
   }
-  return Math.min(parsed, 250);
+  return Math.min(parsed, MAX_LIMIT_PER_SOURCE);
 }
 
 function formatNumber(value: number): string {

@@ -23,6 +23,12 @@ curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?limit=50" \
   -H "Authorization: Bearer $INGESTION_RUN_SECRET"
 ```
 
+Anbefalt lokal kjøring:
+
+```sh
+INGESTION_RUN_SECRET=... node scripts/run-ingestion.mjs --source=trumf_netthandel --limit=1000
+```
+
 Begrenset kjøring:
 
 ```sh
@@ -56,6 +62,8 @@ curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?source=sas_eurob
 - Kandidater inneholder rå JSON/HTML-utdrag per funn i `raw_content` og
   kilde-URL i `source_url`.
 - Det publiseres ingen kampanjer automatisk.
+- `limit` er sperret til maks 1000 per kilde. Dette dekker full Trumf-feed
+  ved kontroll 2026-08-24, der feeden svarte med 251 butikker.
 
 ## Kjente begrensninger
 
