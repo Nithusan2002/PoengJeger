@@ -116,6 +116,8 @@ testes uten å legge hemmeligheter lokalt.
 Knappen `Hent nye kandidater` kaller Edge Function `ingest-campaign-candidates`
 med brukerens Supabase-session. `INGESTION_RUN_SECRET` brukes fortsatt for
 server/cron-kjøring, men legges ikke i adminverktøyet eller browseren.
+Limit kan settes opp til 1000 for full kildehenting, for eksempel hele
+Trumf Netthandel-feeden.
 
 ## Forenklet butikk-review
 

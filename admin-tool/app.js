@@ -2954,7 +2954,7 @@
       return 10;
     }
 
-    return Math.min(Math.max(parsed, 1), 50);
+    return Math.min(Math.max(parsed, 1), 1000);
   }
 
   function isHttpsUrl(value) {
