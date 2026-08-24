@@ -4,6 +4,8 @@ Dette er Poengjeger sin interne adminflate for redaksjonell drift. Den skal
 holdes separat fra en offentlig produktside og skal ikke lenkes fra vanlig
 brukernavigasjon.
 
+For daglig bruk, se `docs/admin-manual.md`.
+
 Anbefalt plassering:
 
 - lokal utvikling: `http://localhost:4173`
