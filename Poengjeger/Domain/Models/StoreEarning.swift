@@ -146,3 +146,50 @@ struct StoreSearchUseCase {
             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 }
+
+struct StoreDiscoveryUseCase {
+    func storesWithEarning(from stores: [Store]) -> [Store] {
+        rankedStores(from: stores)
+            .filter(\.isPublished)
+            .filter { $0.bestCombination != nil || !$0.sortedEarningRates.isEmpty }
+    }
+
+    func rankedStores(from stores: [Store]) -> [Store] {
+        stores
+            .filter(\.isPublished)
+            .sorted(by: compareStores)
+    }
+
+    private func compareStores(_ first: Store, _ second: Store) -> Bool {
+        let firstHasEarning = first.bestCombination != nil || !first.sortedEarningRates.isEmpty
+        let secondHasEarning = second.bestCombination != nil || !second.sortedEarningRates.isEmpty
+
+        if firstHasEarning != secondHasEarning {
+            return firstHasEarning
+        }
+
+        let firstValue = rankingValue(for: first)
+        let secondValue = rankingValue(for: second)
+
+        if firstValue != secondValue {
+            return firstValue > secondValue
+        }
+
+        return first.name.localizedCompare(second.name) == .orderedAscending
+    }
+
+    private func rankingValue(for store: Store) -> Double {
+        guard let label = store.bestCombination?.totalValueLabel else { return 0 }
+        let normalized = label.replacingOccurrences(of: ",", with: ".")
+        let pattern = #"\d+(\.\d+)?"#
+
+        guard
+            let range = normalized.range(of: pattern, options: .regularExpression),
+            let value = Double(normalized[range])
+        else {
+            return 0
+        }
+
+        return value
+    }
+}

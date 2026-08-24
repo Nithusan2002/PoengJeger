@@ -159,6 +159,28 @@ struct ScannableFeedUseCaseTests {
     }
 
     @Test
+    func storeDiscoveryPrioritizesStoresWithVerifiedEarning() {
+        let unverifiedStore = Store(
+            id: UUID(),
+            slug: "uten-opptjening",
+            name: "Uten opptjening",
+            category: SampleData.shoppingCategory,
+            status: .published,
+            websiteURL: nil,
+            searchKeywords: [],
+            lastVerifiedAt: nil,
+            earningRates: [],
+            combinations: []
+        )
+        let allStores = StoreDiscoveryUseCase().rankedStores(from: [unverifiedStore] + SampleData.stores)
+        let stores = StoreDiscoveryUseCase().storesWithEarning(from: SampleData.stores)
+
+        #expect(allStores.map(\.name) == ["Elkjøp", "Komplett", "Meny", "Uten opptjening"])
+        #expect(stores.map(\.name) == ["Elkjøp", "Komplett", "Meny"])
+        #expect(stores.allSatisfy { $0.bestCombination != nil || !$0.sortedEarningRates.isEmpty })
+    }
+
+    @Test
     func supabaseRepositoryDecodesFractionalSecondTimestamps() async throws {
         let programID = UUID()
         let campaignID = UUID()

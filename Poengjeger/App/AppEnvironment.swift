@@ -132,9 +132,9 @@ final class AppEnvironment {
     }
 
     var featuredStores: [Store] {
-        publishedStores
-            .filter { $0.bestCombination != nil }
-            .prefix(3)
+        StoreDiscoveryUseCase()
+            .storesWithEarning(from: stores)
+            .prefix(4)
             .map { $0 }
     }
 

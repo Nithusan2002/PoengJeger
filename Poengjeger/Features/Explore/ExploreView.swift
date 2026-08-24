@@ -29,10 +29,16 @@ struct ExploreView: View {
             .sorted { $0.localizedCompare($1) == .orderedAscending }
     }
 
+    private var earningStores: [Store] {
+        StoreDiscoveryUseCase().storesWithEarning(from: environment.publishedStores)
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
                 header
+
+                earningStoresSection
 
                 campaignSection
 
@@ -66,6 +72,61 @@ struct ExploreView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var earningStoresSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("BUTIKKER MED OPPTJENING")
+                    .font(.caption.weight(.bold))
+                    .tracking(2.2)
+                    .foregroundStyle(.secondary)
+
+                Text("Sjekk disse først")
+                    .font(.system(.title2, design: .serif).weight(.bold))
+                    .foregroundStyle(.primary)
+
+                Text("Publiserte butikker der redaksjonen har verifisert minst én opptjeningsmulighet.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if earningStores.isEmpty {
+                Text("Ingen butikker med verifisert opptjening er publisert ennå.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(PoengjegerTheme.elevatedSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(PoengjegerTheme.border, lineWidth: 1)
+                    }
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(earningStores) { store in
+                        NavigationLink(value: store) {
+                            ExploreStoreMiniRow(store: store)
+                        }
+                        .buttonStyle(.plain)
+
+                        if store.id != earningStores.last?.id {
+                            Divider()
+                                .padding(.leading, 64)
+                        }
+                    }
+                }
+                .background(PoengjegerTheme.elevatedSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(PoengjegerTheme.border, lineWidth: 1)
+                }
+            }
+        }
     }
 
     private var campaignSection: some View {
@@ -132,33 +193,9 @@ struct ExploreView: View {
     }
 
     private func rankedStores(in category: String) -> [Store] {
-        environment.publishedStores
+        StoreDiscoveryUseCase()
+            .rankedStores(from: environment.publishedStores)
             .filter { $0.category?.name == category }
-            .sorted { first, second in
-                let firstValue = rankingValue(for: first)
-                let secondValue = rankingValue(for: second)
-
-                if firstValue != secondValue {
-                    return firstValue > secondValue
-                }
-
-                return first.name.localizedCompare(second.name) == .orderedAscending
-            }
-    }
-
-    private func rankingValue(for store: Store) -> Double {
-        guard let label = store.bestCombination?.totalValueLabel else { return 0 }
-        let normalized = label.replacingOccurrences(of: ",", with: ".")
-        let pattern = #"\d+(\.\d+)?"#
-
-        guard
-            let range = normalized.range(of: pattern, options: .regularExpression),
-            let value = Double(normalized[range])
-        else {
-            return 0
-        }
-
-        return value
     }
 }
 
