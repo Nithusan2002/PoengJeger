@@ -4,7 +4,9 @@
 
 Dette dokumentet beskriver den minste redaksjonelle flyten som trengs for å gå fra `ingestion_candidates` til en publiserbar `campaign`.
 
-Målet er å unngå direkte publisering fra maskinelt oppdaget innhold.
+Målet er å unngå direkte publisering fra maskinelt oppdaget innhold, samtidig
+som butikkorienterte funn fra kilder som Trumf Netthandel og SAS EuroBonus
+Shopping kan bli redaksjonelle utkast til butikkopptjening.
 
 ## Bekreftede grenser
 
@@ -21,7 +23,8 @@ Målet er å unngå direkte publisering fra maskinelt oppdaget innhold.
    - `needs_review`
    - `approved`
    - `rejected`
-4. Når kandidaten er relevant, promoteres den til en `draft`-kampanje.
+4. Når kandidaten er relevant, promoteres den enten til en `draft`-kampanje
+   eller til `draft`-butikkopptjening.
 5. Redaksjonen fullfører kampanjen:
    - forbedrer tittel og sammendrag
    - legger til krav
@@ -29,6 +32,11 @@ Målet er å unngå direkte publisering fra maskinelt oppdaget innhold.
    - kontrollerer kildegrunnlag
    - setter `last_verified_at`
 6. Først deretter kan kampanjen settes til `published`.
+
+For butikkopptjening gjelder samme prinsipp: `promote_ingestion_candidate_to_store_earning(...)`
+oppretter eller oppdaterer en butikk som `draft` og oppretter en
+`store_earning_rates`-rad som `draft`. Butikk og sats må fortsatt kontrolleres
+og publiseres eksplisitt av redaksjonen.
 
 ## Nye databaseprimitiver
 
@@ -40,6 +48,8 @@ Migrasjonen `20260803110000_add_admin_ingestion_workflow.sql` legger til:
   - setter review-status på en kandidat
 - `public.promote_ingestion_candidate_to_campaign(...)`
   - oppretter en `draft`-kampanje fra en kandidat og kobler med første kilde
+- `public.promote_ingestion_candidate_to_store_earning(...)`
+  - oppretter eller gjenbruker butikk og lager en `draft`-sats fra Trumf/SAS-kandidat
 
 ## Testkandidat i repoet
 
@@ -131,6 +141,26 @@ select public.promote_ingestion_candidate_to_campaign(
 );
 ```
 
+Promoter kandidat til draft-butikkopptjening:
+
+```sql
+select public.promote_ingestion_candidate_to_store_earning(
+  p_candidate_id := '00000000-0000-0000-0000-000000000000'
+);
+```
+
+Promoter med overstyrt butikknavn, kategori og sats:
+
+```sql
+select public.promote_ingestion_candidate_to_store_earning(
+  p_candidate_id := '00000000-0000-0000-0000-000000000000',
+  p_store_name := 'Komplett',
+  p_category_id := '22222222-2222-2222-2222-222222222222',
+  p_rate_label := '15 EuroBonus-poeng per 100 kr',
+  p_review_note := 'Kontrollert mot SAS Online Shopping-feed.'
+);
+```
+
 Promoter med overstyrt program/kategori:
 
 ```sql
@@ -153,6 +183,8 @@ select public.promote_ingestion_candidate_to_campaign(
   - kategori hvis kjent
   - én kildehenvisning
 - Krav, geobegrensninger, score og redaksjonell vurdering må fortsatt fylles ut separat.
+- Butikkopptjening-promotering er foreløpig støttet for `trumf_netthandel` og
+  `sas_eurobonus_shopping`, fordi disse kildene produserer butikk-/satsfunn.
 
 ## Neste naturlige utvidelse
 

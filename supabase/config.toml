@@ -66,6 +66,7 @@ sql_paths = [
   "./seed/bonus_programs.sql",
   "./seed/program_guides.sql",
   "./seed/mvp_campaigns.sql",
+  "./seed/store_earning_mvp.sql",
   "./seed/ingestion_candidates.sql",
 ]
 

@@ -34,7 +34,7 @@ Begrunnelse:
 
 ## Status
 
-Første operative adminflate finnes i `admin-tool/`. Den er fortsatt en intern MVP, men dekker kandidat-review, manuell innhenting, promotering til `draft`, kampanjeredigering, publisering og vedlikehold av `program_guides`.
+Første operative adminflate finnes i `admin-tool/`. Den er fortsatt en intern MVP, men dekker kandidat-review, manuell innhenting, promotering til `draft`, kampanjeredigering, publisering og vedlikehold av `program_guides`. Kandidatkøen kan også promotere Trumf-/SAS-funn til `draft`-butikkopptjening, slik at butikkorienterte kilder ikke må behandles som kampanjer.
 
 Dette dokumentet beskriver derfor målbildet og avgrensningen for adminflaten. For konkret lokal kjøring og nåværende funksjoner, bruk `admin-tool/README.md`.
 
@@ -71,9 +71,9 @@ Redaksjonen trenger i dag database- eller SQL-basert arbeid for å håndtere kan
 
 ### 4. Promotering til draft
 
-- Promoter godkjent kandidat til `draft`-kampanje
+- Promoter godkjent kandidat til `draft`-kampanje eller `draft`-butikkopptjening
 - Tillat enkel overstyring av program og kategori før promotering
-- Vis tydelig at promotering ikke publiserer kampanjen
+- Vis tydelig at promotering ikke publiserer kampanje, butikk eller sats
 
 ### 5. Draft-redigering
 
@@ -151,6 +151,7 @@ Anbefalt første oppsett:
 - `admin_ingestion_candidate_queue` for køvisning
 - `set_ingestion_candidate_status(...)` for review
 - `promote_ingestion_candidate_to_campaign(...)` for promotering
+- `promote_ingestion_candidate_to_store_earning(...)` for butikkopptjening
 - direkte redigering av `campaigns` og relaterte tabeller kun for admin-brukere
 
 ## Autorisasjonsmodell

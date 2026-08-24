@@ -50,7 +50,8 @@ select public.grant_editorial_role(
 - kjører `ingest-campaign-candidates` manuelt for valgte kilder med innlogget admin/editor-token
 - filtrerer på status
 - setter review-status via `set_ingestion_candidate_status(...)`
-- promoterer kandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
+- promoterer kampanjekandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
+- promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)`
 - viser kampanjer etter status
 - redigerer draft-felt, krav og primærkilde
 - foreslår redaksjonell vurdering via Edge Function uten å lagre automatisk

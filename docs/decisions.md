@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-022: Butikkorienterte kandidater kan promoteres til draft-butikkopptjening
+- Status: Vedtatt
+- Bakgrunn: Trumf Netthandel og SAS EuroBonus Shopping produserer primært butikk-/satsfunn, ikke fullverdige kampanjer. Hvis alle slike funn må promoteres til kampanjeutkast, blir redaksjonsflyten feil modellert og appens viktigste "sjekk før du handler"-flate får for lite verifisert butikkopptjening.
+- Beslutning: Kandidatkøen får en separat promotering til `stores` og `store_earning_rates`. Promoteringen oppretter eller gjenbruker butikk, lager sats som `draft`, og markerer kandidaten som promotert med referanse til satsen. Den publiserer ikke butikk eller sats automatisk.
+- Konsekvens: Redaksjonen kan behandle SAS-/Trumf-funn i riktig modell uten SQL Editor. Databasen må spore både `promoted_campaign_id` og `promoted_store_earning_rate_id`, og adminverktøyet må gjøre det tydelig hvilket mål kandidaten promoteres til.
+
 ## ADR-021: MVP dreies til butikkorientert "sjekk før du handler"
 - Status: Vedtatt
 - Bakgrunn: Kampanjefeed gir oversikt, men bygger ikke like tydelig vane som å sjekke Poengjeger rett før et kjøp. Den sterkeste brukerjobben er å finne riktig opptjeningsvei hos en butikk eller kategori før brukeren handler.

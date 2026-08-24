@@ -355,7 +355,9 @@
         "reviewed_at",
         "review_note",
         "promoted_campaign_id",
+        "promoted_store_earning_rate_id",
         "ingest_kind",
+        "parser_key",
         "source_name",
         "suggested_program_name",
         "suggested_category_name"
@@ -483,7 +485,9 @@
       reviewedAt: candidate.reviewed_at,
       reviewNote: candidate.review_note || "",
       promotedCampaignId: candidate.promoted_campaign_id,
+      promotedStoreEarningRateId: candidate.promoted_store_earning_rate_id,
       ingestKind: candidate.ingest_kind,
+      parserKey: candidate.parser_key,
       sourceName: candidate.source_name,
       suggestedProgramName: candidate.suggested_program_name,
       suggestedCategoryName: candidate.suggested_category_name
@@ -721,6 +725,7 @@
     }
 
     elements.detailPanel.classList.remove("empty");
+    const canPromoteToStoreEarning = isStoreEarningCandidate(candidate) && !candidate.promotedCampaignId && !candidate.promotedStoreEarningRateId;
     elements.detailPanel.innerHTML = `
       <div class="detail-copy">
         <div class="badge-row">
@@ -764,6 +769,11 @@
             ? `<section><h3>Promotert kampanje</h3><p><code>${escapeHtml(candidate.promotedCampaignId)}</code></p><button type="button" class="secondary" data-open-campaign="${escapeAttribute(candidate.promotedCampaignId)}">Åpne draft-editor</button></section>`
             : ""
         }
+        ${
+          candidate.promotedStoreEarningRateId
+            ? `<section><h3>Promotert butikkopptjening</h3><p><code>${escapeHtml(candidate.promotedStoreEarningRateId)}</code></p><p class="help">Satsen er opprettet som draft og må kontrolleres før publisering.</p></section>`
+            : ""
+        }
 
         <div class="detail-actions">
           <div class="action-row">
@@ -773,8 +783,13 @@
           </div>
           <div class="action-row">
             <button type="button" class="secondary" data-action="promote">Promoter til draft</button>
+            ${
+              canPromoteToStoreEarning
+                ? `<button type="button" class="secondary" data-action="promote_store_earning">Promoter til butikkopptjening</button>`
+                : ""
+            }
           </div>
-          <span class="help">Publisering skjer fortsatt separat på kampanjeutkastet.</span>
+          <span class="help">Publisering skjer fortsatt separat på kampanjeutkast eller butikkopptjening.</span>
         </div>
       </div>
     `;
@@ -788,6 +803,8 @@
         button.textContent = "Jobber...";
 
         try {
+          let successMessage = "Kandidaten ble oppdatert.";
+
           if (action === "promote") {
             const campaignId = await apiRequest("/rest/v1/rpc/promote_ingestion_candidate_to_campaign", {
               method: "POST",
@@ -797,9 +814,19 @@
               }
             });
 
-        state.selectedCampaignId = campaignId;
-        await refreshCampaigns();
-        setActivePanel("campaign-panel");
+            state.selectedCampaignId = campaignId;
+            await refreshCampaigns();
+            setActivePanel("campaign-panel");
+          } else if (action === "promote_store_earning") {
+            const storeEarningRateId = await apiRequest("/rest/v1/rpc/promote_ingestion_candidate_to_store_earning", {
+              method: "POST",
+              body: {
+                p_candidate_id: candidate.id,
+                p_review_note: note || null
+              }
+            });
+
+            successMessage = `Butikkopptjening ble opprettet som draft: ${storeEarningRateId}`;
           } else {
             await apiRequest("/rest/v1/rpc/set_ingestion_candidate_status", {
               method: "POST",
@@ -811,7 +838,7 @@
             });
           }
 
-          setMessage(elements.queueMessage, "Kandidaten ble oppdatert.", "success");
+          setMessage(elements.queueMessage, successMessage, "success");
           await refreshQueue();
         } catch (error) {
           setMessage(elements.queueMessage, error.message, "error");
@@ -2110,6 +2137,10 @@
     };
 
     return labels[source] || source;
+  }
+
+  function isStoreEarningCandidate(candidate) {
+    return candidate && ["trumf_netthandel", "sas_eurobonus_shopping"].includes(candidate.parserKey);
   }
 
   function summarizeIngestionResult(result, requestedSource) {
