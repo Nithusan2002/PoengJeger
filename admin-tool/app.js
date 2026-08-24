@@ -849,6 +849,7 @@
     }
 
     state.storeEarningRates.forEach((rate) => {
+      const readiness = storeEarningReadiness(storeEarningDraftFromRate(rate));
       const item = document.createElement("li");
       item.className = "queue-item";
 
@@ -861,6 +862,7 @@
           ${renderStoreEarningBadge(rate.status)}
           ${rate.store ? renderStoreBadge(rate.store.status) : ""}
           ${rate.method ? renderMetaBadge(rate.method.name) : ""}
+          ${renderReadinessBadge(readiness)}
         </div>
         <h3>${escapeHtml(rate.store ? rate.store.name : "Ukjent butikk")}</h3>
         <p>${escapeHtml(rate.rateLabel || "Ingen sats ennå.")}</p>
@@ -1356,6 +1358,8 @@
       searchKeywords: [],
       lastVerifiedAt: null
     };
+    const draft = storeEarningDraftFromRate(rate);
+    const readiness = storeEarningReadiness(draft);
 
     elements.storeEarningDetailPanel.classList.remove("empty");
     elements.storeEarningDetailPanel.innerHTML = `
@@ -1365,6 +1369,11 @@
           ${renderStoreBadge(store.status)}
           ${rate.method ? renderMetaBadge(rate.method.name) : ""}
           ${store.categoryId ? renderMetaBadge(categoryName(store.categoryId)) : ""}
+          ${renderReadinessBadge(readiness)}
+        </div>
+
+        <div id="store-earning-readiness" class="draft-readiness store-readiness">
+          ${renderStoreEarningReadiness(readiness)}
         </div>
 
         <section class="section-stack">
@@ -1504,10 +1513,10 @@
         <div class="detail-actions">
           <div class="action-row">
             <button type="submit">Lagre endringer</button>
-            <button type="button" class="success" data-store-earning-action="publish">Lagre og publiser</button>
+            <button type="button" class="success" data-store-earning-action="publish">Publiser kontrollert</button>
             <button type="button" class="secondary" data-store-earning-action="archive">Arkiver sats</button>
           </div>
-          <span class="help">Publisering krever publisert butikk, rate-label, https-kilde og kontrolltidspunkt.</span>
+          <span class="help">Knappen setter både butikk og sats til published. Røde punkter blokkerer publisering; gule punkter bør kontrolleres før du trykker.</span>
         </div>
       </form>
     `;
@@ -1527,12 +1536,12 @@
     });
 
     form.addEventListener("input", function () {
-      updateStoreEarningPublishButtonState(form);
+      updateStoreEarningDraftAssist(form, rate);
     });
     form.addEventListener("change", function () {
-      updateStoreEarningPublishButtonState(form);
+      updateStoreEarningDraftAssist(form, rate);
     });
-    updateStoreEarningPublishButtonState(form);
+    updateStoreEarningDraftAssist(form, rate);
   }
 
   function renderEmptyStoreEarningDetail(message) {
@@ -2023,6 +2032,166 @@
     };
   }
 
+  function storeEarningDraftFromRate(rate) {
+    const store = rate.store || {};
+
+    return {
+      storeName: store.name || "",
+      storeStatus: store.status || "draft",
+      storeCategoryId: store.categoryId || null,
+      storeWebsiteUrl: store.websiteUrl || null,
+      storeSearchKeywords: Array.isArray(store.searchKeywords) ? store.searchKeywords : [],
+      earningMethodId: rate.earningMethodId || "",
+      rateStatus: rate.status || "draft",
+      rateLabel: rate.rateLabel || "",
+      normalRateLabel: rate.normalRateLabel || null,
+      valueSummary: rate.valueSummary || null,
+      requirementSummary: rate.requirementSummary || null,
+      warningText: rate.warningText || null,
+      handoffUrl: rate.handoffUrl || null,
+      sourceUrl: rate.sourceUrl || null,
+      sourceTitle: rate.sourceTitle || null,
+      checkedAt: rate.checkedAt || null,
+      startsAt: rate.startsAt || null,
+      endsAt: rate.endsAt || null,
+      sortOrder: rate.sortOrder || 0,
+      isBaseRate: Boolean(rate.isBaseRate)
+    };
+  }
+
+  function storeEarningReadiness(payload) {
+    const checks = [
+      {
+        label: "Butikk",
+        complete: Boolean(payload.storeName),
+        severity: "blocker",
+        help: "Butikknavn må være tydelig før publisering."
+      },
+      {
+        label: "Metode",
+        complete: Boolean(payload.earningMethodId),
+        severity: "blocker",
+        help: "Velg SAS Shopping, Trumf eller annen relevant opptjeningsmetode."
+      },
+      {
+        label: "Sats",
+        complete: Boolean(payload.rateLabel),
+        severity: "blocker",
+        help: "Satsen må være synlig, for eksempel poeng per 100 kr eller prosent."
+      },
+      {
+        label: "Kilde",
+        complete: Boolean(payload.sourceUrl && isHttpsUrl(payload.sourceUrl)),
+        severity: "blocker",
+        help: "Kilde må være en https-URL."
+      },
+      {
+        label: "Kontrollert",
+        complete: Boolean(payload.checkedAt),
+        severity: "blocker",
+        help: "Sett tidspunktet satsen ble kontrollert."
+      },
+      {
+        label: "Handoff",
+        complete: Boolean(payload.handoffUrl && isHttpsUrl(payload.handoffUrl)),
+        severity: "warning",
+        help: "Anbefalt for trygg videresending fra appen."
+      },
+      {
+        label: "Krav",
+        complete: Boolean(payload.requirementSummary),
+        severity: "warning",
+        help: "Forklar hvordan handelen må startes for sporing."
+      },
+      {
+        label: "Forbehold",
+        complete: !requiresManualStoreReview(payload),
+        severity: "warning",
+        help: "Sjekk ekstra hvis teksten sier opptil, kampanje, må kontrolleres eller mangler sluttdato."
+      }
+    ];
+    const blockers = checks.filter((check) => check.severity === "blocker" && !check.complete);
+    const warnings = checks.filter((check) => check.severity === "warning" && !check.complete);
+    const completeCount = checks.filter((check) => check.complete).length;
+
+    return {
+      checks,
+      blockers,
+      warnings,
+      completeCount,
+      totalCount: checks.length,
+      isPublishReady: blockers.length === 0,
+      level: blockers.length ? "blocked" : warnings.length ? "warning" : "ready"
+    };
+  }
+
+  function requiresManualStoreReview(payload) {
+    const text = [
+      payload.rateLabel,
+      payload.normalRateLabel,
+      payload.valueSummary,
+      payload.requirementSummary,
+      payload.warningText
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      text.includes("må kontrolleres")
+      || text.includes("opptil")
+      || text.includes("kampanje")
+      || (text.includes("til ") && !payload.endsAt)
+    );
+  }
+
+  function renderStoreEarningReadiness(readiness) {
+    const heading = readiness.blockers.length
+      ? `${readiness.blockers.length} blokkerende mangler`
+      : readiness.warnings.length
+        ? `${readiness.warnings.length} punkter bør sjekkes`
+        : "Klar til publisering";
+
+    return `
+      <div class="readiness-header">
+        <div>
+          <span class="readiness-kicker">Review-status</span>
+          <strong>${escapeHtml(heading)}</strong>
+        </div>
+        <span class="readiness-pill ${escapeAttribute(readiness.level)}">
+          ${escapeHtml(readinessLabel(readiness))}
+        </span>
+      </div>
+      <div class="readiness-grid">
+        ${readiness.checks
+          .map(
+            (check) => `
+              <div class="readiness-item ${check.complete ? "complete" : check.severity}">
+                <span aria-hidden="true">${check.complete ? "✓" : check.severity === "blocker" ? "!" : "?"}</span>
+                <div>
+                  <strong>${escapeHtml(check.label)}</strong>
+                  <small>${escapeHtml(check.help)}</small>
+                </div>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function updateStoreEarningDraftAssist(form, originalRate) {
+    const payload = collectStoreEarningFormData(new FormData(form), originalRate, null);
+    const readiness = storeEarningReadiness(payload);
+    const readinessContainer = form.querySelector("#store-earning-readiness");
+
+    if (readinessContainer) {
+      readinessContainer.innerHTML = renderStoreEarningReadiness(readiness);
+    }
+
+    updateStoreEarningPublishButtonState(form, readiness);
+  }
+
   function validateStoreEarningPayload(payload) {
     const errors = [];
 
@@ -2356,26 +2525,23 @@
       : "Publisering krever tittel, beskrivelse, detaljer, bonusprogram, sist verifisert, https-kilde, beslutning, kort konklusjon og redaksjonell begrunnelse.";
   }
 
-  function updateStoreEarningPublishButtonState(form) {
+  function updateStoreEarningPublishButtonState(form, readiness) {
     const publishButton = form.querySelector('[data-store-earning-action="publish"]');
     if (!publishButton) {
       return;
     }
 
-    const formData = new FormData(form);
-    const canPublish = Boolean(
-      String(formData.get("storeName") || "").trim()
-        && String(formData.get("rateLabel") || "").trim()
-        && String(formData.get("earningMethodId") || "").trim()
-        && String(formData.get("sourceUrl") || "").trim()
-        && isHttpsUrl(String(formData.get("sourceUrl") || "").trim())
-        && String(formData.get("checkedAt") || "").trim()
+    const resolvedReadiness = readiness || storeEarningReadiness(
+      collectStoreEarningFormData(new FormData(form), { id: "", storeId: "" }, null)
     );
+    const canPublish = resolvedReadiness.isPublishReady;
 
     publishButton.disabled = !canPublish;
     publishButton.title = canPublish
-      ? ""
-      : "Publisering krever butikknavn, opptjeningsmetode, rate-label, https-kilde og kontrolltidspunkt.";
+      ? resolvedReadiness.warnings.length
+        ? "Kan publiseres, men gule punkter bør være kontrollert manuelt først."
+        : ""
+      : `Publisering blokkert: ${resolvedReadiness.blockers.map((check) => check.label).join(", ")}.`;
   }
 
   async function upsertProgramGuide(payload) {
@@ -2865,6 +3031,22 @@
   function renderStoreBadge(status) {
     const label = STORE_STATUS_LABELS[status] || status;
     return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(`Butikk: ${label}`)}</span>`;
+  }
+
+  function renderReadinessBadge(readiness) {
+    return `<span class="badge ${escapeAttribute(readiness.level)}">${escapeHtml(readinessLabel(readiness))}</span>`;
+  }
+
+  function readinessLabel(readiness) {
+    if (readiness.level === "ready") {
+      return "Klar";
+    }
+
+    if (readiness.level === "warning") {
+      return "Bør sjekkes";
+    }
+
+    return "Mangler";
   }
 
   function renderStoreEarningBadge(status) {

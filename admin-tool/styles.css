@@ -540,14 +540,16 @@ button:disabled {
 }
 
 .badge.approved,
-.badge.published {
+.badge.published,
+.badge.ready {
   background: var(--success-soft);
   color: var(--success);
 }
 
 .badge.rejected,
 .badge.expired,
-.badge.archived {
+.badge.archived,
+.badge.blocked {
   background: var(--danger-soft);
   color: var(--danger);
 }
@@ -562,6 +564,11 @@ button:disabled {
 .badge.new {
   background: var(--surface-muted);
   color: var(--muted-strong);
+}
+
+.badge.warning {
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 
 .detail-panel.empty {
@@ -687,9 +694,15 @@ button:disabled {
   background: var(--success-soft);
 }
 
-.readiness-pill.draft {
+.readiness-pill.draft,
+.readiness-pill.warning {
   color: var(--warning);
   background: var(--warning-soft);
+}
+
+.readiness-pill.blocked {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .readiness-grid {
@@ -723,6 +736,16 @@ button:disabled {
 .readiness-item.complete > span {
   color: var(--success);
   background: var(--success-soft);
+}
+
+.readiness-item.warning > span {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.readiness-item.blocker > span {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .readiness-item strong,

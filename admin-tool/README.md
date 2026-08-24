@@ -89,6 +89,7 @@ select public.grant_editorial_role(
 - promoterer kampanjekandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
 - promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)`
 - viser og redigerer butikkopptjening fra `store_earning_rates`
+- viser review-status for butikkopptjening med blokkerende mangler og gule kontrollpunkter
 - publiserer kontrollerte butikker og satser uten SQL Editor
 - viser kampanjer etter status
 - redigerer draft-felt, krav og primærkilde
@@ -113,11 +114,28 @@ Knappen `Hent nye kandidater` kaller Edge Function `ingest-campaign-candidates`
 med brukerens Supabase-session. `INGESTION_RUN_SECRET` brukes fortsatt for
 server/cron-kjøring, men legges ikke i adminverktøyet eller browseren.
 
+## Forenklet butikk-review
+
+Butikkfanen fungerer som første review-inbox for butikkopptjening. Hver sats
+merkes som:
+
+- `Klar` når blokkerende felt er på plass.
+- `Bør sjekkes` når satsen kan publiseres, men har forbehold som `opptil`,
+  kampanjetekst, manglende handoff eller intern kontrolladvarsel.
+- `Mangler` når publisering er blokkert av manglende butikk, metode, sats,
+  kilde eller kontrolltidspunkt.
+
+Knappen `Publiser kontrollert` setter både butikk og sats til `published`, men
+den er bare aktiv når de blokkerende feltene er fylt ut. Dette er valgt fremfor
+helautomatisk publisering fordi kandidatene fortsatt kan ha uklare vilkår,
+kampanjeperioder eller sporingsforbehold.
+
 ## Bevisst ikke med ennå
 
 - rolleadministrasjon i UI
 - full sessionsikkerhet for produksjonsdrift
 - full redigering av multi-program-kampanjer og redaksjonelle vurderingstabeller
 - avansert revisjonshistorikk eller flertrinnsgodkjenning for programguider
+- automatisk publisering av nye butikkandidater uten menneskelig kontroll
 
 Denne flaten er ment som første operative interne MVP, ikke ferdig produksjonsverktøy.
