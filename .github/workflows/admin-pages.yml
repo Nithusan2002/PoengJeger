@@ -62,6 +62,18 @@ jobs:
           fs.writeFileSync(configPath, config);
           NODE
 
+          node - <<'NODE'
+          const fs = require("fs");
+
+          const indexPath = "dist/admin/index.html";
+          const version = process.env.GITHUB_SHA || String(Date.now());
+          const index = fs.readFileSync(indexPath, "utf8")
+            .replaceAll(/config\.local\.js\?v=[^"]+/g, `config.local.js?v=${version}`)
+            .replaceAll(/app\.js\?v=[^"]+/g, `app.js?v=${version}`);
+
+          fs.writeFileSync(indexPath, index);
+          NODE
+
           printf "User-agent: *\nDisallow: /\n" > dist/admin/robots.txt
           touch dist/admin/.nojekyll
 
