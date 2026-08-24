@@ -52,6 +52,8 @@ select public.grant_editorial_role(
 - setter review-status via `set_ingestion_candidate_status(...)`
 - promoterer kampanjekandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
 - promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)`
+- viser og redigerer butikkopptjening fra `store_earning_rates`
+- publiserer kontrollerte butikker og satser uten SQL Editor
 - viser kampanjer etter status
 - redigerer draft-felt, krav og primærkilde
 - foreslår redaksjonell vurdering via Edge Function uten å lagre automatisk

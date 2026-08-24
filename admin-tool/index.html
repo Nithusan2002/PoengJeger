@@ -31,6 +31,10 @@
           <span>Kampanjer</span>
           <small>Draft og publisering</small>
         </button>
+        <button class="nav-item" type="button" data-panel-target="store-earning-panel">
+          <span>Butikker</span>
+          <small>Opptjening</small>
+        </button>
         <button class="nav-item" type="button" data-panel-target="program-guide-panel">
           <span>Lær</span>
           <small>Programguider</small>
@@ -158,6 +162,42 @@
           </div>
         </section>
 
+        <section id="store-earning-panel" class="panel module-panel hidden">
+          <div class="panel-header split">
+            <div>
+              <h2>Butikker og opptjening</h2>
+              <p>Kontroller draft-satser fra kandidatkøen før de vises i appen.</p>
+            </div>
+
+            <div class="toolbar">
+              <label class="field compact">
+                <span>Satsstatus</span>
+                <select id="store-earning-status-filter">
+                  <option value="">Alle</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="expired">Expired</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+
+              <button id="store-earning-refresh-button" class="secondary" type="button">Oppdater</button>
+            </div>
+          </div>
+
+          <div id="store-earning-message" class="message muted">Logg inn for å laste butikkopptjening.</div>
+
+          <div class="content-grid">
+            <div class="queue-list-shell">
+              <ul id="store-earning-list" class="queue-list"></ul>
+            </div>
+
+            <aside id="store-earning-detail-panel" class="detail-panel empty">
+              <p>Velg en sats for å redigere butikkopptjening.</p>
+            </aside>
+          </div>
+        </section>
+
         <section id="program-guide-panel" class="panel module-panel hidden">
           <div class="panel-header split">
             <div>
@@ -185,7 +225,7 @@
       </main>
     </div>
 
-    <script src="./config.local.js?v=202608191030"></script>
-    <script src="./app.js?v=202608191030"></script>
+    <script src="./config.local.js?v=202608241410"></script>
+    <script src="./app.js?v=202608241410"></script>
   </body>
 </html>

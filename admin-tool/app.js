@@ -16,6 +16,18 @@
     published: "Published",
     archived: "Archived"
   };
+  const STORE_STATUS_LABELS = {
+    draft: "Draft",
+    review: "Review",
+    published: "Published",
+    archived: "Archived"
+  };
+  const STORE_EARNING_STATUS_LABELS = {
+    draft: "Draft",
+    published: "Published",
+    expired: "Expired",
+    archived: "Archived"
+  };
   const STATUS_LABELS = {
     new: "Ny",
     needs_review: "Trenger review",
@@ -29,12 +41,15 @@
     role: null,
     candidates: [],
     campaigns: [],
+    storeEarningRates: [],
     programGuides: [],
     categories: [],
     programs: [],
     sources: [],
+    earningMethods: [],
     selectedCandidateId: null,
     selectedCampaignId: null,
+    selectedStoreEarningRateId: null,
     selectedProgramGuideProgramId: null,
     activePanelId: "queue-panel",
     loading: false,
@@ -69,6 +84,12 @@
     refreshButton: document.querySelector("#refresh-button"),
     sessionPill: document.querySelector("#session-pill"),
     signOutButton: document.querySelector("#sign-out-button"),
+    storeEarningDetailPanel: document.querySelector("#store-earning-detail-panel"),
+    storeEarningList: document.querySelector("#store-earning-list"),
+    storeEarningMessage: document.querySelector("#store-earning-message"),
+    storeEarningPanel: document.querySelector("#store-earning-panel"),
+    storeEarningRefreshButton: document.querySelector("#store-earning-refresh-button"),
+    storeEarningStatusFilter: document.querySelector("#store-earning-status-filter"),
     statusFilter: document.querySelector("#status-filter")
   };
   elements.workspaceNav = document.querySelector("#workspace-nav");
@@ -78,10 +99,12 @@
   elements.ingestButton.addEventListener("click", runIngestionFromAdmin);
   elements.refreshButton.addEventListener("click", refreshQueue);
   elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
+  elements.storeEarningRefreshButton.addEventListener("click", refreshStoreEarningRates);
   elements.programGuideRefreshButton.addEventListener("click", refreshProgramGuides);
   elements.signOutButton.addEventListener("click", signOut);
   elements.statusFilter.addEventListener("change", refreshQueue);
   elements.campaignStatusFilter.addEventListener("change", refreshCampaigns);
+  elements.storeEarningStatusFilter.addEventListener("change", refreshStoreEarningRates);
   elements.workspaceNavButtons.forEach((button) => {
     button.addEventListener("click", function () {
       setActivePanel(button.getAttribute("data-panel-target"));
@@ -166,7 +189,7 @@
 
       renderSessionPill();
       await fetchReferenceData();
-      await Promise.all([refreshQueue(), refreshCampaigns(), refreshProgramGuides()]);
+      await Promise.all([refreshQueue(), refreshCampaigns(), refreshStoreEarningRates(), refreshProgramGuides()]);
     } catch (error) {
       clearSession();
       renderUnauthenticated();
@@ -175,15 +198,17 @@
   }
 
   async function fetchReferenceData() {
-    const [programs, categories, sources] = await Promise.all([
+    const [programs, categories, sources, earningMethods] = await Promise.all([
       fetchPrograms(),
       fetchCategories(),
-      fetchSources()
+      fetchSources(),
+      fetchEarningMethods()
     ]);
 
     state.programs = programs;
     state.categories = categories;
     state.sources = sources;
+    state.earningMethods = earningMethods;
   }
 
   async function refreshQueue() {
@@ -265,6 +290,46 @@
       renderEmptyCampaignDetail("Kunne ikke laste kampanjer.");
     } finally {
       elements.campaignRefreshButton.disabled = false;
+    }
+  }
+
+  async function refreshStoreEarningRates() {
+    if (!state.session) {
+      renderUnauthenticated();
+      return;
+    }
+
+    elements.storeEarningRefreshButton.disabled = true;
+    setMessage(elements.storeEarningMessage, "Laster butikkopptjening...", "muted");
+
+    try {
+      const status = elements.storeEarningStatusFilter.value;
+      state.storeEarningRates = await fetchStoreEarningRates(status);
+
+      if (!state.storeEarningRates.length) {
+        state.selectedStoreEarningRateId = null;
+        renderStoreEarningList();
+        renderEmptyStoreEarningDetail("Ingen satser matcher filteret ennå.");
+        setMessage(elements.storeEarningMessage, "Ingen butikkopptjening i valgt filter.", "muted");
+        return;
+      }
+
+      if (!state.storeEarningRates.some((rate) => rate.id === state.selectedStoreEarningRateId)) {
+        state.selectedStoreEarningRateId = state.storeEarningRates[0].id;
+      }
+
+      renderStoreEarningList();
+      renderStoreEarningDetail();
+      setMessage(
+        elements.storeEarningMessage,
+        `Viser ${state.storeEarningRates.length} sats${state.storeEarningRates.length === 1 ? "" : "er"}.`,
+        "success"
+      );
+    } catch (error) {
+      setMessage(elements.storeEarningMessage, error.message, "error");
+      renderEmptyStoreEarningDetail("Kunne ikke laste butikkopptjening.");
+    } finally {
+      elements.storeEarningRefreshButton.disabled = false;
     }
   }
 
@@ -416,6 +481,15 @@
     return apiRequest(`/rest/v1/campaign_sources?${params.toString()}`);
   }
 
+  async function fetchEarningMethods() {
+    const params = new URLSearchParams();
+    params.set("select", "id,name,slug,program_id,status");
+    params.set("status", "neq.archived");
+    params.set("order", "name.asc");
+
+    return apiRequest(`/rest/v1/earning_methods?${params.toString()}`);
+  }
+
   async function fetchCampaigns(status) {
     const params = new URLSearchParams();
     params.set(
@@ -445,6 +519,43 @@
 
     const response = await apiRequest(`/rest/v1/campaigns?${params.toString()}`);
     return response.map(normalizeCampaign);
+  }
+
+  async function fetchStoreEarningRates(status) {
+    const params = new URLSearchParams();
+    params.set(
+      "select",
+      [
+        "id",
+        "store_id",
+        "earning_method_id",
+        "status",
+        "rate_label",
+        "normal_rate_label",
+        "value_summary",
+        "requirement_summary",
+        "warning_text",
+        "handoff_url",
+        "source_url",
+        "source_title",
+        "checked_at",
+        "starts_at",
+        "ends_at",
+        "sort_order",
+        "is_base_rate",
+        "updated_at",
+        "stores(id,slug,name,category_id,status,website_url,search_keywords,last_verified_at)",
+        "earning_methods(id,slug,name,program_id,status)"
+      ].join(",")
+    );
+    params.set("order", "updated_at.desc");
+
+    if (status) {
+      params.set("status", `eq.${status}`);
+    }
+
+    const response = await apiRequest(`/rest/v1/store_earning_rates?${params.toString()}`);
+    return response.map(normalizeStoreEarningRate);
   }
 
   async function fetchProgramGuides() {
@@ -536,6 +647,55 @@
     };
   }
 
+  function normalizeStoreEarningRate(rate) {
+    const store = Array.isArray(rate.stores) ? rate.stores[0] || null : rate.stores || null;
+    const method = Array.isArray(rate.earning_methods)
+      ? rate.earning_methods[0] || null
+      : rate.earning_methods || null;
+
+    return {
+      id: rate.id,
+      storeId: rate.store_id,
+      earningMethodId: rate.earning_method_id,
+      status: rate.status,
+      rateLabel: rate.rate_label || "",
+      normalRateLabel: rate.normal_rate_label || "",
+      valueSummary: rate.value_summary || "",
+      requirementSummary: rate.requirement_summary || "",
+      warningText: rate.warning_text || "",
+      handoffUrl: rate.handoff_url || "",
+      sourceUrl: rate.source_url || "",
+      sourceTitle: rate.source_title || "",
+      checkedAt: rate.checked_at,
+      startsAt: rate.starts_at,
+      endsAt: rate.ends_at,
+      sortOrder: Number(rate.sort_order || 0),
+      isBaseRate: Boolean(rate.is_base_rate),
+      updatedAt: rate.updated_at,
+      store: store
+        ? {
+            id: store.id,
+            slug: store.slug || "",
+            name: store.name || "",
+            categoryId: store.category_id,
+            status: store.status,
+            websiteUrl: store.website_url || "",
+            searchKeywords: Array.isArray(store.search_keywords) ? store.search_keywords : [],
+            lastVerifiedAt: store.last_verified_at
+          }
+        : null,
+      method: method
+        ? {
+            id: method.id,
+            slug: method.slug || "",
+            name: method.name || "",
+            programId: method.program_id,
+            status: method.status
+          }
+        : null
+    };
+  }
+
   function normalizeProgramGuide(guide) {
     return {
       id: guide.id,
@@ -559,6 +719,7 @@
     elements.authPanel.classList.remove("hidden");
     elements.queuePanel.classList.add("hidden");
     elements.campaignPanel.classList.add("hidden");
+    elements.storeEarningPanel.classList.add("hidden");
     elements.programGuidePanel.classList.add("hidden");
     elements.workspaceNav.classList.add("hidden");
     elements.signOutButton.classList.add("hidden");
@@ -574,10 +735,10 @@
   }
 
   function setActivePanel(panelId) {
-    const validPanelIds = ["queue-panel", "campaign-panel", "program-guide-panel"];
+    const validPanelIds = ["queue-panel", "campaign-panel", "store-earning-panel", "program-guide-panel"];
     state.activePanelId = validPanelIds.includes(panelId) ? panelId : "queue-panel";
 
-    [elements.queuePanel, elements.campaignPanel, elements.programGuidePanel].forEach((panel) => {
+    [elements.queuePanel, elements.campaignPanel, elements.storeEarningPanel, elements.programGuidePanel].forEach((panel) => {
       panel.classList.toggle("hidden", panel.id !== state.activePanelId);
     });
 
@@ -677,6 +838,46 @@
       });
 
       elements.campaignList.appendChild(item);
+    });
+  }
+
+  function renderStoreEarningList() {
+    elements.storeEarningList.innerHTML = "";
+
+    if (!state.storeEarningRates.length) {
+      return;
+    }
+
+    state.storeEarningRates.forEach((rate) => {
+      const item = document.createElement("li");
+      item.className = "queue-item";
+
+      if (rate.id === state.selectedStoreEarningRateId) {
+        item.classList.add("selected");
+      }
+
+      item.innerHTML = `
+        <div class="badge-row">
+          ${renderStoreEarningBadge(rate.status)}
+          ${rate.store ? renderStoreBadge(rate.store.status) : ""}
+          ${rate.method ? renderMetaBadge(rate.method.name) : ""}
+        </div>
+        <h3>${escapeHtml(rate.store ? rate.store.name : "Ukjent butikk")}</h3>
+        <p>${escapeHtml(rate.rateLabel || "Ingen sats ennå.")}</p>
+        <div class="candidate-meta">
+          <span>${escapeHtml(rate.sourceTitle || "Ukjent kilde")}</span>
+          <span>•</span>
+          <span>${rate.checkedAt ? `Kontrollert ${formatDateTime(rate.checkedAt)}` : "Ikke kontrollert"}</span>
+        </div>
+      `;
+
+      item.addEventListener("click", function () {
+        state.selectedStoreEarningRateId = rate.id;
+        renderStoreEarningList();
+        renderStoreEarningDetail();
+      });
+
+      elements.storeEarningList.appendChild(item);
     });
   }
 
@@ -1137,6 +1338,208 @@
     updatePublishButtonState(form);
   }
 
+  function renderStoreEarningDetail() {
+    const rate = state.storeEarningRates.find((entry) => entry.id === state.selectedStoreEarningRateId);
+
+    if (!rate) {
+      renderEmptyStoreEarningDetail("Velg en sats for å redigere butikkopptjening.");
+      return;
+    }
+
+    const store = rate.store || {
+      id: rate.storeId,
+      slug: "",
+      name: "",
+      categoryId: null,
+      status: "draft",
+      websiteUrl: "",
+      searchKeywords: [],
+      lastVerifiedAt: null
+    };
+
+    elements.storeEarningDetailPanel.classList.remove("empty");
+    elements.storeEarningDetailPanel.innerHTML = `
+      <form id="store-earning-editor-form" class="detail-form">
+        <div class="badge-row">
+          ${renderStoreEarningBadge(rate.status)}
+          ${renderStoreBadge(store.status)}
+          ${rate.method ? renderMetaBadge(rate.method.name) : ""}
+          ${store.categoryId ? renderMetaBadge(categoryName(store.categoryId)) : ""}
+        </div>
+
+        <section class="section-stack">
+          <h3>Butikk</h3>
+          <div class="detail-grid">
+            <label class="field">
+              <span>Butikknavn</span>
+              <input name="storeName" type="text" value="${escapeAttribute(store.name)}" required />
+            </label>
+
+            <label class="field">
+              <span>Butikkstatus</span>
+              <select name="storeStatus">
+                ${renderStoreStatusOptions(store.status)}
+              </select>
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Kategori</span>
+              <select name="storeCategoryId">
+                <option value="">Ingen valgt</option>
+                ${renderSelectOptions(state.categories, store.categoryId)}
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Butikk-URL</span>
+              <input name="storeWebsiteUrl" type="url" value="${escapeAttribute(store.websiteUrl)}" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Søkeord, ett per linje</span>
+            <textarea name="storeSearchKeywords" rows="4">${escapeHtml(store.searchKeywords.join("\n"))}</textarea>
+          </label>
+        </section>
+
+        <section class="section-stack">
+          <h3>Sats</h3>
+          <div class="detail-grid">
+            <label class="field">
+              <span>Satsstatus</span>
+              <select name="rateStatus">
+                ${renderStoreEarningStatusOptions(rate.status)}
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Metode</span>
+              <select name="earningMethodId">
+                ${renderSelectOptions(storeEarningMethods(), rate.earningMethodId)}
+              </select>
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Rate-label</span>
+              <input name="rateLabel" type="text" value="${escapeAttribute(rate.rateLabel)}" required />
+            </label>
+
+            <label class="field">
+              <span>Normal sats</span>
+              <input name="normalRateLabel" type="text" value="${escapeAttribute(rate.normalRateLabel)}" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Verdiforklaring</span>
+            <textarea name="valueSummary" rows="3">${escapeHtml(rate.valueSummary)}</textarea>
+          </label>
+
+          <label class="field">
+            <span>Krav</span>
+            <textarea name="requirementSummary" rows="3">${escapeHtml(rate.requirementSummary)}</textarea>
+          </label>
+
+          <label class="field">
+            <span>Varsel / forbehold</span>
+            <textarea name="warningText" rows="3">${escapeHtml(rate.warningText)}</textarea>
+          </label>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Handoff-URL</span>
+              <input name="handoffUrl" type="url" value="${escapeAttribute(rate.handoffUrl)}" />
+            </label>
+
+            <label class="field">
+              <span>Kilde-URL</span>
+              <input name="sourceUrl" type="url" value="${escapeAttribute(rate.sourceUrl)}" />
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Kildetittel</span>
+              <input name="sourceTitle" type="text" value="${escapeAttribute(rate.sourceTitle)}" />
+            </label>
+
+            <label class="field">
+              <span>Kontrolltidspunkt</span>
+              <input name="checkedAt" type="datetime-local" value="${escapeAttribute(toDateTimeLocalValue(rate.checkedAt))}" />
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Starter</span>
+              <input name="startsAt" type="datetime-local" value="${escapeAttribute(toDateTimeLocalValue(rate.startsAt))}" />
+            </label>
+
+            <label class="field">
+              <span>Slutter</span>
+              <input name="endsAt" type="datetime-local" value="${escapeAttribute(toDateTimeLocalValue(rate.endsAt))}" />
+            </label>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Sortering</span>
+              <input name="sortOrder" type="number" step="1" value="${escapeAttribute(rate.sortOrder)}" />
+            </label>
+
+            <label class="field checkbox-field">
+              <span>Grunnsats</span>
+              <label class="checkbox-row">
+                <input name="isBaseRate" type="checkbox" ${rate.isBaseRate ? "checked" : ""} />
+                <span>Vis som vanlig opptjening</span>
+              </label>
+            </label>
+          </div>
+        </section>
+
+        <div class="detail-actions">
+          <div class="action-row">
+            <button type="submit">Lagre endringer</button>
+            <button type="button" class="success" data-store-earning-action="publish">Lagre og publiser</button>
+            <button type="button" class="secondary" data-store-earning-action="archive">Arkiver sats</button>
+          </div>
+          <span class="help">Publisering krever publisert butikk, rate-label, https-kilde og kontrolltidspunkt.</span>
+        </div>
+      </form>
+    `;
+
+    const form = elements.storeEarningDetailPanel.querySelector("#store-earning-editor-form");
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      await saveStoreEarningEditor(form, rate, null);
+    });
+
+    elements.storeEarningDetailPanel.querySelectorAll("[data-store-earning-action]").forEach((button) => {
+      button.addEventListener("click", async function () {
+        const action = button.getAttribute("data-store-earning-action");
+        const targetRateStatus = action === "publish" ? "published" : "archived";
+        await saveStoreEarningEditor(form, rate, targetRateStatus);
+      });
+    });
+
+    form.addEventListener("input", function () {
+      updateStoreEarningPublishButtonState(form);
+    });
+    form.addEventListener("change", function () {
+      updateStoreEarningPublishButtonState(form);
+    });
+    updateStoreEarningPublishButtonState(form);
+  }
+
+  function renderEmptyStoreEarningDetail(message) {
+    elements.storeEarningDetailPanel.classList.add("empty");
+    elements.storeEarningDetailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
+  }
+
   function renderEmptyCampaignDetail(message) {
     elements.campaignDetailPanel.classList.add("empty");
     elements.campaignDetailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
@@ -1555,6 +1958,119 @@
     }
   }
 
+  async function saveStoreEarningEditor(form, originalRate, overrideRateStatus) {
+    const formData = new FormData(form);
+    const payload = collectStoreEarningFormData(formData, originalRate, overrideRateStatus);
+    const validationErrors = validateStoreEarningPayload(payload);
+
+    if (validationErrors.length) {
+      setMessage(elements.storeEarningMessage, validationErrors.join(" "), "error");
+      return;
+    }
+
+    const submitButtons = form.querySelectorAll("button");
+    submitButtons.forEach((button) => {
+      button.disabled = true;
+    });
+
+    try {
+      await saveStoreEarningRate(payload);
+      setMessage(elements.storeEarningMessage, "Butikkopptjeningen ble lagret.", "success");
+      await refreshStoreEarningRates();
+    } catch (error) {
+      setMessage(elements.storeEarningMessage, error.message, "error");
+    } finally {
+      submitButtons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
+  }
+
+  function collectStoreEarningFormData(formData, originalRate, overrideRateStatus) {
+    const storeWebsiteUrl = String(formData.get("storeWebsiteUrl") || "").trim();
+    const handoffUrl = String(formData.get("handoffUrl") || "").trim();
+    const sourceUrl = String(formData.get("sourceUrl") || "").trim();
+    const checkedAt = String(formData.get("checkedAt") || "").trim();
+    const startsAt = String(formData.get("startsAt") || "").trim();
+    const endsAt = String(formData.get("endsAt") || "").trim();
+    const rateStatus = overrideRateStatus || String(formData.get("rateStatus") || "draft");
+
+    return {
+      id: originalRate.id,
+      storeId: originalRate.storeId,
+      storeName: String(formData.get("storeName") || "").trim(),
+      storeStatus: rateStatus === "published"
+        ? "published"
+        : String(formData.get("storeStatus") || "draft"),
+      storeCategoryId: emptyToNull(formData.get("storeCategoryId")),
+      storeWebsiteUrl: storeWebsiteUrl || null,
+      storeSearchKeywords: splitTextareaLines(formData.get("storeSearchKeywords")),
+      earningMethodId: emptyToNull(formData.get("earningMethodId")),
+      rateStatus,
+      rateLabel: String(formData.get("rateLabel") || "").trim(),
+      normalRateLabel: emptyToNull(formData.get("normalRateLabel")),
+      valueSummary: emptyToNull(formData.get("valueSummary")),
+      requirementSummary: emptyToNull(formData.get("requirementSummary")),
+      warningText: emptyToNull(formData.get("warningText")),
+      handoffUrl: handoffUrl || null,
+      sourceUrl: sourceUrl || null,
+      sourceTitle: emptyToNull(formData.get("sourceTitle")),
+      checkedAt: checkedAt ? toISOString(checkedAt) : null,
+      startsAt: startsAt ? toISOString(startsAt) : null,
+      endsAt: endsAt ? toISOString(endsAt) : null,
+      sortOrder: parseIntegerOrDefault(formData.get("sortOrder"), 0),
+      isBaseRate: formData.get("isBaseRate") === "on"
+    };
+  }
+
+  function validateStoreEarningPayload(payload) {
+    const errors = [];
+
+    if (!payload.storeName) {
+      errors.push("Butikknavn mangler.");
+    }
+
+    if (!payload.earningMethodId) {
+      errors.push("Opptjeningsmetode mangler.");
+    }
+
+    if (!payload.rateLabel) {
+      errors.push("Rate-label mangler.");
+    }
+
+    if (payload.storeWebsiteUrl && !isHttpsUrl(payload.storeWebsiteUrl)) {
+      errors.push("Butikk-URL må være en https-URL.");
+    }
+
+    if (payload.handoffUrl && !isHttpsUrl(payload.handoffUrl)) {
+      errors.push("Handoff-URL må være en https-URL.");
+    }
+
+    if (payload.sourceUrl && !isHttpsUrl(payload.sourceUrl)) {
+      errors.push("Kilde-URL må være en https-URL.");
+    }
+
+    if (payload.startsAt && payload.endsAt && new Date(payload.endsAt) < new Date(payload.startsAt)) {
+      errors.push("Sluttdato kan ikke være før startdato.");
+    }
+
+    if (payload.rateStatus === "published") {
+      if (payload.storeStatus !== "published") {
+        errors.push("Publisering krever publisert butikk.");
+      }
+
+      if (!payload.sourceUrl) {
+        errors.push("Publisering krever kilde-URL.");
+      }
+
+      if (!payload.checkedAt) {
+        errors.push("Publisering krever kontrolltidspunkt.");
+      }
+    }
+
+    return errors;
+  }
+
   function collectProgramGuideFormData(formData, program, originalGuide, action) {
     const now = new Date().toISOString();
     let status = String(formData.get("status") || "draft");
@@ -1840,6 +2356,28 @@
       : "Publisering krever tittel, beskrivelse, detaljer, bonusprogram, sist verifisert, https-kilde, beslutning, kort konklusjon og redaksjonell begrunnelse.";
   }
 
+  function updateStoreEarningPublishButtonState(form) {
+    const publishButton = form.querySelector('[data-store-earning-action="publish"]');
+    if (!publishButton) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    const canPublish = Boolean(
+      String(formData.get("storeName") || "").trim()
+        && String(formData.get("rateLabel") || "").trim()
+        && String(formData.get("earningMethodId") || "").trim()
+        && String(formData.get("sourceUrl") || "").trim()
+        && isHttpsUrl(String(formData.get("sourceUrl") || "").trim())
+        && String(formData.get("checkedAt") || "").trim()
+    );
+
+    publishButton.disabled = !canPublish;
+    publishButton.title = canPublish
+      ? ""
+      : "Publisering krever butikknavn, opptjeningsmetode, rate-label, https-kilde og kontrolltidspunkt.";
+  }
+
   async function upsertProgramGuide(payload) {
     const body = {
       program_id: payload.programId,
@@ -1876,6 +2414,51 @@
     });
   }
 
+  async function saveStoreEarningRate(payload) {
+    const storeBody = {
+      name: payload.storeName,
+      category_id: payload.storeCategoryId,
+      status: payload.storeStatus,
+      website_url: payload.storeWebsiteUrl,
+      search_keywords: payload.storeSearchKeywords
+    };
+    if (payload.rateStatus === "published") {
+      storeBody.last_verified_at = payload.checkedAt;
+    }
+
+    await apiRequest(`/rest/v1/stores?id=eq.${payload.storeId}`, {
+      method: "PATCH",
+      body: storeBody,
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+
+    await apiRequest(`/rest/v1/store_earning_rates?id=eq.${payload.id}`, {
+      method: "PATCH",
+      body: {
+        earning_method_id: payload.earningMethodId,
+        status: payload.rateStatus,
+        rate_label: payload.rateLabel,
+        normal_rate_label: payload.normalRateLabel,
+        value_summary: payload.valueSummary,
+        requirement_summary: payload.requirementSummary,
+        warning_text: payload.warningText,
+        handoff_url: payload.handoffUrl,
+        source_url: payload.sourceUrl,
+        source_title: payload.sourceTitle,
+        checked_at: payload.checkedAt,
+        starts_at: payload.startsAt,
+        ends_at: payload.endsAt,
+        sort_order: payload.sortOrder,
+        is_base_rate: payload.isBaseRate
+      },
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
+  }
+
   async function signOut() {
     if (state.session) {
       try {
@@ -1893,13 +2476,17 @@
     state.role = null;
     state.candidates = [];
     state.campaigns = [];
+    state.storeEarningRates = [];
     state.programGuides = [];
+    state.earningMethods = [];
     state.selectedCandidateId = null;
     state.selectedCampaignId = null;
+    state.selectedStoreEarningRateId = null;
     state.selectedProgramGuideProgramId = null;
     elements.loginForm.reset();
     renderEmptyDetail("Velg en kandidat for detaljer.");
     renderEmptyCampaignDetail("Velg en kampanje for å redigere draften.");
+    renderEmptyStoreEarningDetail("Velg en sats for å redigere butikkopptjening.");
     renderEmptyProgramGuideDetail("Velg et program for å redigere guiden.");
     renderUnauthenticated();
     setMessage(elements.authMessage, "Du er logget ut.", "success");
@@ -2275,6 +2862,16 @@
     return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(label)}</span>`;
   }
 
+  function renderStoreBadge(status) {
+    const label = STORE_STATUS_LABELS[status] || status;
+    return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(`Butikk: ${label}`)}</span>`;
+  }
+
+  function renderStoreEarningBadge(status) {
+    const label = STORE_EARNING_STATUS_LABELS[status] || status;
+    return `<span class="badge ${escapeAttribute(status)}">${escapeHtml(label)}</span>`;
+  }
+
   function renderMetaBadge(value) {
     return value ? `<span class="badge">${escapeHtml(value)}</span>` : "";
   }
@@ -2300,6 +2897,24 @@
 
   function renderProgramGuideStatusOptions(selectedStatus) {
     return Object.entries(PROGRAM_GUIDE_STATUS_LABELS)
+      .map(([value, label]) => {
+        const isSelected = value === selectedStatus ? " selected" : "";
+        return `<option value="${escapeAttribute(value)}"${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function renderStoreStatusOptions(selectedStatus) {
+    return Object.entries(STORE_STATUS_LABELS)
+      .map(([value, label]) => {
+        const isSelected = value === selectedStatus ? " selected" : "";
+        return `<option value="${escapeAttribute(value)}"${isSelected}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function renderStoreEarningStatusOptions(selectedStatus) {
+    return Object.entries(STORE_EARNING_STATUS_LABELS)
       .map(([value, label]) => {
         const isSelected = value === selectedStatus ? " selected" : "";
         return `<option value="${escapeAttribute(value)}"${isSelected}>${escapeHtml(label)}</option>`;
@@ -2356,6 +2971,10 @@
     return category ? category.name : "";
   }
 
+  function storeEarningMethods() {
+    return state.earningMethods;
+  }
+
   function guideForProgram(programId) {
     return state.programGuides.find((guide) => guide.programId === programId) || null;
   }
@@ -2379,6 +2998,11 @@
   function emptyToNull(value) {
     const normalized = String(value || "").trim();
     return normalized || null;
+  }
+
+  function parseIntegerOrDefault(value, fallback) {
+    const parsed = Number.parseInt(String(value || ""), 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
   }
 
   function escapeHtml(value) {

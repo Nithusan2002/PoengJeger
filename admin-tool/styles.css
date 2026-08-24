@@ -189,7 +189,7 @@ button:disabled {
 
 .workspace-nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 16px;
   padding: 6px;
@@ -375,6 +375,32 @@ button:disabled {
   font-size: 0.82rem;
   color: var(--muted);
   line-height: 1.4;
+}
+
+.checkbox-field {
+  align-content: start;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+.checkbox-row span {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .message {
