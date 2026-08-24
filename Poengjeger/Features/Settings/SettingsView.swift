@@ -33,14 +33,6 @@ struct SettingsView: View {
                     selectedProgramIDs: $environment.userSession.selectedProgramIDs
                 )
 
-                ProfileGuideSection(
-                    programs: programs,
-                    guideForProgram: { program in
-                        environment.programGuide(for: program)
-                    },
-                    campaigns: environment.campaigns
-                )
-
                 #if DEBUG
                 debugSection(dataSourceLabel: environment.dataSource?.label)
                 #endif
@@ -280,49 +272,6 @@ private struct ProfileProgramRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
-    }
-}
-
-private struct ProfileGuideSection: View {
-    let programs: [BonusProgram]
-    let guideForProgram: (BonusProgram) -> ProgramGuide?
-    let campaigns: [Campaign]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ProfileSectionHeading(eyebrow: "PROGRAMGUIDER", title: "Lær økosystemene")
-
-            VStack(spacing: 0) {
-                ForEach(programs) { program in
-                    NavigationLink {
-                        ProgramDetailView(
-                            program: program,
-                            guide: guideForProgram(program),
-                            campaigns: campaigns
-                        )
-                    } label: {
-                        ProfileActionRow(
-                            iconName: "book.closed",
-                            title: program.name,
-                            subtitle: "Tips, feller og aktive kampanjer"
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    if program.id != programs.last?.id {
-                        Divider()
-                            .padding(.leading, 58)
-                    }
-                }
-            }
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(PoengjegerTheme.border, lineWidth: 1)
-            }
-        }
     }
 }
 
