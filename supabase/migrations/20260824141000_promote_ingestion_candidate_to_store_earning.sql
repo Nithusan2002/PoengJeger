@@ -36,16 +36,16 @@ select
   ic.reviewed_at,
   ic.review_note,
   ic.promoted_campaign_id,
-  ic.promoted_store_earning_rate_id,
   sr.id as source_registry_id,
   sr.ingest_kind,
-  sr.parser_key,
   cs.id as campaign_source_id,
   cs.name as source_name,
   bp.id as suggested_program_id,
   bp.name as suggested_program_name,
   cc.id as suggested_category_id,
-  cc.name as suggested_category_name
+  cc.name as suggested_category_name,
+  ic.promoted_store_earning_rate_id,
+  sr.parser_key
 from public.ingestion_candidates ic
 join public.source_registry sr on sr.id = ic.source_registry_id
 join public.campaign_sources cs on cs.id = sr.campaign_source_id
