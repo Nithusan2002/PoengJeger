@@ -148,6 +148,21 @@ hjemme i Utforsk.
 Kopien på Hjem skal ikke love popularitet eller rangering uten faktisk
 popularitetsdata.
 
+## Utforsk
+
+Utforsk skal være sekundærflaten for oppdagelse når brukeren ikke starter med
+et konkret kjøp eller butikknavn.
+
+Prioritet:
+
+1. Aktive publiserte kampanjer først.
+2. Kategorier for bredere sammenligning.
+3. Et begrenset utvalg butikker med verifisert opptjening.
+
+Utforsk skal ikke duplisere Hjem som enda en butikksøkeflate. Søk før kjøp
+hører hjemme på Hjem; Utforsk skal hjelpe brukeren å oppdage hva som er
+aktuelt nå.
+
 ## Butikkside
 
 Butikksiden skal vise informasjon i denne rekkefølgen:
