@@ -93,6 +93,35 @@ Forventet resultat:
 - Fire publiserte kampanjer i kampanjeflaten.
 - Feed-API viser bare de fire publiserte kampanjene.
 
+## iOS Supabase smoke test
+
+Kjør denne testen når iOS-appen viser en Supabase-feil, etter migrasjoner på
+staging, eller før du bygger appen mot et remote Supabase-miljø:
+
+```bash
+node scripts/smoke-ios-supabase.mjs
+```
+
+Scriptet leser `Poengjeger/Config/AppSecrets.local.xcconfig` som standard og
+kjører de samme REST-selectene som iOS-bootstrapflyten bruker:
+
+- `bonus_programs`
+- `program_guides`
+- `campaigns`
+- `stores`
+
+Dette fanger typiske schema drift-feil som manglende kolonner eller manglende
+foreign key-relasjoner for Supabase embeds. Nøkkelen maskeres ved at scriptet
+ikke skriver `SUPABASE_PUBLISHABLE_KEY` til output.
+
+For å teste et annet miljø uten å endre lokal iOS-konfig:
+
+```bash
+SUPABASE_HOST="project-ref.supabase.co" \
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_..." \
+node scripts/smoke-ios-supabase.mjs
+```
+
 Kontrollspørringer:
 
 ```bash
