@@ -56,7 +56,7 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Poengjeger")
                 .font(.system(.headline, design: .serif).weight(.bold))
                 .foregroundStyle(PoengjegerTheme.primary)
@@ -66,12 +66,12 @@ struct HomeView: View {
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Søk etter butikk, kategori eller produkt før du kjøper.")
-                .font(.body)
+            Text("Søk butikk, kategori eller produkt.")
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, -8)
+        .padding(.bottom, -4)
     }
 
     private var searchField: some View {
@@ -109,16 +109,16 @@ struct HomeView: View {
     private var quickSuggestionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("RASKE FORSLAG")
+                Text("FORSLAG")
                     .font(.caption.weight(.bold))
                     .tracking(2.2)
                     .foregroundStyle(.secondary)
 
-                Text("Populære butikker")
+                Text("Butikker med opptjening")
                     .font(.system(.title2, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("Du kan også søke etter kategori eller det du skal kjøpe.")
+                Text("Start her, eller søk etter det du skal kjøpe.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

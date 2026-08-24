@@ -138,12 +138,15 @@ Hjem skal bygge vanen "sjekk før du handler".
 Prioritet:
 
 1. Ett tydelig søkefelt for butikk, kategori eller produkt.
-2. Noen få raske butikkforslag når søket er tomt.
+2. Noen få forslag med verifisert opptjening når søket er tomt.
 3. Direkte søkeresultater når brukeren skriver.
 
 Hjem skal ikke bli en artikkelfeed, abonnementsflate, generell kampanjekatalog
 eller bred browse-flate. Kategorier, kampanjer og full butikkoversikt hører
 hjemme i Utforsk.
+
+Kopien på Hjem skal ikke love popularitet eller rangering uten faktisk
+popularitetsdata.
 
 ## Butikkside
 
