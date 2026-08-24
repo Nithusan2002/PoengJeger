@@ -5,17 +5,20 @@ struct MockCampaignRepository: CampaignRepository {
     private let programGuides: [ProgramGuide]
     private let campaigns: [Campaign]
     private let stores: [Store]
+    private let reason: String?
 
     init(
         programs: [BonusProgram] = SampleData.programs,
         programGuides: [ProgramGuide] = SampleData.programGuides,
         campaigns: [Campaign] = SampleData.campaigns,
-        stores: [Store] = SampleData.stores
+        stores: [Store] = SampleData.stores,
+        reason: String? = nil
     ) {
         self.programs = programs
         self.programGuides = programGuides
         self.campaigns = campaigns
         self.stores = stores
+        self.reason = reason
     }
 
     func fetchBootstrapData() async throws -> CampaignBootstrapData {
@@ -24,7 +27,7 @@ struct MockCampaignRepository: CampaignRepository {
             programGuides: programGuides.filter { $0.status == .published },
             campaigns: campaigns.filter(\.isActive),
             stores: stores.filter(\.isPublished),
-            dataSource: .mock(reason: nil)
+            dataSource: .mock(reason: reason)
         )
     }
 }

@@ -4,6 +4,10 @@
 
 Poengjeger er en iOS-app som samler, kvalitetssikrer og prioriterer aktuelle kampanjer for bonus- og lojalitetsprogrammer.
 
+## Operativ arbeidsmappe
+
+Bruk `/Users/nithu/Developer/PoengJeger-working` som aktiv arbeidsmappe for kodeendringer, bygging og Xcode-feilsøking. Dette er kopien brukeren kjører i Xcode.
+
 Les `docs/product-brief.md` før produktrelaterte eller arkitektoniske endringer.
 
 ## Grunnregler

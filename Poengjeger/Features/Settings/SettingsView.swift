@@ -90,6 +90,13 @@ struct SettingsView: View {
                 )
             }
 
+            let supabaseSummary = SupabaseConfiguration.bundleDebugSummary()
+            ProfileInfoCard(
+                iconName: "link",
+                title: "Supabase-konfig",
+                subtitle: "Host: \(supabaseSummary.host)\nPublishable key: \(supabaseSummary.hasPublishableKey ? "Finnes" : "Mangler")"
+            )
+
             NavigationLink {
                 AdminQueueView()
             } label: {

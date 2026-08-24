@@ -1,4 +1,1 @@
-SUPABASE_HOST =
-SUPABASE_PUBLISHABLE_KEY =
-
-#include? "AppSecrets.local.xcconfig"
+#include "AppSecrets.local.xcconfig"

@@ -49,15 +49,14 @@ final class AppEnvironment {
         let adminRepository: AdminRepository
 
         if let configuration = SupabaseConfiguration.fromBundle() {
-            repository = FallbackCampaignRepository(
-                primary: SupabaseCampaignRepository(configuration: configuration),
-                fallback: MockCampaignRepository()
-            )
+            repository = SupabaseCampaignRepository(configuration: configuration)
             adminRepository = UnavailableAdminRepository(
                 reason: "Live admin krever egen admin-innlogging eller et separat adminverktøy. Denne iOS-klienten bruker bare publiserbar nøkkel."
             )
         } else {
-            repository = MockCampaignRepository()
+            repository = MockCampaignRepository(
+                reason: "SUPABASE_HOST eller SUPABASE_PUBLISHABLE_KEY mangler i appens Info.plist."
+            )
             adminRepository = UnavailableAdminRepository(
                 reason: "Admin-kø er utilgjengelig før appkonfigurasjonen og admin-laget er koblet opp."
             )

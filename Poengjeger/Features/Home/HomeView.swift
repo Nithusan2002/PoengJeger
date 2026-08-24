@@ -32,6 +32,17 @@ struct HomeView: View {
             }
     }
 
+    private var highlightedCampaigns: [Campaign] {
+        ScannableFeedUseCase().makeFeed(
+            campaigns: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
+            showsAllPrograms: true,
+            selectedCategoryID: nil,
+            searchText: "",
+            sort: .expiringFirst
+        )
+    }
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
@@ -225,13 +236,13 @@ struct HomeView: View {
                     title: "Forhøyet opptjening"
                 )
 
-                Text("Et lite, utvalgt antall kampanjer med kjent sluttdato.")
+                Text(environment.publishedStores.isEmpty ? "Aktive kampanjer fra EuroBonus og Trumf." : "Et lite, utvalgt antall kampanjer med kjent sluttdato.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if highlightedEarningItems.isEmpty {
+            if highlightedEarningItems.isEmpty && highlightedCampaigns.isEmpty {
                 Text("Ingen forhøyede opptjeninger med kjent sluttdato akkurat nå.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -243,6 +254,17 @@ struct HomeView: View {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .stroke(PoengjegerTheme.border, lineWidth: 1)
                     }
+            } else if highlightedEarningItems.isEmpty {
+                ForEach(highlightedCampaigns.prefix(4)) { campaign in
+                    NavigationLink(value: campaign) {
+                        CampaignCardView(
+                            campaign: campaign,
+                            primaryProgramName: primaryProgramName(for: campaign),
+                            isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             } else {
                 ForEach(highlightedEarningItems.prefix(3)) { item in
                     NavigationLink(value: item.store) {
@@ -284,6 +306,11 @@ struct HomeView: View {
         default:
             return "Finn relevante opptjeningsmuligheter"
         }
+    }
+
+    private func primaryProgramName(for campaign: Campaign) -> String? {
+        guard let primaryProgramID = campaign.primaryProgramID else { return nil }
+        return environment.firstPhasePrograms.first { $0.id == primaryProgramID }?.name
     }
 }
 

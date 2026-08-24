@@ -11,6 +11,13 @@ struct MainTabView: View {
             }
 
             NavigationStack {
+                FeedView()
+            }
+            .tabItem {
+                Label("Kampanjer", systemImage: "ticket")
+            }
+
+            NavigationStack {
                 ExploreView()
             }
             .tabItem {

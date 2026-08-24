@@ -4,6 +4,13 @@ struct SupabaseConfiguration {
     let url: URL
     let publishableKey: String
 
+    static func bundleDebugSummary(bundle: Bundle = .main) -> (host: String, hasPublishableKey: Bool) {
+        let host = (bundle.object(forInfoDictionaryKey: "SUPABASE_HOST") as? String) ?? "<mangler>"
+        let publishableKey = (bundle.object(forInfoDictionaryKey: "SUPABASE_PUBLISHABLE_KEY") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return (host, !publishableKey.isEmpty && !publishableKey.contains("$("))
+    }
+
     static func fromBundle(bundle: Bundle = .main) -> SupabaseConfiguration? {
         let host = bundle.object(forInfoDictionaryKey: "SUPABASE_HOST") as? String
         let publishableKey = bundle.object(forInfoDictionaryKey: "SUPABASE_PUBLISHABLE_KEY") as? String
@@ -107,7 +114,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
             "campaign_categories(id,slug,name)",
             "campaign_requirements(id,text,sort_order)",
             "campaign_source_references(id,url,title,checked_at,evidence_note,campaign_sources(name))",
-            "campaign_editorial_assessments(score,decision_label,decision_summary,best_for,not_for,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
+            "campaign_editorial_assessments(score,reason_why_it_matters,estimated_value_text,difficulty_level,availability_scope,risk_note)",
             "campaign_geo_restrictions(id,country_code)",
             "campaign_programs(program_id)"
         ].joined(separator: ",")
@@ -142,8 +149,12 @@ struct SupabaseCampaignRepository: CampaignRepository {
             URLQueryItem(name: "order", value: "name.asc")
         ]
 
-        let response: [StoreDTO] = try await request(path: "stores", queryItems: queryItems)
-        return response.compactMap(\.domainModel).filter(\.isPublished)
+        do {
+            let response: [StoreDTO] = try await request(path: "stores", queryItems: queryItems)
+            return response.compactMap(\.domainModel).filter(\.isPublished)
+        } catch let error as SupabaseRepositoryError where error.isMissingSchemaRelation(named: "stores") {
+            return []
+        }
     }
 
     private func request<Response: Decodable>(
@@ -773,5 +784,14 @@ enum SupabaseRepositoryError: LocalizedError {
         case let .decodingFailed(error):
             return "Kunne ikke tolke Supabase-data: \(error.localizedDescription)"
         }
+    }
+
+    func isMissingSchemaRelation(named relationName: String) -> Bool {
+        guard case let .httpError(statusCode, message) = self, statusCode == 404 else {
+            return false
+        }
+
+        return message.contains("public.\(relationName)")
+            || message.localizedCaseInsensitiveContains("schema cache")
     }
 }
