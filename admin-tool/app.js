@@ -989,7 +989,14 @@
     }
 
     elements.detailPanel.classList.remove("empty");
-    const canPromoteToStoreEarning = isStoreEarningCandidate(candidate) && !candidate.promotedCampaignId && !candidate.promotedStoreEarningRateId;
+    const isStoreEarning = isStoreEarningCandidate(candidate);
+    const canPromote = !candidate.promotedCampaignId && !candidate.promotedStoreEarningRateId;
+    const promotionAction = isStoreEarning
+      ? `<button type="button" class="secondary" data-action="promote_store_earning">Promoter til butikkopptjening</button>`
+      : `<button type="button" class="secondary" data-action="promote">Promoter til draft</button>`;
+    const promotionHelp = isStoreEarning
+      ? "Dette er et butikk-/satsfunn. Promotering oppretter draft i Butikker, ikke en kampanje."
+      : "Dette er en kampanjekandidat. Promotering oppretter kampanjeutkast.";
     elements.detailPanel.innerHTML = `
       <div class="detail-copy">
         <div class="badge-row">
@@ -1045,14 +1052,9 @@
             <button type="button" class="danger" data-action="rejected">Avvis</button>
           </div>
           <div class="action-row">
-            <button type="button" class="secondary" data-action="promote">Promoter til draft</button>
-            ${
-              canPromoteToStoreEarning
-                ? `<button type="button" class="secondary" data-action="promote_store_earning">Promoter til butikkopptjening</button>`
-                : ""
-            }
+            ${canPromote ? promotionAction : ""}
           </div>
-          <span class="help">Publisering skjer fortsatt separat på kampanjeutkast eller butikkopptjening.</span>
+          <span class="help">${escapeHtml(promotionHelp)} Publisering skjer fortsatt separat.</span>
         </div>
       </div>
     `;

@@ -54,11 +54,12 @@ Vanlige valg:
 - `Godkjenn`: bruk når funnet ser relevant ut, men ikke nødvendigvis skal
   publiseres ennå.
 - `Avvis`: bruk for irrelevante, dupliserte eller uklare funn.
-- `Promoter til draft`: bruk for ordinære kampanjer.
-- `Promoter til butikkopptjening`: bruk for SAS/Trumf-butikkrater.
+- `Promoter til draft`: vises for ordinære kampanjer.
+- `Promoter til butikkopptjening`: vises for SAS/Trumf-butikkrater.
 
-For SAS/Trumf-butikkfunn bør du vanligvis promotere til butikkopptjening, ikke
-kampanje, med mindre funnet faktisk er en tidsbegrenset kampanje med egne vilkår.
+Adminflaten viser bare ett promoteringsvalg om gangen. SAS/Trumf-butikkfunn
+promoteres til butikkopptjening, mens andre kampanjefunn promoteres til
+kampanjeutkast.
 
 Når du promoterer til butikkopptjening, åpner adminflaten automatisk den nye
 draften i `Butikker`. Da kan du kontrollere og publisere uten å lete etter raden.
