@@ -1,6 +1,19 @@
 # Poengjeger Admin Tool
 
-Dette er en minimal intern webflate for Poengjeger sin redaksjonelle kandidatkø.
+Dette er Poengjeger sin interne adminflate for redaksjonell drift. Den skal
+holdes separat fra en offentlig produktside og skal ikke lenkes fra vanlig
+brukernavigasjon.
+
+Anbefalt plassering:
+
+- lokal utvikling: `http://localhost:4173`
+- intern test/staging: en beskyttet Pages/Netlify/Cloudflare URL
+- produksjonsdrift senere: `admin.poengjeger.no`
+
+GitHub Pages kan brukes teknisk så lenge verktøyet er ren statisk frontend og
+Supabase håndhever alle rettigheter med Auth, RLS og RPC-er. For bredere intern
+bruk er Netlify eller Cloudflare Pages bedre fordi de kan gi enklere headers,
+preview-deploys og eventuell ekstra tilgangskontroll før appen lastes.
 
 ## Lokal konfigurasjon
 
@@ -25,11 +38,34 @@ python3 -m http.server 4173 --directory admin-tool
 http://localhost:4173
 ```
 
+## GitHub Pages
+
+Adminflaten kan deployes fra GitHub Actions med
+`.github/workflows/admin-pages.yml`. Workflowen publiserer `admin-tool/` som en
+statisk GitHub Pages-artifact og lager `config.local.js` under bygging.
+
+Før første deploy:
+
+1. Gå til repository settings for GitHub Pages og velg `GitHub Actions` som
+   kilde.
+2. Opprett repository variables:
+   - `ADMIN_SUPABASE_URL`
+   - `ADMIN_SUPABASE_PUBLISHABLE_KEY`
+3. Bruk kun Supabase publishable/anon key. Ikke legg service-role key,
+   `INGESTION_RUN_SECRET`, OpenAI-nøkkel eller andre hemmeligheter i GitHub
+   Pages-bygget.
+
+Hvis adminflaten senere bruker redirect-basert auth, må Pages-URL-en legges til
+i Supabase Auth sine tillatte redirect-URL-er.
+
 ## Forutsetninger
 
 - brukeren må finnes i Supabase Auth
 - brukeren må ha intern rolle via `editorial_user_roles`
 - første admin må bootstrapes via SQL Editor eller service-role
+- ingen service-role key, OpenAI-nøkkel eller andre hemmeligheter skal ligge i
+  `config.local.js` eller browseren
+- admin-URL-en kan være kjent; sikkerheten skal ikke avhenge av skjult lenke
 
 Eksempel for å gi første rolle:
 
