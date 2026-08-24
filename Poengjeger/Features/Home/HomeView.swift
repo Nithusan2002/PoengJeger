@@ -60,11 +60,15 @@ struct HomeView: View {
                         .clipShape(Capsule())
                 }
 
-                storeSection
+                if environment.publishedStores.isEmpty {
+                    popularCampaignsSection
+                } else {
+                    storeSection
 
-                categorySection
+                    categorySection
 
-                popularCampaignsSection
+                    popularCampaignsSection
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
