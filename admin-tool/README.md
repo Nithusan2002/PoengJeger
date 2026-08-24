@@ -84,6 +84,7 @@ select public.grant_editorial_role(
 - logger inn med Supabase Auth
 - fornyer utløpende Supabase-session med refresh-token og ber om ny innlogging når sessionen ikke kan fornyes
 - leser `current_editorial_role()`
+- viser en personlig `Dagens jobb`-stripe for én adminbruker med direktehopp til nye funn, butikk-drafts og kampanje-drafts
 - henter `admin_ingestion_candidate_queue`
 - kjører `ingest-campaign-candidates` manuelt for valgte kilder med innlogget admin/editor-token
 - filtrerer på status

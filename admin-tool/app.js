@@ -73,6 +73,12 @@
     loginButton: document.querySelector("#login-button"),
     loginForm: document.querySelector("#login-form"),
     passwordInput: document.querySelector("#password-input"),
+    personalCampaignCount: document.querySelector("#personal-campaign-count"),
+    personalDashboard: document.querySelector("#personal-dashboard"),
+    personalIngestButton: document.querySelector("#personal-ingest-button"),
+    personalQueueCount: document.querySelector("#personal-queue-count"),
+    personalStoreCount: document.querySelector("#personal-store-count"),
+    personalSummary: document.querySelector("#personal-summary"),
     programGuideDetailPanel: document.querySelector("#program-guide-detail-panel"),
     programGuideList: document.querySelector("#program-guide-list"),
     programGuideMessage: document.querySelector("#program-guide-message"),
@@ -97,6 +103,7 @@
 
   elements.loginForm.addEventListener("submit", onLoginSubmit);
   elements.ingestButton.addEventListener("click", runIngestionFromAdmin);
+  elements.personalIngestButton.addEventListener("click", runPersonalIngestion);
   elements.refreshButton.addEventListener("click", refreshQueue);
   elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
   elements.storeEarningRefreshButton.addEventListener("click", refreshStoreEarningRates);
@@ -108,6 +115,11 @@
   elements.workspaceNavButtons.forEach((button) => {
     button.addEventListener("click", function () {
       setActivePanel(button.getAttribute("data-panel-target"));
+    });
+  });
+  Array.from(document.querySelectorAll("[data-personal-target]")).forEach((button) => {
+    button.addEventListener("click", function () {
+      openPersonalTarget(button.getAttribute("data-personal-target"));
     });
   });
 
@@ -190,6 +202,7 @@
       renderSessionPill();
       await fetchReferenceData();
       await Promise.all([refreshQueue(), refreshCampaigns(), refreshStoreEarningRates(), refreshProgramGuides()]);
+      updatePersonalDashboard();
     } catch (error) {
       clearSession();
       renderUnauthenticated();
@@ -230,6 +243,7 @@
         renderQueue();
         renderEmptyDetail("Ingen kandidater matcher filteret akkurat nå.");
         setMessage(elements.queueMessage, "Ingen kandidater i valgt filter.", "muted");
+        updatePersonalDashboard();
         return;
       }
 
@@ -244,6 +258,7 @@
         `Viser ${state.candidates.length} kandidat${state.candidates.length === 1 ? "" : "er"}.`,
         "success"
       );
+      updatePersonalDashboard();
     } catch (error) {
       setMessage(elements.queueMessage, error.message, "error");
       renderEmptyDetail("Kunne ikke laste kandidatdetaljer.");
@@ -271,6 +286,7 @@
         renderCampaignList();
         renderEmptyCampaignDetail("Ingen kampanjer matcher filteret ennå.");
         setMessage(elements.campaignMessage, "Ingen kampanjer i valgt filter.", "muted");
+        updatePersonalDashboard();
         return;
       }
 
@@ -285,6 +301,7 @@
         `Viser ${state.campaigns.length} kampanje${state.campaigns.length === 1 ? "" : "r"}.`,
         "success"
       );
+      updatePersonalDashboard();
     } catch (error) {
       setMessage(elements.campaignMessage, error.message, "error");
       renderEmptyCampaignDetail("Kunne ikke laste kampanjer.");
@@ -311,6 +328,7 @@
         renderStoreEarningList();
         renderEmptyStoreEarningDetail("Ingen satser matcher filteret ennå.");
         setMessage(elements.storeEarningMessage, "Ingen butikkopptjening i valgt filter.", "muted");
+        updatePersonalDashboard();
         return;
       }
 
@@ -325,6 +343,7 @@
         `Viser ${state.storeEarningRates.length} sats${state.storeEarningRates.length === 1 ? "" : "er"}.`,
         "success"
       );
+      updatePersonalDashboard();
     } catch (error) {
       setMessage(elements.storeEarningMessage, error.message, "error");
       renderEmptyStoreEarningDetail("Kunne ikke laste butikkopptjening.");
@@ -404,6 +423,28 @@
       elements.ingestButton.disabled = false;
       elements.ingestButton.textContent = originalLabel;
     }
+  }
+
+  async function runPersonalIngestion() {
+    setActivePanel("queue-panel");
+    elements.statusFilter.value = "new";
+    elements.ingestLimitInput.value = "10";
+    await runIngestionFromAdmin();
+  }
+
+  async function openPersonalTarget(panelId) {
+    if (panelId === "queue-panel") {
+      elements.statusFilter.value = "new";
+      await refreshQueue();
+    } else if (panelId === "campaign-panel") {
+      elements.campaignStatusFilter.value = "draft";
+      await refreshCampaigns();
+    } else if (panelId === "store-earning-panel") {
+      elements.storeEarningStatusFilter.value = "draft";
+      await refreshStoreEarningRates();
+    }
+
+    setActivePanel(panelId);
   }
 
   async function fetchQueue(status) {
@@ -721,6 +762,7 @@
     elements.campaignPanel.classList.add("hidden");
     elements.storeEarningPanel.classList.add("hidden");
     elements.programGuidePanel.classList.add("hidden");
+    elements.personalDashboard.classList.add("hidden");
     elements.workspaceNav.classList.add("hidden");
     elements.signOutButton.classList.add("hidden");
     elements.sessionPill.classList.add("hidden");
@@ -728,10 +770,29 @@
 
   function renderAuthenticatedShell() {
     elements.authPanel.classList.add("hidden");
+    elements.personalDashboard.classList.remove("hidden");
     elements.workspaceNav.classList.remove("hidden");
     elements.signOutButton.classList.remove("hidden");
     elements.sessionPill.classList.remove("hidden");
     setActivePanel(state.activePanelId);
+  }
+
+  function updatePersonalDashboard() {
+    if (!state.session) {
+      return;
+    }
+
+    const queueCount = elements.statusFilter.value === "new" ? state.candidates.length : 0;
+    const storeCount = elements.storeEarningStatusFilter.value === "draft" ? state.storeEarningRates.length : 0;
+    const campaignCount = elements.campaignStatusFilter.value === "draft" ? state.campaigns.length : 0;
+    const totalCount = queueCount + storeCount + campaignCount;
+
+    elements.personalQueueCount.textContent = String(queueCount);
+    elements.personalStoreCount.textContent = String(storeCount);
+    elements.personalCampaignCount.textContent = String(campaignCount);
+    elements.personalSummary.textContent = totalCount
+      ? `${totalCount} ting ligger klare for behandling. Start med nye funn eller fortsett på drafts.`
+      : "Ingen nye funn eller drafts i standardfiltrene akkurat nå.";
   }
 
   function setActivePanel(panelId) {

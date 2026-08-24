@@ -14,7 +14,7 @@
           <div class="brand-mark" aria-hidden="true">PJ</div>
           <div>
             <p class="eyebrow">Poengjeger</p>
-            <h1>Intern redaksjon</h1>
+            <h1>Min adminflyt</h1>
           </div>
         </div>
         <div class="topbar-actions">
@@ -26,15 +26,15 @@
       <nav id="workspace-nav" class="workspace-nav hidden" aria-label="Adminseksjoner">
         <button class="nav-item active" type="button" data-panel-target="queue-panel">
           <span>Kø</span>
-          <small>Kandidater</small>
+          <small>Nye funn</small>
         </button>
         <button class="nav-item" type="button" data-panel-target="campaign-panel">
           <span>Kampanjer</span>
-          <small>Draft og publisering</small>
+          <small>Draft</small>
         </button>
         <button class="nav-item" type="button" data-panel-target="store-earning-panel">
           <span>Butikker</span>
-          <small>Opptjening</small>
+          <small>Draft</small>
         </button>
         <button class="nav-item" type="button" data-panel-target="program-guide-panel">
           <span>Lær</span>
@@ -43,6 +43,27 @@
       </nav>
 
       <main class="layout">
+        <section id="personal-dashboard" class="personal-dashboard hidden" aria-label="Dagens adminjobb">
+          <div>
+            <p class="eyebrow">Dagens jobb</p>
+            <h2>Neste oppgave</h2>
+            <p id="personal-summary">Logg inn for å se hva som må behandles.</p>
+          </div>
+
+          <div class="personal-actions">
+            <button id="personal-ingest-button" type="button">Hent 10 nye</button>
+            <button class="secondary" type="button" data-personal-target="queue-panel">
+              Nye funn <strong id="personal-queue-count">0</strong>
+            </button>
+            <button class="secondary" type="button" data-personal-target="store-earning-panel">
+              Butikk-drafts <strong id="personal-store-count">0</strong>
+            </button>
+            <button class="secondary" type="button" data-personal-target="campaign-panel">
+              Kampanje-drafts <strong id="personal-campaign-count">0</strong>
+            </button>
+          </div>
+        </section>
+
         <section id="auth-panel" class="panel auth-panel">
           <div class="panel-header">
             <h2>Intern innlogging</h2>

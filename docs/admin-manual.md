@@ -24,6 +24,14 @@ Hvis du får tilgangsfeil, mangler brukeren rolle i `editorial_user_roles`.
 
 ## Hent Nye Kandidater
 
+Øverst ligger `Dagens jobb`. Bruk den som startpunkt:
+
+1. Trykk `Hent 10 nye` for å hente en liten batch fra valgt kilde.
+2. Trykk `Nye funn`, `Butikk-drafts` eller `Kampanje-drafts` for å hoppe rett
+   til det som må behandles.
+
+For manuell henting i køfanen:
+
 1. Gå til fanen `Kø`.
 2. Velg kilde:
    - `SAS EuroBonus Shopping`

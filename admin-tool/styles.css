@@ -205,6 +205,53 @@ button:disabled {
   }
 }
 
+.personal-dashboard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.personal-dashboard h2 {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.4vw, 1.35rem);
+  letter-spacing: 0;
+}
+
+.personal-dashboard p:not(.eyebrow) {
+  margin: 5px 0 0;
+  color: var(--muted);
+}
+
+.personal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.personal-actions button {
+  min-width: 124px;
+}
+
+.personal-actions strong {
+  display: inline-grid;
+  min-width: 1.65rem;
+  min-height: 1.65rem;
+  margin-left: 0.45rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+}
+
 .nav-item {
   display: grid;
   gap: 3px;
@@ -925,6 +972,15 @@ code {
 }
 
 @media (max-width: 1100px) {
+  .personal-dashboard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .personal-actions {
+    justify-content: flex-start;
+  }
+
   .content-grid {
     grid-template-columns: 1fr;
   }
