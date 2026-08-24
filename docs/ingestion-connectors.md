@@ -30,12 +30,17 @@ curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?source=trumf_net
   -H "Authorization: Bearer $INGESTION_RUN_SECRET"
 ```
 
+```sh
+curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?source=sas_eurobonus_shopping&limit=10" \
+  -H "Authorization: Bearer $INGESTION_RUN_SECRET"
+```
+
 ## Første kilder
 
 | Kilde                  | Parser                   | Status  | Metode                             | Robots/status                                                                                            | Kommentar                                                                                                           |
 | ---------------------- | ------------------------ | ------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Trumf Netthandel       | `trumf_netthandel`       | Aktiv   | Offentlig JSON-feed                | `trumfnetthandel.no/robots.txt` blokkerer ikke `/cashback`; CDN `robots.txt` returnerte 404 ved kontroll | Bruker `https://wlp.tcb-cdn.com/trumf/notifierfeed.json`. Lager kandidater for butikkbonus, ikke ferdige kampanjer. |
-| SAS EuroBonus Shopping | `sas_eurobonus_shopping` | Inaktiv | Offentlig browser-extension API    | `onlineshopping.loyaltykey.com/robots.txt` returnerte 403 ved kontroll                                   | Prioritert som neste kilde, men deaktivert i `source_registry` til robots/vilkår er eksplisitt godkjent.            |
+| SAS EuroBonus Shopping | `sas_eurobonus_shopping` | Aktiv   | Offentlig JSON API                 | `onlineshopping.loyaltykey.com/robots.txt` returnerte 403 ved kontroll 2026-08-24; API-feed svarte 200  | Bruker `https://onlineshopping.loyaltykey.com/api/v1/shops?filter[channel]=SAS&filter[language]=nb&filter[country]=no&filter[amount]=5000`. Lager kandidater for butikkopptjening og mulige kampanjesatser, ikke ferdige kampanjer. |
 | re:member reward       | `remember_reward`        | Inaktiv | Offentlig HTML med `__NEXT_DATA__` | `www.remember.no/robots.txt` tillater `/reward/rabatt`                                                   | Parseren finnes fra spike, men kilden er parkert og skal ikke kjøres i første operative fase.                       |
 
 ## Sikkerhet og kvalitet
@@ -60,3 +65,6 @@ curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?source=trumf_net
   LOfavør bør vurderes separat.
 - `normalized_hash` inkluderer bonusbeskrivelsen. Endrede satser gir derfor ny
   kandidat for review.
+- SAS-kandidater må kontrolleres ekstra nøye før publisering fordi API-et er
+  offentlig tilgjengelig, men `robots.txt` på API-domenet ikke kan leses av
+  connectoren per 2026-08-24.

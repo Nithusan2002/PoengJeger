@@ -47,8 +47,20 @@ type SasShopDetail = {
   name?: string;
   commission_type?: "fixed" | "variable";
   points?: number;
+  points_campaign?: number;
+  campaign_ends?: string | null;
+  campaign_ends_date?: string | null;
   currency?: string;
-  url?: string;
+  categoryId?: number;
+  has_campaign?: number | boolean;
+  slug?: string;
+  fixed_cashback_text?: string | null;
+  description?: string | null;
+  disable_web_view?: boolean;
+};
+
+type SasShopFeed = {
+  data?: SasShopDetail[];
 };
 
 type RememberStore = {
@@ -71,8 +83,9 @@ const USER_AGENT = Deno.env.get("POENGJEGER_INGESTION_USER_AGENT") ??
   "PoengjegerIngestion/0.1 (+https://poengjeger.no)";
 
 const TRUMF_FEED_URL = "https://wlp.tcb-cdn.com/trumf/notifierfeed.json";
-const SAS_API_BASE_URL = "https://onlineshopping.loyaltykey.com";
-const SAS_CHANNEL = "sas/nb-NO";
+const SAS_SHOPS_FEED_URL =
+  "https://onlineshopping.loyaltykey.com/api/v1/shops?filter%5Bchannel%5D=SAS&filter%5Blanguage%5D=nb&filter%5Bcountry%5D=no&filter%5Bamount%5D=5000";
+const SAS_HANDOFF_BASE_URL = "https://onlineshopping.flysas.com/nb-NO/butikker";
 const REMEMBER_URL = "https://www.remember.no/reward/rabatt";
 const DEFAULT_LIMIT_PER_SOURCE = 50;
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -297,58 +310,81 @@ async function scrapeSas(
   programId: string | null,
   limit: number,
 ): Promise<CandidateInput[]> {
-  const listUrl = source.base_url ||
-    `${SAS_API_BASE_URL}/api/browser-extension/${SAS_CHANNEL}/shops`;
-  const shopMap = await fetchJson<Record<string, string>>(listUrl);
-  const entries = Object.entries(shopMap).slice(0, limit);
-  const candidates: CandidateInput[] = [];
+  const feedUrl = source.base_url || SAS_SHOPS_FEED_URL;
+  const feed = await fetchJson<SasShopFeed>(feedUrl);
+  const shops = (feed.data ?? [])
+    .filter((shop) => shop.name && shop.uuid)
+    .slice(0, limit);
 
-  for (const [shopKey, shopId] of entries) {
-    const detail = await fetchJson<{ data?: SasShopDetail }>(
-      `${SAS_API_BASE_URL}/api/browser-extension/${SAS_CHANNEL}/shops/${
-        encodeURIComponent(shopId)
-      }`,
-    );
-    if (!detail.data?.name) {
-      continue;
-    }
+  return Promise.all(shops.map(async (shop) => {
+    const summary = sasSummary(shop);
+    const sourceUrl = sasSourceUrl(shop) || feedUrl;
 
-    const points = Number(detail.data.points) || 0;
-    const summary = points > 0
-      ? detail.data.commission_type === "fixed"
-        ? `${formatNumber(points)} poeng som ny kunde`
-        : `${formatNumber(points)} poeng / 100 kr`
-      : null;
-    const sourceUrl = detail.data.url || `https://${shopKey}`;
-
-    candidates.push({
+    return {
       source_registry_id: source.id,
       source_url: sourceUrl,
-      title: `SAS EuroBonus: ${detail.data.name}`,
+      title: `SAS EuroBonus Shopping: ${shop.name}`,
       summary,
-      raw_content: JSON.stringify({ shopKey, shopId, detail: detail.data }),
+      raw_content: JSON.stringify(shop),
       normalized_hash: await stableHash([
         source.parser_key,
-        shopId,
-        detail.data.name,
+        shop.uuid,
+        shop.name,
         summary,
+        shop.campaign_ends_date,
       ]),
       suggested_program_id: programId,
       status: "new",
       metadata: {
         parser_key: source.parser_key,
-        shop_key: shopKey,
-        shop_id: shopId,
-        commission_type: detail.data.commission_type ?? null,
-        currency: detail.data.currency ?? null,
+        shop_uuid: shop.uuid,
+        shop_slug: shop.slug ?? null,
+        category_id: shop.categoryId ?? null,
+        commission_type: shop.commission_type ?? null,
+        currency: shop.currency ?? null,
+        points: shop.points ?? null,
+        points_campaign: shop.points_campaign ?? null,
+        campaign_ends: shop.campaign_ends ?? null,
+        campaign_ends_date: shop.campaign_ends_date ?? null,
+        has_campaign: shop.has_campaign ?? null,
+        fixed_cashback_text: shop.fixed_cashback_text ?? null,
+        handoff_url: sourceUrl,
+        source_description_text: stripHtml(shop.description ?? ""),
         bonus_type: "points",
         missing_bonus_value: !summary,
         requires_editorial_review: true,
       },
-    });
+    };
+  }));
+}
+
+function sasSummary(shop: SasShopDetail): string | null {
+  if (shop.fixed_cashback_text) {
+    return stripHtml(shop.fixed_cashback_text).trim() || null;
   }
 
-  return candidates;
+  const points = Number(shop.points) || 0;
+  if (points <= 0) {
+    return null;
+  }
+
+  const base = shop.commission_type === "fixed"
+    ? `${formatNumber(points)} EuroBonus-poeng`
+    : `${formatNumber(points)} EuroBonus-poeng per 100 kr`;
+
+  if (Boolean(shop.has_campaign) && shop.campaign_ends_date) {
+    return `${base}, kampanje til ${shop.campaign_ends_date}`;
+  }
+  return base;
+}
+
+function sasSourceUrl(shop: SasShopDetail): string | null {
+  if (!shop.slug || !shop.uuid) {
+    return null;
+  }
+  return `${SAS_HANDOFF_BASE_URL}/${encodeURIComponent(shop.slug)}/${
+    encodeURIComponent(shop.uuid)
+  }`;
 }
 
 async function scrapeRemember(
@@ -610,6 +646,17 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 0 }).format(
     value,
   );
+}
+
+function stripHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function summarizeError(error: unknown): string {
