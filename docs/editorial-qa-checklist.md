@@ -36,7 +36,7 @@ For hver publiserbar kampanje:
 
 For kampanjen som ikke skal publiseres:
 
-1. Sett status til `needs_review` hvis usikkerheten må undersøkes.
+1. La kandidaten stå som `new` hvis usikkerheten må undersøkes senere.
 2. Sett status til `rejected` når avvisningsgrunn er bekreftet.
 3. Skriv review-notat som forklarer om problemet er kilde, vilkår, duplikat, målretting eller lav relevans.
 4. Bekreft at kandidaten ikke kan dukke opp i iOS-feeden.

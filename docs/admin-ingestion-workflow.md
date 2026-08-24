@@ -20,7 +20,6 @@ Shopping kan bli redaksjonelle utkast til butikkopptjening.
 1. Ny kandidat havner i `ingestion_candidates` med status `new`.
 2. Redaksjonen vurderer kandidaten i admin-køen.
 3. Kandidaten settes til:
-   - `needs_review`
    - `approved`
    - `rejected`
 4. Når kandidaten er relevant, promoteres den enten til en `draft`-kampanje
@@ -99,16 +98,16 @@ Se kø:
 ```sql
 select *
 from public.admin_ingestion_candidate_queue
-where status in ('new', 'needs_review', 'approved')
+where status in ('new', 'approved')
 order by detected_at desc;
 ```
 
-Marker kandidat som må vurderes nærmere:
+Legg inn notat på en kandidat som må vurderes nærmere, og la den stå som `new`:
 
 ```sql
 select public.set_ingestion_candidate_status(
   '00000000-0000-0000-0000-000000000000',
-  'needs_review',
+  'new',
   'Trenger manuell kontroll av vilkår og dato.'
 );
 ```

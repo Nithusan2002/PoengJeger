@@ -28,7 +28,7 @@ Rapporter bare kontroller som faktisk er utført. Merk resten som ikke kjørt me
 
 - Bare innloggede brukere med `editor` eller `admin` i `editorial_user_roles` får bruke adminflaten.
 - Første admin kan bootstrapes kontrollert, og videre rolleendringer går via dedikerte funksjoner.
-- Kandidater kan avvises, markeres for review, godkjennes og promoteres til `draft`.
+- Kandidater kan avvises, godkjennes og promoteres til `draft`.
 - Promotering publiserer aldri direkte.
 - Publisering krever minst én kildehenvisning og `last_verified_at`.
 - Adminverktøyet håndterer utløpt session uten å eksponere service role eller andre hemmeligheter i browseren.

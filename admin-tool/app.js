@@ -1041,7 +1041,6 @@
 
         <div class="detail-actions">
           <div class="action-row">
-            <button type="button" data-action="needs_review">Sett til needs_review</button>
             <button type="button" data-action="approved">Godkjenn</button>
             <button type="button" class="danger" data-action="rejected">Avvis</button>
           </div>

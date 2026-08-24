@@ -87,8 +87,8 @@ select public.grant_editorial_role(
 - viser en personlig `Dagens jobb`-stripe for én adminbruker med direktehopp til nye funn, butikk-drafts og kampanje-drafts
 - henter `admin_ingestion_candidate_queue`
 - kjører `ingest-campaign-candidates` manuelt for valgte kilder med innlogget admin/editor-token
-- filtrerer på status
-- setter review-status via `set_ingestion_candidate_status(...)`
+- filtrerer på de operative statusene `new`, `approved`, `rejected` og `promoted`
+- setter enkel kandidatstatus via `set_ingestion_candidate_status(...)`
 - promoterer kampanjekandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
 - promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)` og åpner den nye draften direkte
 - viser og redigerer butikkopptjening fra `store_earning_rates`

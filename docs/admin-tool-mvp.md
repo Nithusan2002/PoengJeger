@@ -60,13 +60,12 @@ Redaksjonen trenger i dag database- eller SQL-basert arbeid for å håndtere kan
 ### 2. Kandidatkø
 
 - Liste over `ingestion_candidates`
-- Filtrering på status: `new`, `needs_review`, `approved`, `rejected`, `promoted`
+- Filtrering på status: `new`, `approved`, `rejected`, `promoted`
 - Vise kilde, oppdaget tidspunkt, foreslått program og kategori
 - Åpne kandidatdetaljer med råinnhold og review-notater
 
 ### 3. Review-handlinger
 
-- Sett status til `needs_review`
 - Godkjenn kandidat
 - Avvis kandidat
 - Lagre review-notat

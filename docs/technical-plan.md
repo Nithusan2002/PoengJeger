@@ -363,7 +363,7 @@ Foreslåtte ingest-tabeller:
   - `normalized_hash`
   - `suggested_program_id`
   - `suggested_category_id`
-  - `status` med verdier som `new`, `needs_review`, `approved`, `rejected`, `promoted`
+  - `status` med verdier som `new`, `approved`, `rejected`, `promoted`; `needs_review` kan finnes historisk, men brukes ikke i daglig én-admin-flyt
   - `reviewed_by`
   - `reviewed_at`
   - `review_note`
@@ -436,7 +436,7 @@ Foreslått flyt:
 - systemet lagrer råtekst, kilde-URL og oppdaget tidspunkt
 
 3. Review-kø vises for admin
-- admin ser kandidater med status `new` eller `needs_review`
+- admin ser kandidater med status `new`
 - listen bør minst vise tittel, kilde, tidspunkt og mulig bonusprogram
 
 4. Kandidat vurderes

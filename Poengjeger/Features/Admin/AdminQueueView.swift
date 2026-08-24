@@ -188,11 +188,6 @@ private struct AdminCandidateActions: View {
     var body: some View {
         HStack {
             if candidate.canReview {
-                Button("Needs review") {
-                    onSetStatus(.needsReview)
-                }
-                .buttonStyle(.bordered)
-
                 Button("Godkjenn") {
                     onSetStatus(.approved)
                 }

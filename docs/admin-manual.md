@@ -51,7 +51,6 @@ Bruk `Kø` til å bestemme hva et funn skal bli.
 
 Vanlige valg:
 
-- `Sett til needs_review`: bruk når funnet trenger mer manuell kontroll.
 - `Godkjenn`: bruk når funnet ser relevant ut, men ikke nødvendigvis skal
   publiseres ennå.
 - `Avvis`: bruk for irrelevante, dupliserte eller uklare funn.
@@ -63,6 +62,9 @@ kampanje, med mindre funnet faktisk er en tidsbegrenset kampanje med egne vilkå
 
 Når du promoterer til butikkopptjening, åpner adminflaten automatisk den nye
 draften i `Butikker`. Da kan du kontrollere og publisere uten å lete etter raden.
+
+Hvis et funn trenger mer kontroll, la det ligge som `Ny` og skriv et kort
+review-notat, eller avvis det hvis det ikke skal følges opp.
 
 ## Butikkopptjening
 
@@ -170,5 +172,4 @@ Ikke publiser videre før du har kontrollert manuelt hvis:
 - Handoff-lenken ikke peker til riktig portal.
 - Innholdet gjelder finansielle produkter eller nye kundeforhold.
 
-Bruk heller `needs_review`, `draft` eller `rejected` enn å publisere usikkert
-innhold.
+Bruk heller `new`, `draft` eller `rejected` enn å publisere usikkert innhold.

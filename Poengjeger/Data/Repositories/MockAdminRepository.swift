@@ -71,7 +71,7 @@ enum AdminSampleData {
         ),
         IngestionCandidate(
             id: UUID(uuidString: "7C21C60F-5C5F-42CD-C16F-FCEF6F1F0602")!,
-            status: .needsReview,
+            status: .new,
             detectedAt: Calendar.current.date(byAdding: .hour, value: -6, to: .now) ?? .now,
             sourceURL: URL(string: "https://www.trumf.no/kampanje/partnerbonus-august")!,
             title: "Partnerbonus hos ny nettbutikk via Trumf",
