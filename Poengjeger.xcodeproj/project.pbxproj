@@ -41,6 +41,7 @@
 		033 /* HowToEarnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137 /* HowToEarnView.swift */; };
 		034 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138 /* ExploreView.swift */; };
 		035 /* CategoryStoresView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139 /* CategoryStoresView.swift */; };
+		041 /* AdminIngestionUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 141 /* AdminIngestionUseCaseTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +94,7 @@
 		137 /* HowToEarnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToEarnView.swift; sourceTree = "<group>"; };
 		138 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
 		139 /* CategoryStoresView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryStoresView.swift; sourceTree = "<group>"; };
+		141 /* AdminIngestionUseCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminIngestionUseCaseTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -376,6 +378,7 @@
 			isa = PBXGroup;
 			children = (
 				117 /* ScannableFeedUseCaseTests.swift */,
+				141 /* AdminIngestionUseCaseTests.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -519,6 +522,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				017 /* ScannableFeedUseCaseTests.swift in Sources */,
+				041 /* AdminIngestionUseCaseTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
