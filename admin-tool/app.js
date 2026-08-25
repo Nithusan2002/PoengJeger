@@ -72,6 +72,15 @@
     ingestSourceSelect: document.querySelector("#ingest-source-select"),
     loginButton: document.querySelector("#login-button"),
     loginForm: document.querySelector("#login-form"),
+    opsCampaignCount: document.querySelector("#ops-campaign-count"),
+    opsCampaignNote: document.querySelector("#ops-campaign-note"),
+    opsFocusLabel: document.querySelector("#ops-focus-label"),
+    opsFocusNote: document.querySelector("#ops-focus-note"),
+    opsOverview: document.querySelector("#ops-overview"),
+    opsQueueCount: document.querySelector("#ops-queue-count"),
+    opsQueueNote: document.querySelector("#ops-queue-note"),
+    opsStoreCount: document.querySelector("#ops-store-count"),
+    opsStoreNote: document.querySelector("#ops-store-note"),
     passwordInput: document.querySelector("#password-input"),
     personalCampaignCount: document.querySelector("#personal-campaign-count"),
     personalDashboard: document.querySelector("#personal-dashboard"),
@@ -87,6 +96,7 @@
     queueList: document.querySelector("#queue-list"),
     queueMessage: document.querySelector("#queue-message"),
     queuePanel: document.querySelector("#queue-panel"),
+    queueWorkbar: document.querySelector("#queue-workbar"),
     refreshButton: document.querySelector("#refresh-button"),
     sessionPill: document.querySelector("#session-pill"),
     signOutButton: document.querySelector("#sign-out-button"),
@@ -96,8 +106,10 @@
     storeEarningPanel: document.querySelector("#store-earning-panel"),
     storeEarningRefreshButton: document.querySelector("#store-earning-refresh-button"),
     storeEarningStatusFilter: document.querySelector("#store-earning-status-filter"),
+    storeEarningWorkbar: document.querySelector("#store-earning-workbar"),
     statusFilter: document.querySelector("#status-filter")
   };
+  elements.campaignWorkbar = document.querySelector("#campaign-workbar");
   elements.workspaceNav = document.querySelector("#workspace-nav");
   elements.workspaceNavButtons = Array.from(document.querySelectorAll("[data-panel-target]"));
 
@@ -765,6 +777,7 @@
     elements.storeEarningPanel.classList.add("hidden");
     elements.programGuidePanel.classList.add("hidden");
     elements.personalDashboard.classList.add("hidden");
+    elements.opsOverview.classList.add("hidden");
     elements.workspaceNav.classList.add("hidden");
     elements.signOutButton.classList.add("hidden");
     elements.sessionPill.classList.add("hidden");
@@ -773,6 +786,7 @@
   function renderAuthenticatedShell() {
     elements.authPanel.classList.add("hidden");
     elements.personalDashboard.classList.remove("hidden");
+    elements.opsOverview.classList.remove("hidden");
     elements.workspaceNav.classList.remove("hidden");
     elements.signOutButton.classList.remove("hidden");
     elements.sessionPill.classList.remove("hidden");
@@ -795,6 +809,114 @@
     elements.personalSummary.textContent = totalCount
       ? `${totalCount} ting ligger klare for behandling. Start med nye funn eller fortsett på drafts.`
       : "Ingen nye funn eller drafts i standardfiltrene akkurat nå.";
+    renderOpsOverview(queueCount, storeCount, campaignCount);
+    renderWorkbars();
+  }
+
+  function renderOpsOverview(queueCount, storeCount, campaignCount) {
+    elements.opsQueueCount.textContent = String(queueCount);
+    elements.opsStoreCount.textContent = String(storeCount);
+    elements.opsCampaignCount.textContent = String(campaignCount);
+
+    elements.opsQueueNote.textContent = queueCount
+      ? "Sorter nyttig fra støy."
+      : "Ingen nye i filteret.";
+    elements.opsStoreNote.textContent = storeCount
+      ? "Publiser etter kontroll."
+      : "Ingen draft-satser.";
+    elements.opsCampaignNote.textContent = campaignCount
+      ? "Fyll beslutning og kilde."
+      : "Ingen kampanjeutkast.";
+
+    const focus = nextAdminFocus(queueCount, storeCount, campaignCount);
+    elements.opsFocusLabel.textContent = focus.label;
+    elements.opsFocusNote.textContent = focus.note;
+  }
+
+  function nextAdminFocus(queueCount, storeCount, campaignCount) {
+    if (queueCount) {
+      return { label: "Kø", note: "Lag butikkdraft eller avvis." };
+    }
+
+    if (storeCount) {
+      return { label: "Butikker", note: "Kontroller sats og handoff." };
+    }
+
+    if (campaignCount) {
+      return { label: "Kampanjer", note: "Sjekk beslutning og kilde." };
+    }
+
+    return { label: "Vedlikehold", note: "Se etter utdaterte publiserte rader." };
+  }
+
+  function renderWorkbars() {
+    renderQueueWorkbar();
+    renderCampaignWorkbar();
+    renderStoreEarningWorkbar();
+  }
+
+  function renderQueueWorkbar() {
+    if (!elements.queueWorkbar) {
+      return;
+    }
+
+    const total = state.candidates.length;
+    const storeCandidates = state.candidates.filter(isStoreEarningCandidate).length;
+    const promoted = state.candidates.filter((candidate) => (
+      candidate.promotedCampaignId || candidate.promotedStoreEarningRateId
+    )).length;
+
+    elements.queueWorkbar.innerHTML = `
+      ${renderWorkbarMetric("I filteret", total)}
+      ${renderWorkbarMetric("Butikkfunn", storeCandidates)}
+      ${renderWorkbarMetric("Promotert", promoted)}
+      <span class="workbar-hint">Standardjobb: åpne første kandidat, lag draft eller avvis.</span>
+    `;
+  }
+
+  function renderCampaignWorkbar() {
+    if (!elements.campaignWorkbar) {
+      return;
+    }
+
+    const readyCount = state.campaigns.filter((campaign) => (
+      campaignReadiness(campaignDraftFromCampaign(campaign)).isPublishReady
+    )).length;
+    const missingSourceCount = state.campaigns.filter((campaign) => !campaign.sourceReferences.length).length;
+
+    elements.campaignWorkbar.innerHTML = `
+      ${renderWorkbarMetric("I filteret", state.campaigns.length)}
+      ${renderWorkbarMetric("Publiserbare", readyCount)}
+      ${renderWorkbarMetric("Mangler kilde", missingSourceCount)}
+      <span class="workbar-hint">Fyll konklusjon, hvorfor interessant og verifisert https-kilde.</span>
+    `;
+  }
+
+  function renderStoreEarningWorkbar() {
+    if (!elements.storeEarningWorkbar) {
+      return;
+    }
+
+    const readinessList = state.storeEarningRates.map((rate) => storeEarningReadiness(storeEarningDraftFromRate(rate)));
+    const readyCount = readinessList.filter((readiness) => readiness.level === "ready").length;
+    const warningCount = readinessList.filter((readiness) => readiness.level === "warning").length;
+    const blockedCount = readinessList.filter((readiness) => readiness.level === "blocked").length;
+
+    elements.storeEarningWorkbar.innerHTML = `
+      ${renderWorkbarMetric("Klar", readyCount)}
+      ${renderWorkbarMetric("Bør sjekkes", warningCount)}
+      ${renderWorkbarMetric("Mangler", blockedCount)}
+      <span class="workbar-hint">Publiser og neste draft holder flyten rask.</span>
+    `;
+  }
+
+  function renderWorkbarMetric(label, value) {
+    return `
+      <span class="workbar-metric">
+        <strong>${escapeHtml(String(value))}</strong>
+        <span>${escapeHtml(label)}</span>
+      </span>
+    `;
   }
 
   function setActivePanel(panelId) {
@@ -810,6 +932,11 @@
       button.classList.toggle("active", isActive);
       button.setAttribute("aria-current", isActive ? "page" : "false");
     });
+    updateActivePanelDensity();
+  }
+
+  function updateActivePanelDensity() {
+    elements.opsOverview.classList.toggle("compact", state.activePanelId === "program-guide-panel");
   }
 
   function renderSessionPill() {
@@ -870,6 +997,7 @@
     }
 
     state.campaigns.forEach((campaign) => {
+      const readiness = campaignReadiness(campaignDraftFromCampaign(campaign));
       const item = document.createElement("li");
       item.className = "queue-item";
 
@@ -882,13 +1010,16 @@
           ${renderCampaignBadge(campaign.status)}
           ${campaign.primaryProgramId ? renderMetaBadge(programName(campaign.primaryProgramId)) : ""}
           ${campaign.categoryId ? renderMetaBadge(categoryName(campaign.categoryId)) : ""}
+          ${renderReadinessBadge(readiness)}
         </div>
         <h3>${escapeHtml(campaign.title || "Uten tittel")}</h3>
-        <p>${escapeHtml(campaign.summary || "Ingen oppsummering ennå.")}</p>
+        <p>${escapeHtml(campaign.editorialAssessment && campaign.editorialAssessment.decisionSummary
+          ? campaign.editorialAssessment.decisionSummary
+          : campaign.summary || "Ingen oppsummering ennå.")}</p>
         <div class="candidate-meta">
           <span>Sist oppdatert ${formatDateTime(campaign.updatedAt)}</span>
           <span>•</span>
-          <span>${campaign.requirements.length} krav</span>
+          <span>${readiness.blockers.length ? `${readiness.blockers.length} mangler` : "Ingen blokkere"}</span>
           <span>•</span>
           <span>${campaign.sourceReferences.length} kilder</span>
         </div>
@@ -1165,6 +1296,7 @@
     const primarySource = campaign.sourceReferences[0] || null;
     const sourceId = primarySource ? primarySource.source_id : "";
     const editorialAssessment = campaign.editorialAssessment;
+    const readiness = campaignReadiness(campaignDraftFromCampaign(campaign));
 
     elements.campaignDetailPanel.classList.remove("empty");
     elements.campaignDetailPanel.innerHTML = `
@@ -1173,26 +1305,67 @@
           ${renderCampaignBadge(campaign.status)}
           ${campaign.primaryProgramId ? renderMetaBadge(programName(campaign.primaryProgramId)) : ""}
           ${campaign.categoryId ? renderMetaBadge(categoryName(campaign.categoryId)) : ""}
+          ${renderReadinessBadge(readiness)}
         </div>
 
-        <div class="detail-grid">
-          <label class="field">
-            <span>Tittel</span>
-            <input name="title" type="text" value="${escapeAttribute(campaign.title)}" required />
-          </label>
-
-          <label class="field">
-            <span>Status</span>
-            <select name="status">
-              ${renderCampaignStatusOptions(campaign.status)}
-            </select>
-          </label>
+        <div id="campaign-readiness" class="draft-readiness campaign-readiness">
+          ${renderCampaignReadiness(readiness)}
         </div>
 
-        <label class="field">
-          <span>Kort beskrivelse</span>
-          <textarea name="summary" rows="3">${escapeHtml(campaign.summary)}</textarea>
-        </label>
+        <section class="section-stack priority-section">
+          <div class="section-heading-row">
+            <div>
+              <h3>Beslutning først</h3>
+              <p class="section-help">Dette er teksten brukeren skal forstå raskest i appen.</p>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Tittel</span>
+              <input name="title" type="text" value="${escapeAttribute(campaign.title)}" required />
+            </label>
+
+            <label class="field">
+              <span>Status</span>
+              <select name="status">
+                ${renderCampaignStatusOptions(campaign.status)}
+              </select>
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Kort beskrivelse</span>
+            <textarea name="summary" rows="3">${escapeHtml(campaign.summary)}</textarea>
+          </label>
+
+          <div class="detail-grid">
+            <label class="field">
+              <span>Beslutning</span>
+              <select name="decisionLabel">
+                <option value="">Ikke satt</option>
+                ${renderEnumOptions(
+                  [
+                    { value: "worth_checking", label: "Verdt å sjekke" },
+                    { value: "niche", label: "Kun relevant for noen" },
+                    { value: "low_value", label: "Lav verdi" },
+                    { value: "uncertain", label: "Usikker / vent" }
+                  ],
+                  editorialAssessment ? editorialAssessment.decisionLabel : ""
+                )}
+              </select>
+              <span class="hint">Kort fasit for om brukeren bør bry seg.</span>
+            </label>
+
+            <label class="field">
+              <span>Kort konklusjon</span>
+              <textarea name="decisionSummary" rows="4">${escapeHtml(
+                editorialAssessment ? editorialAssessment.decisionSummary : ""
+              )}</textarea>
+              <span class="hint">Vises høyt i feed og kampanjedetalj.</span>
+            </label>
+          </div>
+        </section>
 
         <label class="field">
           <span>Detaljer</span>
@@ -1236,36 +1409,13 @@
 
         <section class="section-stack">
           <div class="section-heading-row">
-            <h3>Redaksjonell vurdering</h3>
+            <div>
+              <h3>Redaksjonell vurdering</h3>
+              <p class="section-help">Skill vurderingen fra dokumenterte fakta og vilkår.</p>
+            </div>
             <button type="button" class="secondary compact-button" data-ai-action="suggest-editorial">
               Foreslå med AI
             </button>
-          </div>
-          <div class="detail-grid">
-            <label class="field">
-              <span>Beslutning</span>
-              <select name="decisionLabel">
-                <option value="">Ikke satt</option>
-                ${renderEnumOptions(
-                  [
-                    { value: "worth_checking", label: "Verdt å sjekke" },
-                    { value: "niche", label: "Kun relevant for noen" },
-                    { value: "low_value", label: "Lav verdi" },
-                    { value: "uncertain", label: "Usikker / vent" }
-                  ],
-                  editorialAssessment ? editorialAssessment.decisionLabel : ""
-                )}
-              </select>
-              <span class="hint">Kort fasit for om brukeren bør bry seg.</span>
-            </label>
-
-            <label class="field">
-              <span>Kort konklusjon</span>
-              <textarea name="decisionSummary" rows="4">${escapeHtml(
-                editorialAssessment ? editorialAssessment.decisionSummary : ""
-              )}</textarea>
-              <span class="hint">Vises høyt i feed og kampanjedetalj.</span>
-            </label>
           </div>
 
           <div class="detail-grid">
@@ -1419,12 +1569,12 @@
     }
 
     form.addEventListener("input", function () {
-      updatePublishButtonState(form);
+      updateCampaignDraftAssist(form);
     });
     form.addEventListener("change", function () {
-      updatePublishButtonState(form);
+      updateCampaignDraftAssist(form);
     });
-    updatePublishButtonState(form);
+    updateCampaignDraftAssist(form);
   }
 
   function renderStoreEarningDetail() {
@@ -2443,6 +2593,165 @@
     };
   }
 
+  function campaignDraftFromCampaign(campaign) {
+    const primarySource = campaign.sourceReferences[0] || null;
+    const editorialAssessment = campaign.editorialAssessment || {};
+
+    return {
+      title: campaign.title || "",
+      summary: campaign.summary || "",
+      details: campaign.details || "",
+      status: campaign.status || "draft",
+      primaryProgramId: campaign.primaryProgramId || null,
+      categoryId: campaign.categoryId || null,
+      editorialSummary: campaign.editorialSummary || null,
+      decisionLabel: editorialAssessment.decisionLabel || null,
+      decisionSummary: editorialAssessment.decisionSummary || null,
+      bestFor: editorialAssessment.bestFor || null,
+      notFor: editorialAssessment.notFor || null,
+      reasonWhyItMatters: editorialAssessment.reasonWhyItMatters || "",
+      estimatedValueText: editorialAssessment.estimatedValueText || null,
+      difficultyLevel: editorialAssessment.difficultyLevel || null,
+      availabilityScope: editorialAssessment.availabilityScope || null,
+      riskNote: editorialAssessment.riskNote || null,
+      lastVerifiedAt: campaign.lastVerifiedAt || null,
+      requirements: campaign.requirements.map((requirement) => requirement.text),
+      sourceId: primarySource ? primarySource.source_id : null,
+      sourceTitle: primarySource ? primarySource.title || null : null,
+      sourceUrl: primarySource ? primarySource.url || null : null,
+      sourceCheckedAt: primarySource ? primarySource.checked_at || null : null,
+      sourceEvidenceNote: primarySource ? primarySource.evidence_note || null : null
+    };
+  }
+
+  function campaignDraftFromForm(form) {
+    return collectCampaignFormData(new FormData(form), { id: "" }, null);
+  }
+
+  function campaignReadiness(payload) {
+    const checks = [
+      {
+        label: "Tittel",
+        complete: Boolean(payload.title),
+        severity: "blocker",
+        help: "Må være konkret nok til å forstå tilbudet."
+      },
+      {
+        label: "Kort beskrivelse",
+        complete: Boolean(payload.summary),
+        severity: "blocker",
+        help: "Brukes i liste og detalj."
+      },
+      {
+        label: "Detaljer",
+        complete: Boolean(payload.details),
+        severity: "blocker",
+        help: "Forklar vilkår og hvordan tilbudet fungerer."
+      },
+      {
+        label: "Program",
+        complete: Boolean(payload.primaryProgramId),
+        severity: "blocker",
+        help: "EuroBonus eller Trumf må være valgt."
+      },
+      {
+        label: "Kilde",
+        complete: Boolean(payload.sourceId && payload.sourceUrl && isHttpsUrl(payload.sourceUrl)),
+        severity: "blocker",
+        help: "Publisering krever valgt kilde og https-lenke."
+      },
+      {
+        label: "Kontrollert",
+        complete: Boolean(payload.lastVerifiedAt),
+        severity: "blocker",
+        help: "Sett når kampanjen sist ble verifisert."
+      },
+      {
+        label: "Beslutning",
+        complete: Boolean(payload.decisionLabel && payload.decisionSummary),
+        severity: "blocker",
+        help: "Brukeren trenger en kort konklusjon."
+      },
+      {
+        label: "Hvorfor",
+        complete: Boolean(payload.reasonWhyItMatters),
+        severity: "blocker",
+        help: "Redaksjonell begrunnelse må være tydelig."
+      },
+      {
+        label: "Krav",
+        complete: payload.requirements.length > 0,
+        severity: "warning",
+        help: "Anbefalt før publisering, særlig for sporingsvilkår."
+      },
+      {
+        label: "Passer for",
+        complete: Boolean(payload.bestFor && payload.notFor),
+        severity: "warning",
+        help: "Gjør vurderingen lettere å bruke."
+      }
+    ];
+    const blockers = checks.filter((check) => check.severity === "blocker" && !check.complete);
+    const warnings = checks.filter((check) => check.severity === "warning" && !check.complete);
+    const completeCount = checks.filter((check) => check.complete).length;
+
+    return {
+      checks,
+      blockers,
+      warnings,
+      completeCount,
+      totalCount: checks.length,
+      isPublishReady: blockers.length === 0,
+      level: blockers.length ? "blocked" : warnings.length ? "warning" : "ready"
+    };
+  }
+
+  function renderCampaignReadiness(readiness) {
+    const heading = readiness.blockers.length
+      ? `${readiness.blockers.length} blokkerende mangler`
+      : readiness.warnings.length
+        ? `${readiness.warnings.length} punkter bør sjekkes`
+        : "Klar til publisering";
+
+    return `
+      <div class="readiness-header">
+        <div>
+          <span class="readiness-kicker">Publiseringssjekk</span>
+          <strong>${escapeHtml(heading)}</strong>
+        </div>
+        <span class="readiness-pill ${escapeAttribute(readiness.level)}">
+          ${escapeHtml(readinessLabel(readiness))}
+        </span>
+      </div>
+      <div class="readiness-grid">
+        ${readiness.checks
+          .map(
+            (check) => `
+              <div class="readiness-item ${check.complete ? "complete" : check.severity}">
+                <span aria-hidden="true">${check.complete ? "✓" : check.severity === "blocker" ? "!" : "?"}</span>
+                <div>
+                  <strong>${escapeHtml(check.label)}</strong>
+                  <small>${escapeHtml(check.help)}</small>
+                </div>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function updateCampaignDraftAssist(form) {
+    const readiness = campaignReadiness(campaignDraftFromForm(form));
+    const readinessContainer = form.querySelector("#campaign-readiness");
+
+    if (readinessContainer) {
+      readinessContainer.innerHTML = renderCampaignReadiness(readiness);
+    }
+
+    updatePublishButtonState(form, readiness);
+  }
+
   function validateCampaignPayload(payload) {
     const errors = [];
 
@@ -2564,7 +2873,7 @@
       });
 
       applyEditorialSuggestion(form, suggestion);
-      updatePublishButtonState(form);
+      updateCampaignDraftAssist(form);
       setMessage(
         elements.campaignMessage,
         suggestion.generatedBy === "openai"
@@ -2601,30 +2910,21 @@
     }
   }
 
-  function updatePublishButtonState(form) {
+  function updatePublishButtonState(form, readiness) {
     const publishButton = form.querySelector('[data-publish-action="publish"]');
     if (!publishButton) {
       return;
     }
 
-    const formData = new FormData(form);
-    const canPublish = Boolean(
-      String(formData.get("title") || "").trim()
-        && String(formData.get("summary") || "").trim()
-        && String(formData.get("details") || "").trim()
-        && String(formData.get("primaryProgramId") || "").trim()
-        && String(formData.get("lastVerifiedAt") || "").trim()
-        && String(formData.get("sourceId") || "").trim()
-        && isHttpsUrl(String(formData.get("sourceUrl") || "").trim())
-        && String(formData.get("decisionLabel") || "").trim()
-        && String(formData.get("decisionSummary") || "").trim()
-        && String(formData.get("reasonWhyItMatters") || "").trim()
-    );
+    const resolvedReadiness = readiness || campaignReadiness(campaignDraftFromForm(form));
+    const canPublish = resolvedReadiness.isPublishReady;
 
     publishButton.disabled = !canPublish;
     publishButton.title = canPublish
-      ? ""
-      : "Publisering krever tittel, beskrivelse, detaljer, bonusprogram, sist verifisert, https-kilde, beslutning, kort konklusjon og redaksjonell begrunnelse.";
+      ? resolvedReadiness.warnings.length
+        ? "Kan publiseres, men gule punkter bør være kontrollert manuelt først."
+        : ""
+      : `Publisering blokkert: ${resolvedReadiness.blockers.map((check) => check.label).join(", ")}.`;
   }
 
   function updateStoreEarningPublishButtonState(form, readiness) {

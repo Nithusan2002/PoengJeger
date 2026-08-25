@@ -64,6 +64,29 @@
           </div>
         </section>
 
+        <section id="ops-overview" class="ops-overview hidden" aria-label="Operativ oversikt">
+          <article class="ops-card">
+            <span class="ops-label">Nye funn</span>
+            <strong id="ops-queue-count">0</strong>
+            <small id="ops-queue-note">Kandidater som venter.</small>
+          </article>
+          <article class="ops-card">
+            <span class="ops-label">Butikk-drafts</span>
+            <strong id="ops-store-count">0</strong>
+            <small id="ops-store-note">Satser til kontroll.</small>
+          </article>
+          <article class="ops-card">
+            <span class="ops-label">Kampanje-drafts</span>
+            <strong id="ops-campaign-count">0</strong>
+            <small id="ops-campaign-note">Utkast til publisering.</small>
+          </article>
+          <article class="ops-card quiet">
+            <span class="ops-label">Fokus</span>
+            <strong id="ops-focus-label">Kø</strong>
+            <small id="ops-focus-note">Lag draft eller avvis.</small>
+          </article>
+        </section>
+
         <section id="auth-panel" class="panel auth-panel">
           <div class="panel-header">
             <h2>Intern innlogging</h2>
@@ -133,6 +156,7 @@
           </div>
 
           <div id="queue-message" class="message muted">Logg inn for å laste kandidater.</div>
+          <div id="queue-workbar" class="workbar"></div>
 
           <div class="content-grid">
             <div class="queue-list-shell">
@@ -170,6 +194,7 @@
           </div>
 
           <div id="campaign-message" class="message muted">Logg inn for å laste kampanjer.</div>
+          <div id="campaign-workbar" class="workbar"></div>
 
           <div class="content-grid">
             <div class="queue-list-shell">
@@ -206,6 +231,7 @@
           </div>
 
           <div id="store-earning-message" class="message muted">Logg inn for å laste butikkopptjening.</div>
+          <div id="store-earning-workbar" class="workbar"></div>
 
           <div class="content-grid">
             <div class="queue-list-shell">

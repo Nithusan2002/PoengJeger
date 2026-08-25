@@ -252,6 +252,50 @@ button:disabled {
   font-size: 0.82rem;
 }
 
+.ops-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ops-overview.compact {
+  display: none;
+}
+
+.ops-card {
+  display: grid;
+  gap: 5px;
+  min-height: 112px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.ops-card.quiet {
+  background: var(--surface-raised);
+}
+
+.ops-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ops-card strong {
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+  line-height: 1;
+}
+
+.ops-card small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .nav-item {
   display: grid;
   gap: 3px;
@@ -476,6 +520,46 @@ button:disabled {
   border-color: rgba(14, 117, 95, 0.18);
 }
 
+.workbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+}
+
+.workbar:empty {
+  display: none;
+}
+
+.workbar-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0.38rem 0.62rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+
+.workbar-metric strong {
+  color: var(--accent-strong);
+  font-size: 1rem;
+}
+
+.workbar-metric span,
+.workbar-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.workbar-hint {
+  margin-left: auto;
+  line-height: 1.35;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(320px, 0.42fr) minmax(0, 1fr);
@@ -650,6 +734,25 @@ button:disabled {
   background: var(--surface-raised);
 }
 
+.priority-section {
+  border-color: rgba(17, 107, 140, 0.28);
+  background: var(--accent-soft);
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-help {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
 .detail-copy p,
 .detail-copy a {
   margin: 0;
@@ -748,6 +851,11 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-raised);
+}
+
+.campaign-readiness,
+.store-readiness {
+  border-color: var(--border-strong);
 }
 
 .readiness-header strong {
@@ -1004,6 +1112,10 @@ code {
     flex-direction: column;
   }
 
+  .ops-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .personal-actions {
     justify-content: flex-start;
   }
@@ -1049,6 +1161,19 @@ code {
 
   .workspace-nav {
     grid-template-columns: 1fr;
+  }
+
+  .ops-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-card {
+    min-height: auto;
+  }
+
+  .workbar-hint {
+    width: 100%;
+    margin-left: 0;
   }
 
   .panel {
