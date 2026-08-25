@@ -466,6 +466,7 @@
         "parser_key",
         "source_name",
         "suggested_program_name",
+        "suggested_category_id",
         "suggested_category_name"
       ].join(",")
     );
@@ -642,6 +643,7 @@
       parserKey: candidate.parser_key,
       sourceName: candidate.source_name,
       suggestedProgramName: candidate.suggested_program_name,
+      suggestedCategoryId: candidate.suggested_category_id,
       suggestedCategoryName: candidate.suggested_category_name
     };
   }
@@ -991,12 +993,27 @@
     elements.detailPanel.classList.remove("empty");
     const isStoreEarning = isStoreEarningCandidate(candidate);
     const canPromote = !candidate.promotedCampaignId && !candidate.promotedStoreEarningRateId;
+    const canReject = canPromote && candidate.status !== "rejected";
     const promotionAction = isStoreEarning
-      ? `<button type="button" class="secondary" data-action="promote_store_earning">Promoter til butikkopptjening</button>`
-      : `<button type="button" class="secondary" data-action="promote">Promoter til draft</button>`;
+      ? `<button type="button" data-action="promote_store_earning">Lag butikkdraft</button>`
+      : `<button type="button" data-action="promote">Lag kampanjedraft</button>`;
     const promotionHelp = isStoreEarning
-      ? "Dette er et butikk-/satsfunn. Promotering oppretter draft i Butikker, ikke en kampanje."
-      : "Dette er en kampanjekandidat. Promotering oppretter kampanjeutkast.";
+      ? "Draften åpnes i Butikker før publisering."
+      : "Draften åpnes i Kampanjer før publisering.";
+    const categoryControl = isStoreEarning && canPromote
+      ? `
+        <section>
+          <h3>Kategori</h3>
+          <label class="field">
+            <span>Velg før butikkdraft lages</span>
+            <select id="candidate-store-category-input">
+              <option value="">Ingen valgt</option>
+              ${renderSelectOptions(state.categories, candidate.suggestedCategoryId)}
+            </select>
+          </label>
+        </section>
+      `
+      : "";
     elements.detailPanel.innerHTML = `
       <div class="detail-copy">
         <div class="badge-row">
@@ -1008,18 +1025,12 @@
         <div>
           <h2>${escapeHtml(candidate.title)}</h2>
           <p>${escapeHtml(candidate.summary)}</p>
-        </div>
-
-        <section>
-          <h3>Metadata</h3>
-          <div class="detail-meta">
-            <span>Kilde: ${escapeHtml(candidate.sourceName)}</span>
+          <div class="candidate-source-line">
+            <span>${escapeHtml(candidate.sourceName)}</span>
             <span>•</span>
-            <span>Ingest: ${escapeHtml(candidate.ingestKind)}</span>
-            <span>•</span>
-            <span>Oppdaget: ${formatDateTime(candidate.detectedAt)}</span>
+            <span>Oppdaget ${formatDateTime(candidate.detectedAt)}</span>
           </div>
-        </section>
+        </div>
 
         <section>
           <h3>Kildelenke</h3>
@@ -1028,12 +1039,22 @@
           </a>
         </section>
 
-        <section>
-          <h3>Review-notat</h3>
-          <textarea id="review-note-input" rows="5" placeholder="Kort note til intern vurdering...">${escapeHtml(
-            candidate.reviewNote
-          )}</textarea>
-        </section>
+        ${categoryControl}
+
+        <details class="optional-detail">
+          <summary>Mer</summary>
+          <section>
+            <h3>Intern note</h3>
+            <textarea id="review-note-input" rows="4" placeholder="Valgfritt notat...">${escapeHtml(
+              candidate.reviewNote
+            )}</textarea>
+          </section>
+          <div class="detail-meta">
+            <span>Status: ${escapeHtml(STATUS_LABELS[candidate.status] || candidate.status)}</span>
+            <span>•</span>
+            <span>Ingest: ${escapeHtml(candidate.ingestKind)}</span>
+          </div>
+        </details>
 
         ${
           candidate.promotedCampaignId
@@ -1048,11 +1069,8 @@
 
         <div class="detail-actions">
           <div class="action-row">
-            <button type="button" data-action="approved">Godkjenn</button>
-            <button type="button" class="danger" data-action="rejected">Avvis</button>
-          </div>
-          <div class="action-row">
             ${canPromote ? promotionAction : ""}
+            ${canReject ? `<button type="button" class="danger" data-action="rejected">Avvis</button>` : ""}
           </div>
           <span class="help">${escapeHtml(promotionHelp)} Publisering skjer fortsatt separat.</span>
         </div>
@@ -1061,7 +1079,8 @@
 
     elements.detailPanel.querySelectorAll("button[data-action]").forEach((button) => {
       button.addEventListener("click", async function () {
-        const note = elements.detailPanel.querySelector("#review-note-input").value.trim();
+        const noteInput = elements.detailPanel.querySelector("#review-note-input");
+        const note = noteInput ? noteInput.value.trim() : "";
         const action = button.getAttribute("data-action");
         const originalLabel = button.textContent;
         button.disabled = true;
@@ -1083,10 +1102,12 @@
             await refreshCampaigns();
             setActivePanel("campaign-panel");
           } else if (action === "promote_store_earning") {
+            const categoryInput = elements.detailPanel.querySelector("#candidate-store-category-input");
             const storeEarningRateId = await apiRequest("/rest/v1/rpc/promote_ingestion_candidate_to_store_earning", {
               method: "POST",
               body: {
                 p_candidate_id: candidate.id,
+                p_category_id: categoryInput ? emptyToNull(categoryInput.value) : null,
                 p_review_note: note || null
               }
             });

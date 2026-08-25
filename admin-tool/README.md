@@ -87,10 +87,10 @@ select public.grant_editorial_role(
 - viser en personlig `Dagens jobb`-stripe for én adminbruker med direktehopp til nye funn, butikk-drafts og kampanje-drafts
 - henter `admin_ingestion_candidate_queue`
 - kjører `ingest-campaign-candidates` manuelt for valgte kilder med innlogget admin/editor-token
-- filtrerer på de operative statusene `new`, `approved`, `rejected` og `promoted`
-- setter enkel kandidatstatus via `set_ingestion_candidate_status(...)`
-- promoterer kampanjekandidater til `draft` via `promote_ingestion_candidate_to_campaign(...)`
-- promoterer Trumf-/SAS-kandidater til draft-butikkopptjening via `promote_ingestion_candidate_to_store_earning(...)` og åpner den nye draften direkte
+- filtrerer på de operative statusene `new`, `rejected`, `promoted` og alle
+- avviser irrelevante kandidater via `set_ingestion_candidate_status(...)`
+- lager kampanjedraft via `promote_ingestion_candidate_to_campaign(...)`
+- lager Trumf-/SAS-butikkdraft via `promote_ingestion_candidate_to_store_earning(...)`, kan sette kategori i samme steg og åpner den nye draften direkte
 - viser og redigerer butikkopptjening fra `store_earning_rates`
 - viser review-status for butikkopptjening med blokkerende mangler og gule kontrollpunkter
 - publiserer kontrollerte butikker og satser uten SQL Editor, med egen `Publiser og neste draft`-flyt for rask review
@@ -138,6 +138,8 @@ kampanjeperioder eller sporingsforbehold.
 For raskere daglig arbeid åpner køen på nye kandidater, kampanjer og
 butikkopptjening åpner på draft, promotering til butikkopptjening hopper direkte
 til den nye draften, og `Publiser og neste draft` velger neste ubehandlede sats.
+Kandidatkøen viser bare handlingene som trengs for én admin: lag draft eller
+avvis. Interne review-notater og teknisk ingest-metadata ligger bak `Mer`.
 
 ## Bevisst ikke med ennå
 

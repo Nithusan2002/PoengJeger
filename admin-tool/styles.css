@@ -656,9 +656,36 @@ button:disabled {
   line-height: 1.55;
 }
 
+.candidate-source-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
 .detail-copy a {
   color: var(--accent);
   word-break: break-word;
+}
+
+.optional-detail {
+  display: grid;
+  gap: 12px;
+}
+
+.optional-detail summary {
+  width: max-content;
+  cursor: pointer;
+  color: var(--muted-strong);
+  font-weight: 800;
+}
+
+.optional-detail[open] {
+  display: grid;
+  gap: 12px;
 }
 
 .detail-form {

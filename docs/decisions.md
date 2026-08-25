@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-023: Adminflaten optimaliseres for én personlig administrator
+- Status: Vedtatt
+- Bakgrunn: Poengjeger administreres foreløpig av én person. En flertrinns redaksjonell kø med synlige godkjenningsstatuser, review-notater og teknisk metadata øker friksjon uten å gi tilsvarende kontroll i MVP.
+- Beslutning: Adminflaten skal prioritere daglige handlinger: hente kandidater, lage riktig draft, avvise irrelevante funn og publisere kontrollerte butikk-/kampanjedrafts. Mellomstatuser og interne notater kan beholdes i datamodellen, men skal ikke dominere standard-UI.
+- Konsekvens: Panelet blir raskere å bruke og mindre redaksjonssystem. Hvis flere redaktører kommer inn senere, kan skjulte reviewfelt og eksisterende statuser hentes frem igjen uten ny datamodell.
+
 ## ADR-022: Butikkorienterte kandidater kan promoteres til draft-butikkopptjening
 - Status: Vedtatt
 - Bakgrunn: Trumf Netthandel og SAS EuroBonus Shopping produserer primært butikk-/satsfunn, ikke fullverdige kampanjer. Hvis alle slike funn må promoteres til kampanjeutkast, blir redaksjonsflyten feil modellert og appens viktigste "sjekk før du handler"-flate får for lite verifisert butikkopptjening.

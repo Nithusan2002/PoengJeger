@@ -23,7 +23,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 2. Verifiser den nye skannbare feeden visuelt med representative kampanjer, Dynamic Type, mørk modus og backenddata.
 3. Juster eksisterende SwiftUI-flyt mot `docs/design-and-user-flow.md`, spesielt Hjem, butikksøk, butikkside, Guide og kampanjedetalj.
 4. Velg og analyser eksplisitt godkjente kilder for EuroBonus og Trumf før automatisert overvåking utvides.
-5. Stram inn adminverktøyet med bedre session-håndtering, rolleadministrasjon og QA før bredere intern bruk.
+5. Stram inn adminverktøyet videre med bedre session-håndtering og QA før bredere intern bruk. Første forenkling er gjort for én admin: kandidatkøen prioriterer lag draft/avvis fremfor flertrinns review.
 
 ## Ikke i MVP uten ny beslutning
 
