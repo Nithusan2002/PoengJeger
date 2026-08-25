@@ -96,6 +96,7 @@
     queueList: document.querySelector("#queue-list"),
     queueMessage: document.querySelector("#queue-message"),
     queuePanel: document.querySelector("#queue-panel"),
+    queueTypeFilter: document.querySelector("#queue-type-filter"),
     queueWorkbar: document.querySelector("#queue-workbar"),
     refreshButton: document.querySelector("#refresh-button"),
     sessionPill: document.querySelector("#session-pill"),
@@ -122,6 +123,7 @@
   elements.programGuideRefreshButton.addEventListener("click", refreshProgramGuides);
   elements.signOutButton.addEventListener("click", signOut);
   elements.statusFilter.addEventListener("change", refreshQueue);
+  elements.queueTypeFilter.addEventListener("change", onQueueTypeFilterChange);
   elements.campaignStatusFilter.addEventListener("change", refreshCampaigns);
   elements.storeEarningStatusFilter.addEventListener("change", refreshStoreEarningRates);
   elements.workspaceNavButtons.forEach((button) => {
@@ -249,25 +251,26 @@
     try {
       const status = elements.statusFilter.value;
       state.candidates = await fetchQueue(status);
+      const visibleCandidates = queueFilteredCandidates();
 
-      if (!state.candidates.length) {
+      if (!visibleCandidates.length) {
         state.selectedCandidateId = null;
         renderQueue();
-        renderEmptyDetail("Ingen kandidater matcher filteret akkurat nå.");
-        setMessage(elements.queueMessage, "Ingen kandidater i valgt filter.", "muted");
+        renderEmptyDetail("Ingen kandidater matcher filtrene akkurat nå.");
+        setMessage(elements.queueMessage, "Ingen kandidater i valgte filtre.", "muted");
         updatePersonalDashboard();
         return;
       }
 
-      if (!state.candidates.some((candidate) => candidate.id === state.selectedCandidateId)) {
-        state.selectedCandidateId = state.candidates[0].id;
+      if (!visibleCandidates.some((candidate) => candidate.id === state.selectedCandidateId)) {
+        state.selectedCandidateId = visibleCandidates[0].id;
       }
 
       renderQueue();
       renderDetail();
       setMessage(
         elements.queueMessage,
-        `Viser ${state.candidates.length} kandidat${state.candidates.length === 1 ? "" : "er"}.`,
+        `Viser ${visibleCandidates.length} av ${state.candidates.length} kandidat${state.candidates.length === 1 ? "" : "er"}.`,
         "success"
       );
       updatePersonalDashboard();
@@ -440,6 +443,7 @@
   async function runPersonalIngestion() {
     setActivePanel("queue-panel");
     elements.statusFilter.value = "new";
+    elements.queueTypeFilter.value = "";
     elements.ingestLimitInput.value = "10";
     await runIngestionFromAdmin();
   }
@@ -447,6 +451,7 @@
   async function openPersonalTarget(panelId) {
     if (panelId === "queue-panel") {
       elements.statusFilter.value = "new";
+      elements.queueTypeFilter.value = "";
       await refreshQueue();
     } else if (panelId === "campaign-panel") {
       elements.campaignStatusFilter.value = "draft";
@@ -457,6 +462,32 @@
     }
 
     setActivePanel(panelId);
+  }
+
+  function onQueueTypeFilterChange() {
+    const visibleCandidates = queueFilteredCandidates();
+
+    if (!visibleCandidates.length) {
+      state.selectedCandidateId = null;
+      renderQueue();
+      renderEmptyDetail("Ingen kandidater matcher typefilteret.");
+      setMessage(elements.queueMessage, "Ingen kandidater i valgt typefilter.", "muted");
+      updatePersonalDashboard();
+      return;
+    }
+
+    if (!visibleCandidates.some((candidate) => candidate.id === state.selectedCandidateId)) {
+      state.selectedCandidateId = visibleCandidates[0].id;
+    }
+
+    renderQueue();
+    renderDetail();
+    setMessage(
+      elements.queueMessage,
+      `Viser ${visibleCandidates.length} av ${state.candidates.length} kandidat${state.candidates.length === 1 ? "" : "er"}.`,
+      "success"
+    );
+    updatePersonalDashboard();
   }
 
   async function fetchQueue(status) {
@@ -860,15 +891,18 @@
       return;
     }
 
-    const total = state.candidates.length;
-    const storeCandidates = state.candidates.filter(isStoreEarningCandidate).length;
-    const promoted = state.candidates.filter((candidate) => (
+    const visibleCandidates = queueFilteredCandidates();
+    const total = visibleCandidates.length;
+    const storeCandidates = visibleCandidates.filter(isStoreEarningCandidate).length;
+    const campaignCandidates = visibleCandidates.filter((candidate) => !isStoreEarningCandidate(candidate)).length;
+    const promoted = visibleCandidates.filter((candidate) => (
       candidate.promotedCampaignId || candidate.promotedStoreEarningRateId
     )).length;
 
     elements.queueWorkbar.innerHTML = `
       ${renderWorkbarMetric("I filteret", total)}
       ${renderWorkbarMetric("Butikkfunn", storeCandidates)}
+      ${renderWorkbarMetric("Kampanjefunn", campaignCandidates)}
       ${renderWorkbarMetric("Promotert", promoted)}
       <span class="workbar-hint">Standardjobb: åpne første kandidat, lag draft eller avvis.</span>
     `;
@@ -948,14 +982,37 @@
     elements.sessionPill.textContent = `${email} · ${role}${expiry}`;
   }
 
+  function queueFilteredCandidates() {
+    const selectedType = elements.queueTypeFilter.value;
+
+    if (!selectedType) {
+      return state.candidates;
+    }
+
+    return state.candidates.filter((candidate) => queueTypeMatches(candidate, selectedType));
+  }
+
+  function queueTypeMatches(candidate, selectedType) {
+    if (selectedType === "store_earning") {
+      return isStoreEarningCandidate(candidate);
+    }
+
+    if (selectedType === "campaign") {
+      return !isStoreEarningCandidate(candidate);
+    }
+
+    return true;
+  }
+
   function renderQueue() {
     elements.queueList.innerHTML = "";
+    const visibleCandidates = queueFilteredCandidates();
 
-    if (!state.candidates.length) {
+    if (!visibleCandidates.length) {
       return;
     }
 
-    state.candidates.forEach((candidate) => {
+    visibleCandidates.forEach((candidate) => {
       const item = document.createElement("li");
       item.className = "queue-item";
       if (candidate.id === state.selectedCandidateId) {
