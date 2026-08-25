@@ -250,6 +250,18 @@ private struct EarningRateCard: View {
                     .foregroundStyle(PoengjegerTheme.warning)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            if let url = rate.handoffURL ?? rate.sourceURL {
+                Link(destination: url) {
+                    Label("Start hos \(destinationName(for: rate, url: url))", systemImage: "arrow.up.forward.app.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(PoengjegerTheme.primary)
+                .padding(.top, 4)
+                .accessibilityHint("Åpner \(destinationName(for: rate, url: url)) eksternt.")
+            }
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -260,7 +272,23 @@ private struct EarningRateCard: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(rate.isBaseRate ? PoengjegerTheme.border : PoengjegerTheme.campaign.opacity(0.28), lineWidth: 1)
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func destinationName(for rate: StoreEarningRate, url: URL) -> String {
+        if let sourceTitle = rate.sourceTitle, !sourceTitle.isEmpty {
+            return sourceTitle
+        }
+
+        let host = url.host()?.localizedLowercase ?? ""
+        if host.contains("trumf") {
+            return "Trumf"
+        }
+        if host.contains("sas") || host.contains("eurobonus") {
+            return "EuroBonus"
+        }
+
+        return rate.method.name
     }
 }
 

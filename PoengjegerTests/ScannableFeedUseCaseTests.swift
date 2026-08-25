@@ -154,8 +154,18 @@ struct ScannableFeedUseCaseTests {
         let stores = SampleData.stores
 
         #expect(StoreSearchUseCase().search(stores: stores, query: "elkjøp").map(\.name) == ["Elkjøp"])
+        #expect(StoreSearchUseCase().search(stores: stores, query: "elkjop").map(\.name) == ["Elkjøp"])
         #expect(StoreSearchUseCase().search(stores: stores, query: "dagligvare").map(\.name) == ["Meny"])
         #expect(StoreSearchUseCase().search(stores: stores, query: "gaming").map(\.name) == ["Komplett"])
+    }
+
+    @Test
+    func storeSearchRanksIntentMatchesBeforeAlphabeticalOrder() {
+        let stores = SampleData.stores
+
+        #expect(StoreSearchUseCase().search(stores: stores, query: "elkjp").map(\.name) == ["Elkjøp"])
+        #expect(StoreSearchUseCase().search(stores: stores, query: "telefon").map(\.name) == ["Elkjøp"])
+        #expect(StoreSearchUseCase().search(stores: stores, query: "elektronikk").map(\.name) == ["Elkjøp", "Komplett"])
     }
 
     @Test
