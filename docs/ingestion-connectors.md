@@ -61,10 +61,12 @@ curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?source=sas_eurob
   gjettes ikke.
 - Kandidater får `suggested_category_id` ved innhenting når kilden er
   butikkorientert. Tydelige nøkkelord/domener kan gi mer spesifikke kategorier
-  som `Dagligvare`, `Hotell`, `Reise`, `Telekom`, `Kredittkort` eller
-  `Abonnement`. Ellers brukes `Netthandel` som trygg standard for
-  shoppingportal-funn. Forslaget lagres også i metadata og kan overstyres i
-  admin før draft opprettes.
+  som `Elektronikk`, `Klær og sko`, `Sport og fritid`, `Helse og skjønnhet`,
+  `Barn og familie`, `Hus og hjem`, `Bil og motor`, `Bøker og medier`,
+  `Dyr og kjæledyr`, `Programvare`, `Dagligvare`, `Hotell`, `Reise`, `Telekom`,
+  `Kredittkort` eller `Abonnement`. Ellers brukes `Annet` som standard dersom
+  kategorien finnes, med `Netthandel` som bakoverkompatibel fallback. Forslaget
+  lagres også i metadata og kan overstyres i admin før draft opprettes.
 - Kandidater inneholder rå JSON/HTML-utdrag per funn i `raw_content` og
   kilde-URL i `source_url`.
 - Det publiseres ingen kampanjer automatisk.

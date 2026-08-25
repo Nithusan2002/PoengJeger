@@ -158,6 +158,24 @@ private func categorySubtitle(for category: String) -> String {
     switch category.localizedLowercase {
     case let value where value.contains("elektronikk"):
         return "TV, lyd, data og hvitevarer"
+    case let value where value.contains("klær") || value.contains("sko"):
+        return "Mote, sko og tilbehør"
+    case let value where value.contains("sport") || value.contains("fritid"):
+        return "Trening, tur og utstyr"
+    case let value where value.contains("helse") || value.contains("skjønnhet"):
+        return "Apotek, velvære og hudpleie"
+    case let value where value.contains("barn") || value.contains("familie"):
+        return "Baby, barn og familiehandel"
+    case let value where value.contains("hus") || value.contains("hjem"):
+        return "Interiør, kjøkken, hage og verktøy"
+    case let value where value.contains("bil") || value.contains("motor"):
+        return "Bildeler, dekk og bilutstyr"
+    case let value where value.contains("bøker") || value.contains("medier"):
+        return "Bøker, magasiner og medier"
+    case let value where value.contains("dyr") || value.contains("kjæledyr"):
+        return "Dyreutstyr og kjæledyr"
+    case let value where value.contains("programvare"):
+        return "Apper, sikkerhet og programvare"
     case let value where value.contains("hotell"):
         return "Overnatting i inn- og utland"
     case let value where value.contains("reise"):
@@ -175,6 +193,24 @@ private func iconName(for category: String) -> String {
     switch category.localizedLowercase {
     case let value where value.contains("elektronikk"):
         return "desktopcomputer"
+    case let value where value.contains("klær") || value.contains("sko"):
+        return "tshirt"
+    case let value where value.contains("sport") || value.contains("fritid"):
+        return "figure.run"
+    case let value where value.contains("helse") || value.contains("skjønnhet"):
+        return "cross.case"
+    case let value where value.contains("barn") || value.contains("familie"):
+        return "figure.2.and.child.holdinghands"
+    case let value where value.contains("hus") || value.contains("hjem"):
+        return "house"
+    case let value where value.contains("bil") || value.contains("motor"):
+        return "car"
+    case let value where value.contains("bøker") || value.contains("medier"):
+        return "book"
+    case let value where value.contains("dyr") || value.contains("kjæledyr"):
+        return "pawprint"
+    case let value where value.contains("programvare"):
+        return "app.badge"
     case let value where value.contains("daglig"):
         return "basket"
     case let value where value.contains("reise") || value.contains("hotell"):
