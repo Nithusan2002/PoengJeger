@@ -19,6 +19,7 @@ type CandidateInput = {
   raw_content: string;
   normalized_hash: string;
   suggested_program_id: string | null;
+  suggested_category_id: string | null;
   status: "new";
   metadata: Record<string, unknown>;
 };
@@ -28,6 +29,11 @@ type IngestionRunRow = {
 };
 
 type BonusProgramRow = {
+  id: string;
+  slug: string;
+};
+
+type CampaignCategoryRow = {
   id: string;
   slug: string;
 };
@@ -74,6 +80,12 @@ type RememberStore = {
     type: "PERCENTAGE" | "NOK";
     description: string;
   }>;
+};
+
+type CategorySuggestion = {
+  id: string | null;
+  slug: string | null;
+  source: "keyword" | "default" | "unavailable";
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -139,11 +151,12 @@ Deno.serve(async (request) => {
 
   try {
     const programs = await loadBonusPrograms();
+    const categories = await loadCampaignCategories();
     const sources = await loadActiveSources(parserKeyFilter);
     const results = [];
 
     for (const source of sources) {
-      results.push(await runSource(source, programs, limitPerSource));
+      results.push(await runSource(source, programs, categories, limitPerSource));
     }
 
     return jsonResponse({
@@ -199,6 +212,7 @@ async function fetchRequesterRole(
 async function runSource(
   source: SourceRegistryRow,
   programs: Map<string, string>,
+  categories: Map<string, string>,
   limitPerSource: number,
 ) {
   const run = await createRun(source.id);
@@ -206,7 +220,7 @@ async function runSource(
   let skippedDuplicateCount = 0;
 
   try {
-    const candidates = await scrapeSource(source, programs, limitPerSource);
+    const candidates = await scrapeSource(source, programs, categories, limitPerSource);
     for (const candidate of candidates) {
       const inserted = await insertCandidateIfNew(candidate);
       if (inserted) {
@@ -246,19 +260,26 @@ async function runSource(
 async function scrapeSource(
   source: SourceRegistryRow,
   programs: Map<string, string>,
+  categories: Map<string, string>,
   limitPerSource: number,
 ): Promise<CandidateInput[]> {
   switch (source.parser_key) {
     case "trumf_netthandel":
-      return scrapeTrumf(source, programs.get("trumf") ?? null, limitPerSource);
+      return scrapeTrumf(
+        source,
+        programs.get("trumf") ?? null,
+        categories,
+        limitPerSource,
+      );
     case "sas_eurobonus_shopping":
       return scrapeSas(
         source,
         programs.get("sas-eurobonus") ?? null,
+        categories,
         limitPerSource,
       );
     case "remember_reward":
-      return scrapeRemember(source, null, limitPerSource);
+      return scrapeRemember(source, null, categories, limitPerSource);
     default:
       throw new Error(`Unsupported parser_key: ${source.parser_key ?? "null"}`);
   }
@@ -267,6 +288,7 @@ async function scrapeSource(
 async function scrapeTrumf(
   source: SourceRegistryRow,
   programId: string | null,
+  categories: Map<string, string>,
   limit: number,
 ): Promise<CandidateInput[]> {
   const feedUrl = source.base_url || TRUMF_FEED_URL;
@@ -280,6 +302,11 @@ async function scrapeTrumf(
       encodeURIComponent(merchant.urlName!)
     }`;
     const summary = merchant.cashbackDescription || merchant.basicRate || null;
+    const category = suggestMerchantCategory(categories, [
+      merchant.name,
+      merchant.urlName,
+      merchant.hostName,
+    ]);
     return {
       source_registry_id: source.id,
       source_url: sourceUrl,
@@ -293,12 +320,15 @@ async function scrapeTrumf(
         summary,
       ]),
       suggested_program_id: programId,
+      suggested_category_id: category.id,
       status: "new",
       metadata: {
         parser_key: source.parser_key,
         host_name: merchant.hostName ?? null,
         url_name: merchant.urlName,
         bonus_type: "cashback",
+        suggested_category_slug: category.slug,
+        suggested_category_source: category.source,
         missing_bonus_value: !summary,
         requires_editorial_review: true,
       },
@@ -309,6 +339,7 @@ async function scrapeTrumf(
 async function scrapeSas(
   source: SourceRegistryRow,
   programId: string | null,
+  categories: Map<string, string>,
   limit: number,
 ): Promise<CandidateInput[]> {
   const feedUrl = source.base_url || SAS_SHOPS_FEED_URL;
@@ -320,6 +351,12 @@ async function scrapeSas(
   return Promise.all(shops.map(async (shop) => {
     const summary = sasSummary(shop);
     const sourceUrl = sasSourceUrl(shop) || feedUrl;
+    const category = suggestMerchantCategory(categories, [
+      shop.name,
+      shop.slug,
+      String(shop.categoryId ?? ""),
+      stripHtml(shop.description ?? ""),
+    ]);
 
     return {
       source_registry_id: source.id,
@@ -335,6 +372,7 @@ async function scrapeSas(
         shop.campaign_ends_date,
       ]),
       suggested_program_id: programId,
+      suggested_category_id: category.id,
       status: "new",
       metadata: {
         parser_key: source.parser_key,
@@ -352,6 +390,8 @@ async function scrapeSas(
         handoff_url: sourceUrl,
         source_description_text: stripHtml(shop.description ?? ""),
         bonus_type: "points",
+        suggested_category_slug: category.slug,
+        suggested_category_source: category.source,
         missing_bonus_value: !summary,
         requires_editorial_review: true,
       },
@@ -391,6 +431,7 @@ function sasSourceUrl(shop: SasShopDetail): string | null {
 async function scrapeRemember(
   source: SourceRegistryRow,
   programId: string | null,
+  categories: Map<string, string>,
   limit: number,
 ): Promise<CandidateInput[]> {
   const pageUrl = source.base_url || REMEMBER_URL;
@@ -414,6 +455,10 @@ async function scrapeRemember(
     const sourceUrl = `https://www.remember.no/reward/rabatt/${
       encodeURIComponent(store.slug!)
     }`;
+    const category = suggestMerchantCategory(categories, [
+      store.name,
+      store.slug,
+    ]);
     return {
       source_registry_id: source.id,
       source_url: sourceUrl,
@@ -427,12 +472,15 @@ async function scrapeRemember(
         summary,
       ]),
       suggested_program_id: programId,
+      suggested_category_id: category.id,
       status: "new",
       metadata: {
         parser_key: source.parser_key,
         slug: store.slug,
         commission: store.commission ?? null,
         bonus_type: "cashback",
+        suggested_category_slug: category.slug,
+        suggested_category_source: category.source,
         missing_bonus_value: !summary,
         requires_editorial_review: true,
       },
@@ -469,6 +517,13 @@ async function loadBonusPrograms(): Promise<Map<string, string>> {
   return new Map(rows.map((row) => [row.slug, row.id]));
 }
 
+async function loadCampaignCategories(): Promise<Map<string, string>> {
+  const rows = await restRequest<CampaignCategoryRow[]>(
+    "/rest/v1/campaign_categories?select=id,slug",
+  );
+  return new Map(rows.map((row) => [row.slug, row.id]));
+}
+
 async function loadActiveSources(
   parserKeyFilter: string | null,
 ): Promise<SourceRegistryRow[]> {
@@ -490,6 +545,159 @@ async function loadActiveSources(
   return restRequest<SourceRegistryRow[]>(
     `/rest/v1/source_registry?${params.toString()}`,
   );
+}
+
+function suggestMerchantCategory(
+  categories: Map<string, string>,
+  values: Array<string | null | undefined>,
+): CategorySuggestion {
+  const haystack = normalizeSearchText(values.filter(Boolean).join(" "));
+  const matchedSlug = categorySlugFromKeywords(haystack);
+
+  if (matchedSlug && categories.has(matchedSlug)) {
+    return {
+      id: categories.get(matchedSlug) ?? null,
+      slug: matchedSlug,
+      source: "keyword",
+    };
+  }
+
+  if (categories.has("shopping")) {
+    return {
+      id: categories.get("shopping") ?? null,
+      slug: "shopping",
+      source: "default",
+    };
+  }
+
+  return {
+    id: null,
+    slug: null,
+    source: "unavailable",
+  };
+}
+
+function categorySlugFromKeywords(value: string): string | null {
+  const rules: Array<{ slug: string; terms: string[] }> = [
+    {
+      slug: "dagligvare",
+      terms: [
+        "dagligvare",
+        "grocery",
+        "matkasse",
+        "matvarer",
+        "meny",
+        "kiwi",
+        "spar",
+        "joker",
+        "oda",
+        "kolonial",
+        "godtlevert",
+        "adamsmatkasse",
+        "adams matkasse",
+        "morgenlevering",
+      ],
+    },
+    {
+      slug: "hotel",
+      terms: [
+        "hotel",
+        "hotell",
+        "hotels",
+        "overnatting",
+        "strawberry",
+        "scandic",
+        "thon",
+        "radisson",
+        "booking",
+      ],
+    },
+    {
+      slug: "reise",
+      terms: [
+        "reise",
+        "travel",
+        "flight",
+        "fly",
+        "tog",
+        "buss",
+        "ferie",
+        "cruise",
+        "leiebil",
+        "rentalcar",
+        "hertz",
+        "avis",
+        "vy",
+        "norwegian",
+      ],
+    },
+    {
+      slug: "telecom",
+      terms: [
+        "telekom",
+        "mobil",
+        "mobile",
+        "bredband",
+        "broadband",
+        "telia",
+        "telenor",
+        "onecall",
+        "talkmore",
+        "chilimobil",
+        "ice",
+      ],
+    },
+    {
+      slug: "credit-card",
+      terms: [
+        "kredittkort",
+        "creditcard",
+        "credit card",
+        "americanexpress",
+        "american express",
+        "mastercard",
+        "visa",
+        "amex",
+      ],
+    },
+    {
+      slug: "subscription",
+      terms: [
+        "abonnement",
+        "subscription",
+        "streaming",
+        "lydbok",
+        "storytel",
+        "bookbeat",
+        "viaplay",
+        "tv2play",
+        "disney",
+        "spotify",
+        "avisabonnement",
+      ],
+    },
+  ];
+
+  for (const rule of rules) {
+    if (rule.terms.some((term) => value.includes(normalizeSearchText(term)))) {
+      return rule.slug;
+    }
+  }
+
+  return null;
+}
+
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/æ/g, "ae")
+    .replace(/ø/g, "o")
+    .replace(/å/g, "a")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 async function createRun(sourceRegistryId: string): Promise<IngestionRunRow> {

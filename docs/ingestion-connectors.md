@@ -59,6 +59,12 @@ curl -X POST "$SUPABASE_FUNCTION_URL/ingest-campaign-candidates?source=sas_eurob
 - Duplikater stoppes med eksisterende `normalized_hash`-indeks.
 - Manglende bonusverdi markeres i `metadata.missing_bonus_value`; verdier
   gjettes ikke.
+- Kandidater får `suggested_category_id` ved innhenting når kilden er
+  butikkorientert. Tydelige nøkkelord/domener kan gi mer spesifikke kategorier
+  som `Dagligvare`, `Hotell`, `Reise`, `Telekom`, `Kredittkort` eller
+  `Abonnement`. Ellers brukes `Netthandel` som trygg standard for
+  shoppingportal-funn. Forslaget lagres også i metadata og kan overstyres i
+  admin før draft opprettes.
 - Kandidater inneholder rå JSON/HTML-utdrag per funn i `raw_content` og
   kilde-URL i `source_url`.
 - Det publiseres ingen kampanjer automatisk.
