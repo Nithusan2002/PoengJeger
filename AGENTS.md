@@ -22,6 +22,14 @@ Les `docs/product-brief.md` før produktrelaterte eller arkitektoniske endringer
 - Vurder tester ut fra risiko og omfang. Kjør relevante tester ved kodeendringer, skjemaendringer, sikkerhetskritiske endringer, større brukerflyter eller når brukeren ber om det. Ikke bruk tid eller tokens på testkjøring for rene dokumentasjons-/instruksjonsendringer, små analyser eller statusspørsmål. Ikke påstå at tester er kjørt når de ikke er det; rapporter kort når tester bevisst er hoppet over.
 - Oppdater `docs/decisions.md` ved større tekniske eller produktmessige beslutninger, og `docs/roadmap.md` når planlagt omfang påvirkes.
 
+## Token- og omfangsdisiplin
+
+- For korte spørsmål, statusforespørsler, vurderinger eller råd: svar direkte uten å lese flere filer, kjøre tester eller bruke Skills, med mindre det er nødvendig for korrekt svar.
+- Bruk Skills bare når oppgaven faktisk innebærer kodeendring, produktendring, databaseendring, kampanjeinnhold, release eller sikkerhetskritisk arbeid.
+- Ikke kjør tester, bygg eller omfattende repo-søk for rene avklaringer, med mindre brukeren ber om det.
+- Ikke oppdater dokumentasjon, roadmap, decisions eller Notion etter hver forespørsel. Gjør det bare ved klare, varige beslutninger eller statusendringer.
+- Ved usikkerhet: gjør minste nyttige handling først, og spør heller før større undersøkelser eller endringer.
+
 ## Teknisk utgangspunkt
 
 - SwiftUI og iOS først.
@@ -59,4 +67,6 @@ Forklar situasjonen før irreversible databaseendringer, sletting av vesentlig k
 
 ## Ferdigdefinisjon
 
-Rapporter hva som ble endret, berørte filer, Skills brukt når relevant, tester kjørt eller hvorfor tester ble hoppet over, antakelser samt gjenværende risiko eller oppfølging.
+For kode-, skjema-, produkt- eller releasearbeid: rapporter hva som ble endret, berørte filer, relevante Skills, tester kjørt eller hvorfor tester ble hoppet over, antakelser og gjenværende risiko.
+
+For små spørsmål, status, råd eller analyse uten endringer: svar kort og ikke bruk full ferdigdefinisjon.
