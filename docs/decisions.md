@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-024: Premium er foretrukket kommersiell retning, men betalingsmur venter
+- Status: Vedtatt
+- Bakgrunn: Poengjeger må kunne tjene penger uten å svekke tilliten til redaksjonell rangering og kampanjevurderinger. Affiliate og sponsing kan passe enkelte kampanjer, men skaper tydeligere interessekonflikter. Et premiumabonnement passer bedre med produktets verdi: spart tid, bedre prioritering og mer presise varsler for brukere som følger bonuskampanjer aktivt.
+- Beslutning: Premiumabonnement er foretrukket kommersiell retning for Poengjeger. Lanseringsappen skal likevel ha et reelt gratisprodukt med personlig feed, kampanjedetaljer, enkel filtrering, grunnleggende lagring/favoritter, begrensede relevante varsler og grunnleggende Guide-innhold. Betalingslogikk og hard betalingsmur bygges ikke før kjerneløkken viser gjentatt bruk eller tydelig etterspørsel etter premiumkandidater. Premiumkandidater er funksjoner som øker presisjon, frekvens eller dybde: flere varsler, lagrede filtre, historikk, dypere guider, tidlig varsling og ukentlig oppsummering.
+- Konsekvens: Produktet kan designes med en tydelig gratis/premium-grense uten å innføre App Store-abonnement i første lansering. MVP-en må instrumentere bruk av kampanjedetaljer, favoritter, varsler, filtre og Guide-innhold slik at premiumbeslutningen kan tas på faktisk bruk. Affiliate og kommersielle samarbeid kan vurderes som supplement senere, men skal ikke være hovedretning og må aldri påvirke redaksjonell rangering.
+
 ## ADR-023: Adminflaten optimaliseres for én personlig administrator
 - Status: Vedtatt
 - Bakgrunn: Poengjeger administreres foreløpig av én person. En flertrinns redaksjonell kø med synlige godkjenningsstatuser, review-notater og teknisk metadata øker friksjon uten å gi tilsvarende kontroll i MVP.
@@ -17,7 +23,6 @@
 - Bakgrunn: Kampanjefeed gir oversikt, men bygger ikke like tydelig vane som å sjekke Poengjeger rett før et kjøp. Den sterkeste brukerjobben er å finne riktig opptjeningsvei hos en butikk eller kategori før brukeren handler.
 - Beslutning: MVP-retningen dreies fra feed-først til butikk-/kategori-søk først. Hjem skal prioritere søk, butikksider skal vise vanlig opptjening, aktive kampanjer, alle mekanismer og beste redaksjonelt definerte kombinasjon, og "Slik gjør du det" skal føre direkte til riktig ekstern portal etter nødvendige advarsler. Kampanjefeeden beholdes som sekundær utforskflate.
 - Konsekvens: Datamodellen må utvides med butikker, opptjeningsmetoder, satser og kombinasjoner. Redaksjonelt arbeid flyttes delvis fra isolerte kampanjer til vedlikehold av butikkopptjening og handoff-steg. Første versjon bruker redaksjonelle kombinasjoner, ikke automatisk optimalisering.
-
 ## ADR-020: Kampanjer må ha eksplisitt redaksjonell beslutning
 - Status: Vedtatt
 - Bakgrunn: Poengjegers kjerneverdi er ikke å samle kampanjelenker, men å hjelpe brukeren å avgjøre raskt om en kampanje er relevant. Score, tittel og generell begrunnelse er ikke nok hvis feeden og detaljsiden ikke gir en tydelig konklusjon.
