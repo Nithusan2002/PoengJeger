@@ -669,6 +669,17 @@
         throw error;
       }
 
+      await sleep(500);
+      try {
+        const response = await fetchProgramGuidesWithColumns(PROGRAM_GUIDE_COLUMNS);
+        state.programGuideManualCopyAvailable = true;
+        return response.map(normalizeProgramGuide);
+      } catch (retryError) {
+        if (!isMissingProgramGuideManualCopyColumn(retryError)) {
+          throw retryError;
+        }
+      }
+
       const response = await fetchProgramGuidesWithColumns(PROGRAM_GUIDE_BASE_COLUMNS);
       state.programGuideManualCopyAvailable = false;
       return response.map(normalizeProgramGuide);
@@ -686,6 +697,12 @@
   function isMissingProgramGuideManualCopyColumn(error) {
     const message = String(error && error.message ? error.message : error);
     return PROGRAM_GUIDE_MANUAL_COPY_COLUMNS.some((column) => message.includes(`program_guides.${column}`));
+  }
+
+  function sleep(milliseconds) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, milliseconds);
+    });
   }
 
   function normalizeCandidate(candidate) {
@@ -2500,7 +2517,7 @@
     return `
       <div class="schema-notice">
         Databasen mangler de nye guidefeltene. Admin viser eksisterende innhold, men full manuell redigering krever migrasjonen
-        <code>20260826083000_add_program_guide_manual_display_copy.sql</code>.
+        <code>20260826063520_add_program_guide_manual_display_copy.sql</code>.
       </div>
     `;
   }
