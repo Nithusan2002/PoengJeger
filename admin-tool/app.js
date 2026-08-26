@@ -2167,8 +2167,14 @@
           <aside class="program-guide-preview-pane">
             <div class="preview-sticky">
               <div class="preview-heading">
-                <span>Forhåndsvisning</span>
-                <strong>${escapeHtml(program.name)}</strong>
+                <div>
+                  <span>Forhåndsvisning</span>
+                  <strong>${escapeHtml(program.name)}</strong>
+                </div>
+                <div class="preview-mode-tabs" aria-label="Preview mode">
+                  <span class="active">Mobil</span>
+                  <span>Artikkel</span>
+                </div>
               </div>
               <div id="program-guide-live-preview">
                 ${renderProgramGuidePreview(program, draft)}
@@ -2366,51 +2372,59 @@
     const riskIntro = guide.riskSectionIntro || "Ting som kan gjøre en god kampanje mindre god.";
 
     return `
-      <div class="program-preview-card">
-        <div class="program-preview-hero">
-          <div class="program-preview-mark">${escapeHtml(programInitials(program))}</div>
-          <div>
-            <span>${escapeHtml(guideKicker)} · ${escapeHtml(readingTimeLabel)}</span>
-            <h3>${escapeHtml(program.name)}</h3>
-            <p>${escapeHtml(intro)}</p>
+      <div class="program-preview-device">
+        <div class="program-preview-device-bar">
+          <span></span>
+          <strong>${escapeHtml(program.name)}</strong>
+          <span></span>
+        </div>
+
+        <article class="program-preview-card">
+          <header class="program-preview-hero">
+            <div class="program-preview-mark">${escapeHtml(programInitials(program))}</div>
+            <div>
+              <span>${escapeHtml(guideKicker)} · ${escapeHtml(readingTimeLabel)}</span>
+              <h3>${escapeHtml(program.name)}</h3>
+              <p>${escapeHtml(intro)}</p>
+            </div>
+          </header>
+
+          <div class="program-preview-metrics">
+            <div>
+              <span>Verdi per poeng</span>
+              <strong>${escapeHtml(valueLabel)}</strong>
+              <p>${escapeHtml(valueDetail)}</p>
+            </div>
+            <div>
+              <span>Utløp</span>
+              <strong>${escapeHtml(expirationLabel)}</strong>
+              <p>${escapeHtml(expirationDetail)}</p>
+            </div>
           </div>
-        </div>
 
-        <div class="program-preview-metrics">
-          <div>
-            <span>Verdi per poeng</span>
-            <strong>${escapeHtml(valueLabel)}</strong>
-            <p>${escapeHtml(valueDetail)}</p>
-          </div>
-          <div>
-            <span>Utløp</span>
-            <strong>${escapeHtml(expirationLabel)}</strong>
-            <p>${escapeHtml(expirationDetail)}</p>
-          </div>
-        </div>
+          <section class="program-preview-strategy">
+            <strong>${escapeHtml(strategyTitle)}</strong>
+            <p>${escapeHtml(strategy)}</p>
+          </section>
 
-        <div class="program-preview-section">
-          <span>${escapeHtml(earningTitle)}</span>
-          <p>${escapeHtml(earningIntro)}</p>
-          ${renderPreviewTips(guide.earningTips)}
-        </div>
+          <section class="program-preview-section">
+            <span>${escapeHtml(earningTitle)}</span>
+            <p>${escapeHtml(earningIntro)}</p>
+            ${renderPreviewTips(guide.earningTips)}
+          </section>
 
-        <div class="program-preview-section">
-          <span>${escapeHtml(redemptionTitle)}</span>
-          <p>${escapeHtml(redemptionIntro)}</p>
-          ${renderPreviewTips(guide.redemptionTips)}
-        </div>
+          <section class="program-preview-section">
+            <span>${escapeHtml(redemptionTitle)}</span>
+            <p>${escapeHtml(redemptionIntro)}</p>
+            ${renderPreviewTips(guide.redemptionTips)}
+          </section>
 
-        <div class="program-preview-section">
-          <span>${escapeHtml(riskTitle)}</span>
-          <p>${escapeHtml(riskIntro)}</p>
-          ${renderPreviewTips(guide.riskNotes)}
-        </div>
-
-        <div class="program-preview-strategy">
-          <strong>${escapeHtml(strategyTitle)}</strong>
-          <p>${escapeHtml(strategy)}</p>
-        </div>
+          <section class="program-preview-section">
+            <span>${escapeHtml(riskTitle)}</span>
+            <p>${escapeHtml(riskIntro)}</p>
+            ${renderPreviewTips(guide.riskNotes)}
+          </section>
+        </article>
       </div>
     `;
   }
@@ -2421,12 +2435,12 @@
     }
 
     return `
-      <ul>
+      <div class="program-preview-paragraphs">
         ${items
-          .slice(0, 3)
-          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .slice(0, 4)
+          .map((item) => `<p>${escapeHtml(item)}</p>`)
           .join("")}
-      </ul>
+      </div>
     `;
   }
 
