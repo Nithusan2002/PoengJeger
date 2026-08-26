@@ -35,6 +35,44 @@
     rejected: "Avvist",
     promoted: "Promotert"
   };
+  const PROGRAM_GUIDE_BASE_COLUMNS = [
+    "id",
+    "program_id",
+    "status",
+    "intro_text",
+    "strategy",
+    "value_estimate_label",
+    "value_estimate_detail",
+    "expiration_summary",
+    "expiration_detail",
+    "earning_tips",
+    "redemption_tips",
+    "risk_notes",
+    "last_reviewed_at",
+    "updated_at"
+  ];
+  const PROGRAM_GUIDE_MANUAL_COPY_COLUMNS = [
+    "guide_kicker",
+    "reading_time_label",
+    "strategy_section_title",
+    "decision_section_title",
+    "earning_decision_label",
+    "redemption_decision_label",
+    "risk_decision_label",
+    "earning_section_title",
+    "earning_section_intro",
+    "redemption_section_title",
+    "redemption_section_intro",
+    "risk_section_title",
+    "risk_section_intro",
+    "campaigns_section_title",
+    "campaigns_section_intro"
+  ];
+  const PROGRAM_GUIDE_COLUMNS = [
+    ...PROGRAM_GUIDE_BASE_COLUMNS.slice(0, 9),
+    ...PROGRAM_GUIDE_MANUAL_COPY_COLUMNS,
+    ...PROGRAM_GUIDE_BASE_COLUMNS.slice(9)
+  ];
 
   const state = {
     session: loadSession(),
@@ -53,6 +91,7 @@
     selectedProgramGuideProgramId: null,
     activePanelId: "queue-panel",
     loading: false,
+    programGuideManualCopyAvailable: true,
     sessionRefreshPromise: null
   };
 
@@ -390,11 +429,19 @@
 
       renderProgramGuideList();
       renderProgramGuideDetail();
-      setMessage(
-        elements.programGuideMessage,
-        `Viser ${state.programs.length} program${state.programs.length === 1 ? "" : "mer"}.`,
-        "success"
-      );
+      if (state.programGuideManualCopyAvailable) {
+        setMessage(
+          elements.programGuideMessage,
+          `Viser ${state.programs.length} program${state.programs.length === 1 ? "" : "mer"}.`,
+          "success"
+        );
+      } else {
+        setMessage(
+          elements.programGuideMessage,
+          "Databasen mangler de nye guidefeltene. Kjør siste Supabase-migrasjon før hele guiden kan lagres.",
+          "error"
+        );
+      }
     } catch (error) {
       setMessage(elements.programGuideMessage, error.message, "error");
       renderEmptyProgramGuideDetail("Kunne ikke laste programguider.");
@@ -613,45 +660,32 @@
   }
 
   async function fetchProgramGuides() {
+    try {
+      const response = await fetchProgramGuidesWithColumns(PROGRAM_GUIDE_COLUMNS);
+      state.programGuideManualCopyAvailable = true;
+      return response.map(normalizeProgramGuide);
+    } catch (error) {
+      if (!isMissingProgramGuideManualCopyColumn(error)) {
+        throw error;
+      }
+
+      const response = await fetchProgramGuidesWithColumns(PROGRAM_GUIDE_BASE_COLUMNS);
+      state.programGuideManualCopyAvailable = false;
+      return response.map(normalizeProgramGuide);
+    }
+  }
+
+  async function fetchProgramGuidesWithColumns(columns) {
     const params = new URLSearchParams();
-    params.set(
-      "select",
-      [
-        "id",
-        "program_id",
-        "status",
-        "intro_text",
-        "strategy",
-        "value_estimate_label",
-        "value_estimate_detail",
-        "expiration_summary",
-        "expiration_detail",
-        "guide_kicker",
-        "reading_time_label",
-        "strategy_section_title",
-        "decision_section_title",
-        "earning_decision_label",
-        "redemption_decision_label",
-        "risk_decision_label",
-        "earning_section_title",
-        "earning_section_intro",
-        "redemption_section_title",
-        "redemption_section_intro",
-        "risk_section_title",
-        "risk_section_intro",
-        "campaigns_section_title",
-        "campaigns_section_intro",
-        "earning_tips",
-        "redemption_tips",
-        "risk_notes",
-        "last_reviewed_at",
-        "updated_at"
-      ].join(",")
-    );
+    params.set("select", columns.join(","));
     params.set("order", "updated_at.desc");
 
-    const response = await apiRequest(`/rest/v1/program_guides?${params.toString()}`);
-    return response.map(normalizeProgramGuide);
+    return apiRequest(`/rest/v1/program_guides?${params.toString()}`);
+  }
+
+  function isMissingProgramGuideManualCopyColumn(error) {
+    const message = String(error && error.message ? error.message : error);
+    return PROGRAM_GUIDE_MANUAL_COPY_COLUMNS.some((column) => message.includes(`program_guides.${column}`));
   }
 
   function normalizeCandidate(candidate) {
@@ -1852,6 +1886,8 @@
               ${renderProgramGuideReadiness(readiness)}
             </section>
 
+            ${renderProgramGuideSchemaNotice()}
+
             <div class="detail-grid">
               <label class="field">
                 <span>Program</span>
@@ -2420,6 +2456,15 @@
   }
 
   async function saveProgramGuideEditor(form, program, originalGuide, action) {
+    if (!state.programGuideManualCopyAvailable) {
+      setMessage(
+        elements.programGuideMessage,
+        "Kan ikke lagre hele guiden før Supabase-migrasjonen for nye guidefelter er kjørt.",
+        "error"
+      );
+      return;
+    }
+
     const formData = new FormData(form);
     const payload = collectProgramGuideFormData(formData, program, originalGuide, action);
     const validationErrors = validateProgramGuidePayload(payload);
@@ -2445,6 +2490,19 @@
         button.disabled = false;
       });
     }
+  }
+
+  function renderProgramGuideSchemaNotice() {
+    if (state.programGuideManualCopyAvailable) {
+      return "";
+    }
+
+    return `
+      <div class="schema-notice">
+        Databasen mangler de nye guidefeltene. Admin viser eksisterende innhold, men full manuell redigering krever migrasjonen
+        <code>20260826083000_add_program_guide_manual_display_copy.sql</code>.
+      </div>
+    `;
   }
 
   async function saveStoreEarningEditor(form, originalRate, overrideRateStatus, options = {}) {

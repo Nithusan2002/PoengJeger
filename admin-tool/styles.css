@@ -858,6 +858,20 @@ button:disabled {
   border-color: var(--border-strong);
 }
 
+.schema-notice {
+  padding: 12px 14px;
+  border: 1px solid rgba(205, 71, 71, 0.28);
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.schema-notice code {
+  font-size: 0.84rem;
+}
+
 .readiness-header strong {
   display: block;
   margin-top: 3px;
