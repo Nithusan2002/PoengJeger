@@ -67,55 +67,99 @@ enum SampleData {
             id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A701")!,
             programID: euroBonus.id,
             status: .published,
-            introText: "EuroBonus er nyttig når du har en konkret plan for opptjening og bruk. Guiden hjelper deg å vurdere kampanjer opp mot fleksibilitet, gebyrer og faktisk reisebehov.",
-            strategy: "EuroBonus passer best når du kan samle nok poeng til reiser eller fordeler du faktisk vil bruke. Vurder kampanjer opp mot fleksibilitet, gebyrer og om reisen allerede er relevant.",
-            valueEstimateLabel: "Varierer",
-            valueEstimateDetail: "Verdien avhenger av reisemål, tilgjengelighet, avgifter og alternativ kontantpris.",
-            expirationSummary: "Sjekk vilkår",
-            expirationDetail: "Kontroller alltid gjeldende utløpsregler hos SAS før du lar saldo ligge lenge.",
+            introText: "EuroBonus fungerer best når du vet hva poengene skal brukes til. Start med målet ditt, finn ut omtrent hvor mange bonuspoeng du trenger, og bygg opptjeningen rundt kjøp du faktisk ville gjort.",
+            strategy: "Lag et enkelt poengkart: flyreiser, dagligvarer, netthandel, hotell, leiebil, abonnementer og kortbruk. Poenget er ikke å handle mer, men å samle eksisterende kjøp i færre, riktige kanaler når pris og vilkår fortsatt er gode.",
+            valueEstimateLabel: "Reiseverdi",
+            valueEstimateDetail: "Verdien varierer med rute, dato, tilgjengelighet, avgifter og hva samme reise ville kostet kontant.",
+            expirationSummary: "Sjekk poengtype",
+            expirationDetail: "Bonuspoeng kan brukes til reiser og andre fordeler. Nivåpoeng teller mot medlemsnivå og følger kvalifiseringsperioden.",
+            guideKicker: "PROGRAMGUIDE",
+            readingTimeLabel: "4 min lesing",
+            strategySectionTitle: "Slik bør du bruke det",
+            decisionSectionTitle: "Før du går videre",
+            earningDecisionLabel: "Tjen poeng når",
+            redemptionDecisionLabel: "Bruk poeng når",
+            riskDecisionLabel: "Stopp opp hvis",
+            earningSectionTitle: "Slik tjener du poeng",
+            earningSectionIntro: "Start med målet, og bygg opptjeningen rundt kjøp du allerede har.",
+            redemptionSectionTitle: "Slik bruker du poengene smart",
+            redemptionSectionIntro: "Bruk poengene der forskjellen mot kontantpris faktisk er tydelig.",
+            riskSectionTitle: "Vanlige feller",
+            riskSectionIntro: "Det som gjør en sterk poengmulighet svakere i praksis.",
+            campaignsSectionTitle: "Kampanjer nå",
+            campaignsSectionIntro: "Aktive kampanjer knyttet til SAS EuroBonus.",
             earningTips: [
-                "Prioriter kampanjer der du uansett skal kjøpe reisen, varen eller tjenesten.",
-                "Se etter kombinasjoner av kort, partner og tidsbegrenset kampanje, men kontroller vilkårene før du handler.",
-                "Vær ekstra kritisk til tilbud som krever nytt kredittkort eller høyt kortbruk."
+                "Definer målet først: rabatt på en kort tur, bonusreise, oppgradering eller en større reise for flere personer.",
+                "Skil mellom bonuspoeng og nivåpoeng før du vurderer en kampanje.",
+                "Kartlegg de store kanalene først: fly og SkyTeam-partnere, SAS-partnere, Trumf, netthandelsportaler, hotell, leiebil og betalingskort.",
+                "Start netthandel og partnerkjøp fra riktig portal eller lenke når sporing er en del av vilkårene.",
+                "Bruk dobbelopptjening bare når den er enkel: riktig portal eller partner pluss et kort som gir EuroBonus-poeng.",
+                "Sjekk kampanjer og velkomstbonuser, men regn med gebyrer, binding og omsetningskrav før du lar dem styre valget."
             ],
             redemptionTips: [
-                "Bruk poeng der kontantprisen er høy og tilgjengeligheten passer dine datoer.",
-                "Sammenlign poengbruk med ordinær pris, skatter, gebyrer og fleksibilitet.",
-                "Ikke bind deg til opptjening hvis du ikke har en realistisk plan for bruk."
+                "Bruk poeng der kontantprisen er høy og tilgjengeligheten passer datoene dine.",
+                "Sammenlign poengpris med ordinær pris, skatter, gebyrer og billettfleksibilitet.",
+                "Sjekk om award flight, oppgradering eller annen poengbruk passer bedre enn å betale kontant.",
+                "Ikke bind deg til opptjening hvis du ikke har en realistisk plan for bruk innen rimelig tid.",
+                "Sjekk alternative avganger før du konkluderer med at en kampanje gir god verdi."
             ],
             riskNotes: [
-                "Tilgjengelighet på bonusreiser kan være begrenset.",
+                "Tilgjengelighet på bonusreiser kan være begrenset på populære datoer og ruter.",
                 "Kampanjer kan være målrettet eller ha krav som ikke er synlige i overskriften.",
-                "Poengverdi er et estimat, ikke en fast kurs."
+                "Poengverdi er et estimat, ikke en fast kurs.",
+                "Gebyrer, skatter og manglende fleksibilitet kan spise opp mye av verdien.",
+                "Kortavgifter, omsetningskrav og dyrere butikker kan koste mer enn poengene er verdt for deg.",
+                "Dobbel- og trippelopptjening kan feile hvis sporing, rabattkoder, korttype eller partnerregler ikke passer."
             ],
-            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 10))
+            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 26))
         ),
         ProgramGuide(
             id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A702")!,
             programID: trumf.id,
             status: .published,
-            introText: "Trumf er lett å forstå fordi bonusen kan brukes som penger. Totalprisen bør likevel styre valget.",
-            strategy: "Trumf er ofte mest nyttig når bonusen kommer fra dagligvarekjøp du allerede ville gjort. Høy prosentbonus er mindre verdt hvis varen er dyrere enn alternativet.",
-            valueEstimateLabel: "1 kr = 1 kr",
-            valueEstimateDetail: "Trumf-bonus er konkret kroneverdi, men kampanjeverdi må vurderes mot totalpris.",
-            expirationSummary: "Lett å bruke",
-            expirationDetail: "Sjekk saldo og overføringsvilkår før du flytter bonus til andre programmer.",
+            introText: "Trumf er enklere enn mange poengprogrammer fordi bonusen har tydelig kroneverdi. Den viktigste vurderingen er likevel om totalprisen fortsatt er god etter at bonusen er regnet inn.",
+            strategy: "Bruk Trumf som rabatt på kjøp du uansett ville gjort. Ekstra bonus er mest interessant når prisen, butikkvalget og vilkårene fortsatt er fornuftige uten at bonusen må redde regnestykket.",
+            valueEstimateLabel: "Kronebonus",
+            valueEstimateDetail: "Trumf-bonus opptjenes i kroner. Verdien endrer seg først når du velger bruksmåte, for eksempel butikk, bankkonto eller overføring til EuroBonus.",
+            expirationSummary: "Fleksibelt",
+            expirationDetail: "Sjekk saldo, uttak og overføringsvilkår før du flytter bonus til andre programmer.",
+            guideKicker: "PROGRAMGUIDE",
+            readingTimeLabel: "3 min lesing",
+            strategySectionTitle: "Slik bør du bruke det",
+            decisionSectionTitle: "Før du går videre",
+            earningDecisionLabel: "Tjen bonus når",
+            redemptionDecisionLabel: "Bruk bonus når",
+            riskDecisionLabel: "Stopp opp hvis",
+            earningSectionTitle: "Slik tjener du Trumf",
+            earningSectionIntro: "Start med handlemønsteret ditt, ikke med bonusprosenten.",
+            redemptionSectionTitle: "Slik bruker du bonusen smart",
+            redemptionSectionIntro: "Velg bruksmåten som gir mest verdi og minst friksjon for deg.",
+            riskSectionTitle: "Vanlige feller",
+            riskSectionIntro: "Detaljer som ofte avgjør om Trumf faktisk lønner seg.",
+            campaignsSectionTitle: "Kampanjer nå",
+            campaignsSectionIntro: "Aktive kampanjer knyttet til Trumf.",
             earningTips: [
-                "Aktiver kampanjer før kjøp når det kreves.",
-                "Sjekk om bonusen gjelder hele handelen eller bare utvalgte varer.",
-                "Vurder totalpris først, bonus etterpå."
+                "Aktiver personlige eller tidsbegrensede kampanjer før kjøp når det kreves.",
+                "Sjekk om bonusen gjelder hele handelen, bestemte varer, bestemte butikker eller netthandel via partner.",
+                "Vurder totalpris først, bonus etterpå.",
+                "Bruk handlelister og planlagte kjøp til å skille nyttig bonus fra mersalg.",
+                "Kontroller om kuponger, rabatter eller betalingsmåte påvirker bonusgrunnlaget."
             ],
             redemptionTips: [
-                "Bruk saldoen der den gir konkret verdi for deg, eller overfør bare når vilkårene passer.",
+                "Bruk saldoen som kontantbonus når det gir konkret verdi for deg.",
+                "Vurder overføring til EuroBonus bare når du forstår vilkår, timing og hva poengene skal brukes til.",
                 "Se etter kampanjer som gir ekstra bonus på kjøp du uansett skulle gjøre.",
-                "Hold oversikt over aktiveringskrav og kampanjeperioder."
+                "Hold oversikt over aktiveringskrav og kampanjeperioder.",
+                "Sammenlign alltid bonusen med billigste realistiske alternativ."
             ],
             riskNotes: [
-                "Utvalg, butikk og medlemskrav kan variere.",
+                "Utvalg, butikk, medlemskrav og aktivering kan variere mellom kampanjer.",
                 "Bonus kan beregnes etter rabatter eller med unntak for enkelte varer.",
-                "Ikke la bonusprosent alene styre kjøpet."
+                "Ikke la bonusprosent alene styre kjøpet.",
+                "Høy ekstra bonus kan fortsatt være dårlig verdi hvis varen er dyrere enn hos alternativer.",
+                "Overføring til andre programmer kan gjøre en fleksibel kroneverdi mindre fleksibel."
             ],
-            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 10))
+            lastReviewedAt: Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 26))
         ),
         ProgramGuide(
             id: UUID(uuidString: "97E492D0-01C7-4856-9B05-96368168A703")!,

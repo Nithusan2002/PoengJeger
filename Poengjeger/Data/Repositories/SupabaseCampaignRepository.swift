@@ -88,7 +88,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
 
     private func fetchProgramGuides() async throws -> [ProgramGuide] {
         let queryItems = [
-            URLQueryItem(name: "select", value: "id,program_id,status,intro_text,strategy,value_estimate_label,value_estimate_detail,expiration_summary,expiration_detail,earning_tips,redemption_tips,risk_notes,last_reviewed_at"),
+            URLQueryItem(name: "select", value: "id,program_id,status,intro_text,strategy,value_estimate_label,value_estimate_detail,expiration_summary,expiration_detail,guide_kicker,reading_time_label,strategy_section_title,decision_section_title,earning_decision_label,redemption_decision_label,risk_decision_label,earning_section_title,earning_section_intro,redemption_section_title,redemption_section_intro,risk_section_title,risk_section_intro,campaigns_section_title,campaigns_section_intro,earning_tips,redemption_tips,risk_notes,last_reviewed_at"),
             URLQueryItem(name: "status", value: "eq.published"),
             URLQueryItem(name: "order", value: "last_reviewed_at.desc.nullslast")
         ]
@@ -242,6 +242,21 @@ private struct ProgramGuideDTO: Decodable {
     let valueEstimateDetail: String?
     let expirationSummary: String?
     let expirationDetail: String?
+    let guideKicker: String?
+    let readingTimeLabel: String?
+    let strategySectionTitle: String?
+    let decisionSectionTitle: String?
+    let earningDecisionLabel: String?
+    let redemptionDecisionLabel: String?
+    let riskDecisionLabel: String?
+    let earningSectionTitle: String?
+    let earningSectionIntro: String?
+    let redemptionSectionTitle: String?
+    let redemptionSectionIntro: String?
+    let riskSectionTitle: String?
+    let riskSectionIntro: String?
+    let campaignsSectionTitle: String?
+    let campaignsSectionIntro: String?
     let earningTips: [String]
     let redemptionTips: [String]
     let riskNotes: [String]
@@ -257,6 +272,21 @@ private struct ProgramGuideDTO: Decodable {
         case valueEstimateDetail = "value_estimate_detail"
         case expirationSummary = "expiration_summary"
         case expirationDetail = "expiration_detail"
+        case guideKicker = "guide_kicker"
+        case readingTimeLabel = "reading_time_label"
+        case strategySectionTitle = "strategy_section_title"
+        case decisionSectionTitle = "decision_section_title"
+        case earningDecisionLabel = "earning_decision_label"
+        case redemptionDecisionLabel = "redemption_decision_label"
+        case riskDecisionLabel = "risk_decision_label"
+        case earningSectionTitle = "earning_section_title"
+        case earningSectionIntro = "earning_section_intro"
+        case redemptionSectionTitle = "redemption_section_title"
+        case redemptionSectionIntro = "redemption_section_intro"
+        case riskSectionTitle = "risk_section_title"
+        case riskSectionIntro = "risk_section_intro"
+        case campaignsSectionTitle = "campaigns_section_title"
+        case campaignsSectionIntro = "campaigns_section_intro"
         case earningTips = "earning_tips"
         case redemptionTips = "redemption_tips"
         case riskNotes = "risk_notes"
@@ -278,6 +308,21 @@ private struct ProgramGuideDTO: Decodable {
             valueEstimateDetail: valueEstimateDetail,
             expirationSummary: expirationSummary,
             expirationDetail: expirationDetail,
+            guideKicker: guideKicker,
+            readingTimeLabel: readingTimeLabel,
+            strategySectionTitle: strategySectionTitle,
+            decisionSectionTitle: decisionSectionTitle,
+            earningDecisionLabel: earningDecisionLabel,
+            redemptionDecisionLabel: redemptionDecisionLabel,
+            riskDecisionLabel: riskDecisionLabel,
+            earningSectionTitle: earningSectionTitle,
+            earningSectionIntro: earningSectionIntro,
+            redemptionSectionTitle: redemptionSectionTitle,
+            redemptionSectionIntro: redemptionSectionIntro,
+            riskSectionTitle: riskSectionTitle,
+            riskSectionIntro: riskSectionIntro,
+            campaignsSectionTitle: campaignsSectionTitle,
+            campaignsSectionIntro: campaignsSectionIntro,
             earningTips: earningTips,
             redemptionTips: redemptionTips,
             riskNotes: riskNotes,

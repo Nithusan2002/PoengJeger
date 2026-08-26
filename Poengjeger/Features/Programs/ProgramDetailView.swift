@@ -42,7 +42,10 @@ struct ProgramDetailView: View {
                 ProgramHero(
                     program: program,
                     activeCampaignCount: activeCampaigns.count,
-                    introText: introText
+                    introText: introText,
+                    kicker: guide.guideKickerText,
+                    readingTimeLabel: guide.readingTimeLabelText,
+                    lastReviewedAt: guide?.lastReviewedAt
                 )
 
                 ProgramInsightRail(
@@ -68,33 +71,45 @@ struct ProgramDetailView: View {
                     ]
                 )
 
+                ProgramDecisionSnapshot(
+                    title: guide.decisionSectionTitleText,
+                    earningLabel: guide.earningDecisionLabelText,
+                    earningTip: guide?.earningTips.first,
+                    redemptionLabel: guide.redemptionDecisionLabelText,
+                    redemptionTip: guide?.redemptionTips.first,
+                    riskLabel: guide.riskDecisionLabelText,
+                    riskNote: guide?.riskNotes.first
+                )
+
                 if let strategyText {
-                    ProgramStrategyCard(text: strategyText)
+                    ProgramStrategyCard(title: guide.strategySectionTitleText, text: strategyText)
                 }
 
                 ProgramTipSection(
-                    title: "Slik tjener du poeng",
-                    subtitle: "Start her før du går for en kampanje.",
+                    title: guide.earningSectionTitleText,
+                    subtitle: guide.earningSectionIntroText,
                     systemImage: "plus.circle",
                     items: guide?.earningTips ?? []
                 )
 
                 ProgramTipSection(
-                    title: "Slik bruker du poengene smart",
-                    subtitle: "Bruk poengene der du ser hva du får igjen.",
+                    title: guide.redemptionSectionTitleText,
+                    subtitle: guide.redemptionSectionIntroText,
                     systemImage: "arrow.up.right.circle",
                     items: guide?.redemptionTips ?? []
                 )
 
                 ProgramTipSection(
-                    title: "Vanlige feller",
-                    subtitle: "Ting som kan gjøre en god kampanje mindre god.",
+                    title: guide.riskSectionTitleText,
+                    subtitle: guide.riskSectionIntroText,
                     systemImage: "exclamationmark.triangle",
                     items: guide?.riskNotes ?? []
                 )
 
                 ProgramCampaignSection(
                     program: program,
+                    title: guide.campaignsSectionTitleText,
+                    subtitle: guide.campaignsSectionIntroText(for: program),
                     campaigns: activeCampaigns
                 )
 
@@ -115,34 +130,72 @@ private struct ProgramHero: View {
     let program: BonusProgram
     let activeCampaignCount: Int
     let introText: String
+    let kicker: String
+    let readingTimeLabel: String
+    let lastReviewedAt: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center, spacing: 14) {
                 ProgramMark(program: program, size: 56)
 
                 VStack(alignment: .leading, spacing: 4) {
+                    Text(kicker)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(PoengjegerTheme.accent)
+
                     Text(program.name)
                         .font(.title.weight(.bold))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("\(activeCampaignCount) aktive kampanjer")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        ProgramHeroMetaPill(text: readingTimeLabel, systemImage: "book")
+                        ProgramHeroMetaPill(text: "\(activeCampaignCount) aktive", systemImage: "ticket")
+                    }
                 }
 
                 Spacer(minLength: 8)
             }
 
             Text(introText)
-                .font(.title3.weight(.medium))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
-                .lineSpacing(4)
+                .lineSpacing(5)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(reviewText)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.bottom, 4)
         .accessibilityElement(children: .combine)
+    }
+
+    private var reviewText: String {
+        if let lastReviewedAt {
+            return "Redaksjonelt kontrollert \(lastReviewedAt.formatted(date: .abbreviated, time: .omitted)). Programvilkår kan endre seg, så sjekk alltid kilden før større valg."
+        }
+
+        return "Guiden har begrenset innhold til den er redaksjonelt kontrollert."
+    }
+}
+
+private struct ProgramHeroMetaPill: View {
+    let text: String
+    let systemImage: String
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(PoengjegerTheme.accent)
+            .lineLimit(1)
+            .minimumScaleFactor(0.78)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(PoengjegerTheme.accentSoft)
+            .clipShape(Capsule())
     }
 }
 
@@ -230,24 +283,109 @@ private struct ProgramInsightCard: View {
 }
 
 private struct ProgramStrategyCard: View {
+    let title: String
     let text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("Slik bør du bruke det", systemImage: "target")
-                .font(.subheadline.weight(.bold))
+        VStack(alignment: .leading, spacing: 12) {
+            Label(title, systemImage: "target")
+                .font(.headline.weight(.bold))
                 .foregroundStyle(PoengjegerTheme.accent)
 
             Text(text)
                 .font(.body)
-                .foregroundStyle(.secondary)
-                .lineSpacing(3)
+                .foregroundStyle(.primary)
+                .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.primaryTint)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+        }
+    }
+}
+
+private struct ProgramDecisionSnapshot: View {
+    let title: String
+    let earningLabel: String
+    let earningTip: String?
+    let redemptionLabel: String
+    let redemptionTip: String?
+    let riskLabel: String
+    let riskNote: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(title, systemImage: "checklist")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.primary)
+
+            VStack(spacing: 10) {
+                ProgramDecisionRow(
+                    title: earningLabel,
+                    text: earningTip?.nonEmpty ?? "kampanjen passer et kjøp du uansett skal gjøre.",
+                    systemImage: "plus.circle",
+                    tint: PoengjegerTheme.success
+                )
+
+                ProgramDecisionRow(
+                    title: redemptionLabel,
+                    text: redemptionTip?.nonEmpty ?? "du kan sammenligne poengbruk med kontantpris og vilkår.",
+                    systemImage: "arrow.up.right.circle",
+                    tint: PoengjegerTheme.accent
+                )
+
+                ProgramDecisionRow(
+                    title: riskLabel,
+                    text: riskNote?.nonEmpty ?? "vilkår, frist eller kostnad gjør verdien uklar.",
+                    systemImage: "exclamationmark.triangle",
+                    tint: PoengjegerTheme.warning
+                )
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.accentSoft)
+        .background(PoengjegerTheme.primaryTint)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+        }
+    }
+}
+
+private struct ProgramDecisionRow: View {
+    let title: String
+    let text: String
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(tint)
+                .frame(width: 24)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.primary)
+
+                Text(text)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -258,62 +396,44 @@ private struct ProgramTipSection: View {
     let items: [String]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                Label(title, systemImage: systemImage)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 16) {
+            Label(title, systemImage: systemImage)
+                .font(.title3.weight(.bold))
+                .foregroundStyle(.primary)
 
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            Text(subtitle)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
 
             if items.isEmpty {
                 ProgramEmptyGuideRow(text: "Ikke publisert ennå.")
             } else {
-                VStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 14) {
                     ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                        ProgramTipRow(number: index + 1, text: item)
+                        ProgramGuideParagraph(text: item)
+                            .accessibilityLabel("Avsnitt \(index + 1): \(item)")
                     }
                 }
+                .padding(.top, 2)
             }
         }
+        .padding(.top, 4)
     }
 }
 
-private struct ProgramTipRow: View {
-    let number: Int
+private struct ProgramGuideParagraph: View {
     let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text("\(number)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.accent)
-                .frame(width: 28, height: 28)
-                .background(PoengjegerTheme.accentSoft)
-                .clipShape(Circle())
-                .accessibilityHidden(true)
-
-            Text(text)
-                .font(.body)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Punkt \(number): \(text)")
+        Text(text)
+            .font(.body)
+            .foregroundStyle(.primary)
+            .lineSpacing(6)
+            .fixedSize(horizontal: false, vertical: true)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -337,16 +457,18 @@ private struct ProgramEmptyGuideRow: View {
 
 private struct ProgramCampaignSection: View {
     let program: BonusProgram
+    let title: String
+    let subtitle: String
     let campaigns: [Campaign]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Label("Kampanjer nå", systemImage: "ticket")
+                Label(title, systemImage: "ticket")
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("Aktive kampanjer knyttet til \(program.name).")
+                Text(subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -501,6 +623,68 @@ extension BonusProgram {
         default:
             return PoengjegerTheme.accent
         }
+    }
+}
+
+private extension Optional where Wrapped == ProgramGuide {
+    var guideKickerText: String {
+        self?.guideKicker?.nonEmpty ?? "PROGRAMGUIDE"
+    }
+
+    var readingTimeLabelText: String {
+        self?.readingTimeLabel?.nonEmpty ?? "4 min lesing"
+    }
+
+    var strategySectionTitleText: String {
+        self?.strategySectionTitle?.nonEmpty ?? "Slik bør du bruke det"
+    }
+
+    var decisionSectionTitleText: String {
+        self?.decisionSectionTitle?.nonEmpty ?? "Før du går videre"
+    }
+
+    var earningDecisionLabelText: String {
+        self?.earningDecisionLabel?.nonEmpty ?? "Tjen poeng når"
+    }
+
+    var redemptionDecisionLabelText: String {
+        self?.redemptionDecisionLabel?.nonEmpty ?? "Bruk poeng når"
+    }
+
+    var riskDecisionLabelText: String {
+        self?.riskDecisionLabel?.nonEmpty ?? "Stopp opp hvis"
+    }
+
+    var earningSectionTitleText: String {
+        self?.earningSectionTitle?.nonEmpty ?? "Slik tjener du poeng"
+    }
+
+    var earningSectionIntroText: String {
+        self?.earningSectionIntro?.nonEmpty ?? "Start her før du går for en kampanje."
+    }
+
+    var redemptionSectionTitleText: String {
+        self?.redemptionSectionTitle?.nonEmpty ?? "Slik bruker du poengene smart"
+    }
+
+    var redemptionSectionIntroText: String {
+        self?.redemptionSectionIntro?.nonEmpty ?? "Bruk poengene der du ser hva du får igjen."
+    }
+
+    var riskSectionTitleText: String {
+        self?.riskSectionTitle?.nonEmpty ?? "Vanlige feller"
+    }
+
+    var riskSectionIntroText: String {
+        self?.riskSectionIntro?.nonEmpty ?? "Ting som kan gjøre en god kampanje mindre god."
+    }
+
+    var campaignsSectionTitleText: String {
+        self?.campaignsSectionTitle?.nonEmpty ?? "Kampanjer nå"
+    }
+
+    func campaignsSectionIntroText(for program: BonusProgram) -> String {
+        self?.campaignsSectionIntro?.nonEmpty ?? "Aktive kampanjer knyttet til \(program.name)."
     }
 }
 

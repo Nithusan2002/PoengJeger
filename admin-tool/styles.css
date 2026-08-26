@@ -974,9 +974,20 @@ button:disabled {
   font-size: 1.25rem;
 }
 
+.program-preview-hero span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .program-preview-hero p,
 .program-preview-metrics p,
-.program-preview-strategy,
+.program-preview-section p,
+.program-preview-strategy p,
 .program-preview-empty {
   margin: 0;
   color: var(--muted);
@@ -1030,15 +1041,25 @@ button:disabled {
 }
 
 .program-preview-strategy {
+  display: grid;
+  gap: 6px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
   font-size: 0.88rem;
+}
+
+.program-preview-strategy strong {
+  color: var(--text);
 }
 
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.detail-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .source-card {

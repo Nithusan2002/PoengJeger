@@ -626,6 +626,21 @@
         "value_estimate_detail",
         "expiration_summary",
         "expiration_detail",
+        "guide_kicker",
+        "reading_time_label",
+        "strategy_section_title",
+        "decision_section_title",
+        "earning_decision_label",
+        "redemption_decision_label",
+        "risk_decision_label",
+        "earning_section_title",
+        "earning_section_intro",
+        "redemption_section_title",
+        "redemption_section_intro",
+        "risk_section_title",
+        "risk_section_intro",
+        "campaigns_section_title",
+        "campaigns_section_intro",
         "earning_tips",
         "redemption_tips",
         "risk_notes",
@@ -762,6 +777,21 @@
       valueEstimateDetail: guide.value_estimate_detail || "",
       expirationSummary: guide.expiration_summary || "",
       expirationDetail: guide.expiration_detail || "",
+      guideKicker: guide.guide_kicker || "",
+      readingTimeLabel: guide.reading_time_label || "",
+      strategySectionTitle: guide.strategy_section_title || "",
+      decisionSectionTitle: guide.decision_section_title || "",
+      earningDecisionLabel: guide.earning_decision_label || "",
+      redemptionDecisionLabel: guide.redemption_decision_label || "",
+      riskDecisionLabel: guide.risk_decision_label || "",
+      earningSectionTitle: guide.earning_section_title || "",
+      earningSectionIntro: guide.earning_section_intro || "",
+      redemptionSectionTitle: guide.redemption_section_title || "",
+      redemptionSectionIntro: guide.redemption_section_intro || "",
+      riskSectionTitle: guide.risk_section_title || "",
+      riskSectionIntro: guide.risk_section_intro || "",
+      campaignsSectionTitle: guide.campaigns_section_title || "",
+      campaignsSectionIntro: guide.campaigns_section_intro || "",
       earningTips: Array.isArray(guide.earning_tips) ? guide.earning_tips : [],
       redemptionTips: Array.isArray(guide.redemption_tips) ? guide.redemption_tips : [],
       riskNotes: Array.isArray(guide.risk_notes) ? guide.risk_notes : [],
@@ -1836,6 +1866,28 @@
               </label>
             </div>
 
+            <div class="detail-grid">
+              <label class="field">
+                <span>Guide-kicker</span>
+                <input
+                  name="guideKicker"
+                  type="text"
+                  placeholder="PROGRAMGUIDE"
+                  value="${escapeAttribute(draft.guideKicker)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Lesetid-label</span>
+                <input
+                  name="readingTimeLabel"
+                  type="text"
+                  placeholder="4 min lesing"
+                  value="${escapeAttribute(draft.readingTimeLabel)}"
+                />
+              </label>
+            </div>
+
             <label class="field">
               <span>Intro på programsiden</span>
               <textarea name="introText" rows="4" placeholder="Kort forklaring som vises øverst på programsiden...">${escapeHtml(
@@ -1845,7 +1897,17 @@
             </label>
 
             <label class="field">
-              <span>Strategi</span>
+              <span>Strategi: seksjonstittel</span>
+              <input
+                name="strategySectionTitle"
+                type="text"
+                placeholder="Slik bør du bruke det"
+                value="${escapeAttribute(draft.strategySectionTitle)}"
+              />
+            </label>
+
+            <label class="field">
+              <span>Strategi: brødtekst</span>
               <textarea name="strategy" rows="5" placeholder="Når passer dette programmet, og hva bør brukeren vurdere?">${escapeHtml(
                 draft.strategy
               )}</textarea>
@@ -1885,19 +1947,149 @@
             </label>
 
             <label class="field">
-              <span>Slik tjener du, ett tips per linje</span>
+              <span>Beslutningskort: tittel</span>
+              <input
+                name="decisionSectionTitle"
+                type="text"
+                placeholder="Før du går videre"
+                value="${escapeAttribute(draft.decisionSectionTitle)}"
+              />
+            </label>
+
+            <div class="detail-grid three">
+              <label class="field">
+                <span>Beslutning: opptjening</span>
+                <input
+                  name="earningDecisionLabel"
+                  type="text"
+                  placeholder="Tjen poeng når"
+                  value="${escapeAttribute(draft.earningDecisionLabel)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Beslutning: bruk</span>
+                <input
+                  name="redemptionDecisionLabel"
+                  type="text"
+                  placeholder="Bruk poeng når"
+                  value="${escapeAttribute(draft.redemptionDecisionLabel)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Beslutning: risiko</span>
+                <input
+                  name="riskDecisionLabel"
+                  type="text"
+                  placeholder="Stopp opp hvis"
+                  value="${escapeAttribute(draft.riskDecisionLabel)}"
+                />
+              </label>
+            </div>
+
+            <div class="detail-grid">
+              <label class="field">
+                <span>Opptjening: seksjonstittel</span>
+                <input
+                  name="earningSectionTitle"
+                  type="text"
+                  placeholder="Slik tjener du poeng"
+                  value="${escapeAttribute(draft.earningSectionTitle)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Opptjening: ingress</span>
+                <input
+                  name="earningSectionIntro"
+                  type="text"
+                  placeholder="Start her før du går for en kampanje."
+                  value="${escapeAttribute(draft.earningSectionIntro)}"
+                />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Opptjening: avsnitt, én linje per avsnitt</span>
               <textarea name="earningTips" rows="5" placeholder="Registrer medlemsnummer før kjøp&#10;Aktiver kampanjer før betaling">${escapeHtml(draft.earningTips.join("\n"))}</textarea>
             </label>
 
+            <div class="detail-grid">
+              <label class="field">
+                <span>Bruk: seksjonstittel</span>
+                <input
+                  name="redemptionSectionTitle"
+                  type="text"
+                  placeholder="Slik bruker du poengene smart"
+                  value="${escapeAttribute(draft.redemptionSectionTitle)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Bruk: ingress</span>
+                <input
+                  name="redemptionSectionIntro"
+                  type="text"
+                  placeholder="Bruk poengene der du ser hva du får igjen."
+                  value="${escapeAttribute(draft.redemptionSectionIntro)}"
+                />
+              </label>
+            </div>
+
             <label class="field">
-              <span>Slik bruker du, ett tips per linje</span>
+              <span>Bruk: avsnitt, én linje per avsnitt</span>
               <textarea name="redemptionTips" rows="5" placeholder="Sammenlign poengbruk med kontantpris&#10;Unngå bruk der alternativverdien er lav">${escapeHtml(draft.redemptionTips.join("\n"))}</textarea>
             </label>
 
+            <div class="detail-grid">
+              <label class="field">
+                <span>Feller: seksjonstittel</span>
+                <input
+                  name="riskSectionTitle"
+                  type="text"
+                  placeholder="Vanlige feller"
+                  value="${escapeAttribute(draft.riskSectionTitle)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Feller: ingress</span>
+                <input
+                  name="riskSectionIntro"
+                  type="text"
+                  placeholder="Ting som kan gjøre en god kampanje mindre god."
+                  value="${escapeAttribute(draft.riskSectionIntro)}"
+                />
+              </label>
+            </div>
+
             <label class="field">
-              <span>Vanlige feller, ett punkt per linje</span>
+              <span>Feller: avsnitt, én linje per avsnitt</span>
               <textarea name="riskNotes" rows="5" placeholder="Kampanjer kan være målrettet&#10;Vilkår kan endres før bruk">${escapeHtml(draft.riskNotes.join("\n"))}</textarea>
             </label>
+
+            <div class="detail-grid">
+              <label class="field">
+                <span>Kampanjer: seksjonstittel</span>
+                <input
+                  name="campaignsSectionTitle"
+                  type="text"
+                  placeholder="Kampanjer nå"
+                  value="${escapeAttribute(draft.campaignsSectionTitle)}"
+                />
+              </label>
+
+              <label class="field">
+                <span>Kampanjer: ingress</span>
+                <input
+                  name="campaignsSectionIntro"
+                  type="text"
+                  placeholder="Aktive kampanjer knyttet til programmet."
+                  value="${escapeAttribute(draft.campaignsSectionIntro)}"
+                />
+              </label>
+            </div>
 
             <label class="field">
               <span>Sist redaksjonelt kontrollert</span>
@@ -1970,6 +2162,21 @@
       valueEstimateDetail: "",
       expirationSummary: "",
       expirationDetail: "",
+      guideKicker: "PROGRAMGUIDE",
+      readingTimeLabel: "4 min lesing",
+      strategySectionTitle: "Slik bør du bruke det",
+      decisionSectionTitle: "Før du går videre",
+      earningDecisionLabel: "Tjen poeng når",
+      redemptionDecisionLabel: "Bruk poeng når",
+      riskDecisionLabel: "Stopp opp hvis",
+      earningSectionTitle: "Slik tjener du poeng",
+      earningSectionIntro: "Start her før du går for en kampanje.",
+      redemptionSectionTitle: "Slik bruker du poengene smart",
+      redemptionSectionIntro: "Bruk poengene der du ser hva du får igjen.",
+      riskSectionTitle: "Vanlige feller",
+      riskSectionIntro: "Ting som kan gjøre en god kampanje mindre god.",
+      campaignsSectionTitle: "Kampanjer nå",
+      campaignsSectionIntro: "Aktive kampanjer knyttet til programmet.",
       earningTips: [],
       redemptionTips: [],
       riskNotes: [],
@@ -1989,6 +2196,21 @@
       valueEstimateDetail: String(formData.get("valueEstimateDetail") || "").trim(),
       expirationSummary: String(formData.get("expirationSummary") || "").trim(),
       expirationDetail: String(formData.get("expirationDetail") || "").trim(),
+      guideKicker: String(formData.get("guideKicker") || "").trim(),
+      readingTimeLabel: String(formData.get("readingTimeLabel") || "").trim(),
+      strategySectionTitle: String(formData.get("strategySectionTitle") || "").trim(),
+      decisionSectionTitle: String(formData.get("decisionSectionTitle") || "").trim(),
+      earningDecisionLabel: String(formData.get("earningDecisionLabel") || "").trim(),
+      redemptionDecisionLabel: String(formData.get("redemptionDecisionLabel") || "").trim(),
+      riskDecisionLabel: String(formData.get("riskDecisionLabel") || "").trim(),
+      earningSectionTitle: String(formData.get("earningSectionTitle") || "").trim(),
+      earningSectionIntro: String(formData.get("earningSectionIntro") || "").trim(),
+      redemptionSectionTitle: String(formData.get("redemptionSectionTitle") || "").trim(),
+      redemptionSectionIntro: String(formData.get("redemptionSectionIntro") || "").trim(),
+      riskSectionTitle: String(formData.get("riskSectionTitle") || "").trim(),
+      riskSectionIntro: String(formData.get("riskSectionIntro") || "").trim(),
+      campaignsSectionTitle: String(formData.get("campaignsSectionTitle") || "").trim(),
+      campaignsSectionIntro: String(formData.get("campaignsSectionIntro") || "").trim(),
       earningTips: splitTextareaLines(formData.get("earningTips")),
       redemptionTips: splitTextareaLines(formData.get("redemptionTips")),
       riskNotes: splitTextareaLines(formData.get("riskNotes")),
@@ -2080,12 +2302,22 @@
     const valueDetail = guide.valueEstimateDetail || "Forklaring av verdi vises her.";
     const expirationLabel = guide.expirationSummary || "Utløp";
     const expirationDetail = guide.expirationDetail || "Forklaring av utløpsrisiko vises her.";
+    const guideKicker = guide.guideKicker || "PROGRAMGUIDE";
+    const readingTimeLabel = guide.readingTimeLabel || "4 min lesing";
+    const strategyTitle = guide.strategySectionTitle || "Slik bør du bruke det";
+    const earningTitle = guide.earningSectionTitle || "Slik tjener du poeng";
+    const earningIntro = guide.earningSectionIntro || "Start her før du går for en kampanje.";
+    const redemptionTitle = guide.redemptionSectionTitle || "Slik bruker du poengene smart";
+    const redemptionIntro = guide.redemptionSectionIntro || "Bruk poengene der du ser hva du får igjen.";
+    const riskTitle = guide.riskSectionTitle || "Vanlige feller";
+    const riskIntro = guide.riskSectionIntro || "Ting som kan gjøre en god kampanje mindre god.";
 
     return `
       <div class="program-preview-card">
         <div class="program-preview-hero">
           <div class="program-preview-mark">${escapeHtml(programInitials(program))}</div>
           <div>
+            <span>${escapeHtml(guideKicker)} · ${escapeHtml(readingTimeLabel)}</span>
             <h3>${escapeHtml(program.name)}</h3>
             <p>${escapeHtml(intro)}</p>
           </div>
@@ -2105,21 +2337,27 @@
         </div>
 
         <div class="program-preview-section">
-          <span>Slik tjener du raskere</span>
+          <span>${escapeHtml(earningTitle)}</span>
+          <p>${escapeHtml(earningIntro)}</p>
           ${renderPreviewTips(guide.earningTips)}
         </div>
 
         <div class="program-preview-section">
-          <span>Slik får du mest ut av poengene</span>
+          <span>${escapeHtml(redemptionTitle)}</span>
+          <p>${escapeHtml(redemptionIntro)}</p>
           ${renderPreviewTips(guide.redemptionTips)}
         </div>
 
         <div class="program-preview-section">
-          <span>Vanlige feller</span>
+          <span>${escapeHtml(riskTitle)}</span>
+          <p>${escapeHtml(riskIntro)}</p>
           ${renderPreviewTips(guide.riskNotes)}
         </div>
 
-        <p class="program-preview-strategy">${escapeHtml(strategy)}</p>
+        <div class="program-preview-strategy">
+          <strong>${escapeHtml(strategyTitle)}</strong>
+          <p>${escapeHtml(strategy)}</p>
+        </div>
       </div>
     `;
   }
@@ -2516,6 +2754,21 @@
       valueEstimateDetail: String(formData.get("valueEstimateDetail") || "").trim(),
       expirationSummary: String(formData.get("expirationSummary") || "").trim(),
       expirationDetail: String(formData.get("expirationDetail") || "").trim(),
+      guideKicker: String(formData.get("guideKicker") || "").trim(),
+      readingTimeLabel: String(formData.get("readingTimeLabel") || "").trim(),
+      strategySectionTitle: String(formData.get("strategySectionTitle") || "").trim(),
+      decisionSectionTitle: String(formData.get("decisionSectionTitle") || "").trim(),
+      earningDecisionLabel: String(formData.get("earningDecisionLabel") || "").trim(),
+      redemptionDecisionLabel: String(formData.get("redemptionDecisionLabel") || "").trim(),
+      riskDecisionLabel: String(formData.get("riskDecisionLabel") || "").trim(),
+      earningSectionTitle: String(formData.get("earningSectionTitle") || "").trim(),
+      earningSectionIntro: String(formData.get("earningSectionIntro") || "").trim(),
+      redemptionSectionTitle: String(formData.get("redemptionSectionTitle") || "").trim(),
+      redemptionSectionIntro: String(formData.get("redemptionSectionIntro") || "").trim(),
+      riskSectionTitle: String(formData.get("riskSectionTitle") || "").trim(),
+      riskSectionIntro: String(formData.get("riskSectionIntro") || "").trim(),
+      campaignsSectionTitle: String(formData.get("campaignsSectionTitle") || "").trim(),
+      campaignsSectionIntro: String(formData.get("campaignsSectionIntro") || "").trim(),
       earningTips: splitTextareaLines(formData.get("earningTips")),
       redemptionTips: splitTextareaLines(formData.get("redemptionTips")),
       riskNotes: splitTextareaLines(formData.get("riskNotes")),
@@ -2960,6 +3213,21 @@
       value_estimate_detail: payload.valueEstimateDetail || null,
       expiration_summary: payload.expirationSummary || null,
       expiration_detail: payload.expirationDetail || null,
+      guide_kicker: payload.guideKicker || null,
+      reading_time_label: payload.readingTimeLabel || null,
+      strategy_section_title: payload.strategySectionTitle || null,
+      decision_section_title: payload.decisionSectionTitle || null,
+      earning_decision_label: payload.earningDecisionLabel || null,
+      redemption_decision_label: payload.redemptionDecisionLabel || null,
+      risk_decision_label: payload.riskDecisionLabel || null,
+      earning_section_title: payload.earningSectionTitle || null,
+      earning_section_intro: payload.earningSectionIntro || null,
+      redemption_section_title: payload.redemptionSectionTitle || null,
+      redemption_section_intro: payload.redemptionSectionIntro || null,
+      risk_section_title: payload.riskSectionTitle || null,
+      risk_section_intro: payload.riskSectionIntro || null,
+      campaigns_section_title: payload.campaignsSectionTitle || null,
+      campaigns_section_intro: payload.campaignsSectionIntro || null,
       earning_tips: payload.earningTips,
       redemption_tips: payload.redemptionTips,
       risk_notes: payload.riskNotes,
