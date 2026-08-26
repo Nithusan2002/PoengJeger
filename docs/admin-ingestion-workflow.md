@@ -73,7 +73,7 @@ Hvis du kjører via CLI mot remote prosjekt, trenger du først prosjektlink og d
 Eksempel:
 
 ```bash
-supabase link --project-ref mbyauevanjebwlutueyw
+supabase link --project-ref vxshbidckvfzxohcpprq
 supabase db push
 ```
 
