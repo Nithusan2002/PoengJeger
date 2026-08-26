@@ -2517,7 +2517,7 @@
     return `
       <div class="schema-notice">
         Databasen mangler de nye guidefeltene. Admin viser eksisterende innhold, men full manuell redigering krever migrasjonen
-        <code>20260826063520_add_program_guide_manual_display_copy.sql</code>.
+        <code>20260826103142_add_program_guide_manual_display_copy.sql</code>.
       </div>
     `;
   }
