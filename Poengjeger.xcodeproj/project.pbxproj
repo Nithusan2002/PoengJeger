@@ -43,6 +43,12 @@
 		035 /* CategoryStoresView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139 /* CategoryStoresView.swift */; };
 		036 /* StoreEarningUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 140 /* StoreEarningUseCaseTests.swift */; };
 		041 /* AdminIngestionUseCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 141 /* AdminIngestionUseCaseTests.swift */; };
+		042 /* FeedControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142 /* FeedControls.swift */; };
+		043 /* FeedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 143 /* FeedComponents.swift */; };
+		044 /* CampaignDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 144 /* CampaignDetailComponents.swift */; };
+		045 /* CampaignDetailPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 145 /* CampaignDetailPresentation.swift */; };
+		046 /* ProgramDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146 /* ProgramDetailComponents.swift */; };
+		047 /* ProgramDetailPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147 /* ProgramDetailPresentation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +103,12 @@
 		139 /* CategoryStoresView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryStoresView.swift; sourceTree = "<group>"; };
 		140 /* StoreEarningUseCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreEarningUseCaseTests.swift; sourceTree = "<group>"; };
 		141 /* AdminIngestionUseCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminIngestionUseCaseTests.swift; sourceTree = "<group>"; };
+		142 /* FeedControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedControls.swift; sourceTree = "<group>"; };
+		143 /* FeedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedComponents.swift; sourceTree = "<group>"; };
+		144 /* CampaignDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignDetailComponents.swift; sourceTree = "<group>"; };
+		145 /* CampaignDetailPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignDetailPresentation.swift; sourceTree = "<group>"; };
+		146 /* ProgramDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailComponents.swift; sourceTree = "<group>"; };
+		147 /* ProgramDetailPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailPresentation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -242,6 +254,8 @@
 			isa = PBXGroup;
 			children = (
 				113 /* FeedView.swift */,
+				142 /* FeedControls.swift */,
+				143 /* FeedComponents.swift */,
 				130 /* FeedPresentation.swift */,
 			);
 			path = Feed;
@@ -288,6 +302,8 @@
 			isa = PBXGroup;
 			children = (
 				114 /* CampaignDetailView.swift */,
+				144 /* CampaignDetailComponents.swift */,
+				145 /* CampaignDetailPresentation.swift */,
 			);
 			path = CampaignDetail;
 			sourceTree = "<group>";
@@ -338,6 +354,8 @@
 			children = (
 				133 /* LearnView.swift */,
 				131 /* ProgramDetailView.swift */,
+				146 /* ProgramDetailComponents.swift */,
+				147 /* ProgramDetailPresentation.swift */,
 			);
 			path = Programs;
 			sourceTree = "<group>";
@@ -500,7 +518,11 @@
 				011 /* MainTabView.swift in Sources */,
 				012 /* OnboardingView.swift in Sources */,
 				013 /* FeedView.swift in Sources */,
+				042 /* FeedControls.swift in Sources */,
+				043 /* FeedComponents.swift in Sources */,
 				014 /* CampaignDetailView.swift in Sources */,
+				044 /* CampaignDetailComponents.swift in Sources */,
+				045 /* CampaignDetailPresentation.swift in Sources */,
 				015 /* FavoritesView.swift in Sources */,
 				016 /* SettingsView.swift in Sources */,
 				018 /* SupabaseCampaignRepository.swift in Sources */,
@@ -509,6 +531,8 @@
 				025 /* CampaignCardView.swift in Sources */,
 				026 /* FeedPresentation.swift in Sources */,
 				027 /* ProgramDetailView.swift in Sources */,
+				046 /* ProgramDetailComponents.swift in Sources */,
+				047 /* ProgramDetailPresentation.swift in Sources */,
 				028 /* ProgramGuide.swift in Sources */,
 				029 /* LearnView.swift in Sources */,
 				030 /* StoreEarning.swift in Sources */,

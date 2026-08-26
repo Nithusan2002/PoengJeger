@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 enum FeedSort: String, CaseIterable, Identifiable {
     case expiringFirst
@@ -126,6 +126,108 @@ struct ScannableFeedUseCase {
             return false
         case (nil, nil):
             return (lhs.editorialScore ?? 0) > (rhs.editorialScore ?? 0)
+        }
+    }
+}
+
+extension Campaign {
+    var isFeedUrgent: Bool {
+        guard let days = FeedDateHelper.daysUntil(endDate) else { return false }
+        return days >= 0 && days <= 3
+    }
+
+    var isFeedHighValue: Bool {
+        if editorialAssessment?.decisionLabel == .worthChecking {
+            return true
+        }
+
+        return (editorialScore ?? 0) >= 80
+    }
+
+    var feedHeadline: String {
+        if let value = editorialAssessment?.estimatedValueText?.feedValueLabel {
+            return value
+        }
+
+        return title
+    }
+
+    var feedReason: String {
+        if let decisionSummary = editorialAssessment?.decisionSummary?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !decisionSummary.isEmpty {
+            return decisionSummary
+        }
+
+        if let reason = editorialAssessment?.reasonWhyItMatters, !reason.isEmpty {
+            return reason
+        }
+
+        return displaySummary
+    }
+
+    var feedDecisionLabel: String? {
+        if let label = editorialAssessment?.decisionLabel?.displayName {
+            return label
+        }
+
+        return editorialScore == nil ? nil : editorialTierLabel
+    }
+}
+
+extension String {
+    var feedValueLabel: String? {
+        let normalized = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+
+        let patterns = [
+            #"\d[\d\s]*(?:kr|kroner)(?:\s+i\s+[A-Za-zÆØÅæøå-]+-bonus)?"#,
+            #"\d[\d\s]*(?:EuroBonus-poeng|CashPoints|poeng)"#,
+            #"\d+\s*%\s+[A-Za-zÆØÅæøå-]+-bonus"#,
+            #"\d+\s*%\s+bonus"#,
+            #"\d+\s+dager\s+gratis"#
+        ]
+
+        for pattern in patterns {
+            if let match = normalized.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
+                return String(normalized[match]).normalizedFeedValueLabel
+            }
+        }
+
+        let firstSentence = normalized.split(separator: ".").first.map(String.init) ?? normalized
+        if firstSentence.count <= 34 {
+            return firstSentence
+        }
+
+        return nil
+    }
+
+    private var normalizedFeedValueLabel: String {
+        replacingOccurrences(of: #" +"#, with: " ", options: .regularExpression)
+    }
+}
+
+extension BonusProgram {
+    var shortDisplayName: String {
+        switch slug {
+        case "sas-eurobonus":
+            return "SAS"
+        case "norwegian-reward":
+            return "Norwegian"
+        default:
+            return name
+        }
+    }
+
+    var feedColor: Color {
+        switch slug {
+        case "sas-eurobonus":
+            return Color(red: 0.08, green: 0.28, blue: 0.62)
+        case "trumf":
+            return Color(red: 0.10, green: 0.48, blue: 0.28)
+        case "spenn":
+            return Color(red: 0.62, green: 0.30, blue: 0.76)
+        default:
+            return PoengjegerTheme.accent
         }
     }
 }
