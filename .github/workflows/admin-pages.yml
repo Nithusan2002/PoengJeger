@@ -69,7 +69,8 @@ jobs:
           const version = process.env.GITHUB_SHA || String(Date.now());
           const index = fs.readFileSync(indexPath, "utf8")
             .replaceAll(/config\.local\.js\?v=[^"]+/g, `config.local.js?v=${version}`)
-            .replaceAll(/app\.js\?v=[^"]+/g, `app.js?v=${version}`);
+            .replaceAll(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
+            .replaceAll(/styles\.css\?v=[^"]+/g, `styles.css?v=${version}`);
 
           fs.writeFileSync(indexPath, index);
           NODE
