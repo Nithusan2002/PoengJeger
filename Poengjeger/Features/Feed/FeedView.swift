@@ -149,6 +149,38 @@ struct FeedView: View {
                 selectedProgramIDs: $environment.userSession.selectedProgramIDs
             )
         }
+        .onChange(of: selectedSort) {
+            environment.track(.init(
+                name: "filter_applied",
+                surface: "feed",
+                properties: [
+                    "filter_type": "sort",
+                    "selected_count": "1"
+                ]
+            ))
+        }
+        .onChange(of: selectedCategoryID) {
+            environment.track(.init(
+                name: "filter_applied",
+                surface: "feed",
+                entityType: selectedCategoryID == nil ? nil : "category",
+                entityID: selectedCategoryID,
+                properties: [
+                    "filter_type": "category",
+                    "selected_count": selectedCategoryID == nil ? "0" : "1"
+                ]
+            ))
+        }
+        .onChange(of: showsAllPrograms) {
+            environment.track(.init(
+                name: "filter_applied",
+                surface: "feed",
+                properties: [
+                    "filter_type": "program_scope",
+                    "selected_count": showsAllPrograms ? "all" : "\(environment.selectedFirstPhaseProgramIDs.count)"
+                ]
+            ))
+        }
     }
 
     private var isLoadingInitialData: Bool {

@@ -203,6 +203,125 @@ struct SupabaseCampaignRepository: CampaignRepository {
     }
 }
 
+struct SupabaseProductAnalytics: ProductAnalytics {
+    private let configuration: SupabaseConfiguration
+    private let session: URLSession
+    private let anonymousUserIDStore: AnonymousUserIDStore
+    private let sessionID: UUID
+    private let appVersion: String?
+
+    init(
+        configuration: SupabaseConfiguration,
+        session: URLSession = .shared,
+        anonymousUserIDStore: AnonymousUserIDStore = UserDefaultsAnonymousUserIDStore(),
+        sessionID: UUID = UUID(),
+        appVersion: String? = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    ) {
+        self.configuration = configuration
+        self.session = session
+        self.anonymousUserIDStore = anonymousUserIDStore
+        self.sessionID = sessionID
+        self.appVersion = appVersion
+    }
+
+    func track(_ event: ProductAnalyticsEvent) async {
+        guard let url = endpointURL else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(configuration.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(configuration.publishableKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+
+        let payload = ProductEventPayload(
+            eventName: event.name,
+            anonymousUserID: anonymousUserIDStore.anonymousUserID,
+            sessionID: sessionID,
+            surface: event.surface,
+            entityType: event.entityType,
+            entityID: event.entityID,
+            properties: event.properties,
+            appVersion: appVersion
+        )
+
+        do {
+            request.httpBody = try JSONEncoder().encode(payload)
+            let (_, response) = try await session.data(for: request)
+            #if DEBUG
+            if let httpResponse = response as? HTTPURLResponse, !(200..<300).contains(httpResponse.statusCode) {
+                print("Product analytics event failed: \(event.name) (\(httpResponse.statusCode))")
+            }
+            #endif
+        } catch {
+            #if DEBUG
+            print("Product analytics event failed: \(event.name)")
+            #endif
+        }
+    }
+
+    private var endpointURL: URL? {
+        guard var components = URLComponents(url: configuration.url, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+
+        components.path = "/rest/v1/product_events"
+        return components.url
+    }
+}
+
+struct NoopProductAnalytics: ProductAnalytics {
+    func track(_ event: ProductAnalyticsEvent) async {}
+}
+
+protocol AnonymousUserIDStore: Sendable {
+    var anonymousUserID: UUID { get }
+}
+
+struct UserDefaultsAnonymousUserIDStore: AnonymousUserIDStore, @unchecked Sendable {
+    private let defaults: UserDefaults
+    private let key = "no.poengjeger.analytics-anonymous-user-id"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    var anonymousUserID: UUID {
+        if let string = defaults.string(forKey: key), let id = UUID(uuidString: string) {
+            return id
+        }
+
+        let id = UUID()
+        defaults.set(id.uuidString, forKey: key)
+        return id
+    }
+}
+
+private struct ProductEventPayload: Encodable {
+    let eventName: String
+    let anonymousUserID: UUID
+    let sessionID: UUID
+    let surface: String?
+    let entityType: String?
+    let entityID: UUID?
+    let properties: [String: String]
+    let appVersion: String?
+    let platform = "ios"
+
+    enum CodingKeys: String, CodingKey {
+        case eventName = "event_name"
+        case anonymousUserID = "anonymous_user_id"
+        case sessionID = "session_id"
+        case surface
+        case entityType = "entity_type"
+        case entityID = "entity_id"
+        case properties
+        case appVersion = "app_version"
+        case platform
+    }
+}
+
 private struct BonusProgramDTO: Decodable {
     let id: UUID
     let slug: String

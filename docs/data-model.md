@@ -33,6 +33,7 @@ Publiserte butikker, opptjeningsmetoder, satser og kombinasjoner kan leses av kl
 - `user_program_preferences`: valgte bonusprogrammer.
 - `user_favorite_campaigns`: lagrede kampanjer.
 - `notification_subscriptions`: valgfrie program- eller kategoriabonnementer.
+- `product_events`: pseudonyme produktanalytics-events for å validere MVP-bruk og premium-kandidater. Klienten kan bare skrive events; lesetilgang er begrenset til redaksjonelle medlemmer.
 
 Brukerdata er knyttet til Supabase Auth og omfattes av RLS. Appen lagrer ikke bonuskontoer, private saldi eller transaksjoner.
 

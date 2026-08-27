@@ -2,26 +2,24 @@ import SwiftUI
 
 struct StoreDetailView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var isRecommendationExpanded = false
+
     let store: Store
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
+            LazyVStack(alignment: .leading, spacing: 28) {
                 header
-
-                bestCombinationSection
-
-                rateSection(title: "Vanlig opptjening", rates: store.baseRates)
-
-                rateSection(title: "Akkurat nå", rates: store.activePromotions)
-
+                bestOpportunitySection
+                referenceRateSection
+                currentCampaignSection
                 allMethodsSection
-
+                actionSection
                 sourceSection
             }
             .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 28)
+            .padding(.top, 18)
+            .padding(.bottom, 36)
         }
         .background(PoengjegerTheme.background)
         .navigationTitle(store.name)
@@ -29,20 +27,23 @@ struct StoreDetailView: View {
         .navigationDestination(for: EarningCombination.self) { combination in
             HowToEarnView(store: store, combination: combination)
         }
+        .task(id: store.id) {
+            trackStoreDetailOpened()
+        }
     }
 
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
             StoreInitialMark(name: store.name)
-                .frame(width: 54, height: 54)
+                .frame(width: 58, height: 58)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(store.name)
                     .font(.system(.title, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(store.category?.name ?? "Butikk")
+                Text(categoryLine)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -50,110 +51,231 @@ struct StoreDetailView: View {
                     Label("Sist kontrollert \(shortDate(lastVerifiedAt))", systemImage: "checkmark")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .padding(.top, 2)
+                        .padding(.top, 1)
                 }
             }
+
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func rateSection(title: String, rates: [StoreEarningRate]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionHeading(
-                title: title,
-                subtitle: title == "Vanlig opptjening" ? "Stabil grunnopptjening du kan regne med først." : "Tidsbegrensede forbedringer over normalen."
-            )
+    @ViewBuilder
+    private var bestOpportunitySection: some View {
+        if let combination = store.bestCombination {
+            let includedRates = rates(in: combination)
 
-            if rates.isEmpty {
-                Text(title == "Vanlig opptjening" ? "Ingen publisert grunnopptjening ennå." : "Ingen aktive kampanjer for denne butikken akkurat nå.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PoengjegerTheme.elevatedSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            VStack(alignment: .leading, spacing: 14) {
+                Text(bestCombinationEyebrow(for: combination))
+                    .font(.caption.weight(.bold))
+                    .tracking(2.6)
+                    .foregroundStyle(PoengjegerTheme.primary)
+
+                Text(combination.totalValueLabel)
+                    .font(.system(size: 40, weight: .bold, design: .serif))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(combination.summary)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                bestOpportunityMeta(rates: includedRates, verifiedAt: combination.lastVerifiedAt ?? store.lastVerifiedAt)
+
+                NavigationLink(value: combination) {
+                    Label("Slik gjør du det", systemImage: "arrow.right")
+                        .font(.headline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(PoengjegerTheme.primary)
+                .simultaneousGesture(TapGesture().onEnded {
+                    environment.track(.init(
+                        name: "handoff_opened",
+                        surface: "store_detail",
+                        entityType: "earning_combination",
+                        entityID: combination.id,
+                        properties: ["store_id": store.id.uuidString]
+                    ))
+                })
+
+                Button {
+                    withAnimation(.snappy) {
+                        isRecommendationExpanded.toggle()
+                    }
+                } label: {
+                    HStack {
+                        Text(isRecommendationExpanded ? "Skjul forklaring" : "Hvorfor er dette best?")
+                        Image(systemName: isRecommendationExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.bold))
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .tint(PoengjegerTheme.highlight)
+
+                if isRecommendationExpanded {
+                    RecommendationExplanation(
+                        combination: combination,
+                        rates: includedRates,
+                        lastVerifiedAt: combination.lastVerifiedAt ?? store.lastVerifiedAt,
+                        sourceFormatter: sourceDestinationName
+                    )
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(PoengjegerTheme.elevatedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+            }
+            .accessibilityElement(children: .contain)
+        } else {
+            EmptyBestOpportunityCard()
+        }
+    }
+
+    private func bestOpportunityMeta(rates: [StoreEarningRate], verifiedAt: Date?) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 14) {
+                metaItems(rates: rates, verifiedAt: verifiedAt)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                metaItems(rates: rates, verifiedAt: verifiedAt)
+            }
+        }
+        .font(.caption.weight(.semibold))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private func metaItems(rates: [StoreEarningRate], verifiedAt: Date?) -> some View {
+        if let expiryText = expiryText(for: rates) {
+            Label(expiryText, systemImage: "calendar")
+                .foregroundStyle(PoengjegerTheme.warning)
+        }
+
+        if let verifiedAt {
+            Label("Sist kontrollert \(shortDate(verifiedAt))", systemImage: "checkmark")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var referenceRateSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            LovableSectionHeading(eyebrow: "REFERANSEPUNKT", title: "Vanlig opptjening")
+
+            if store.baseRates.isEmpty {
+                EmptyStoreDetailCard(text: "Ingen publisert grunnopptjening ennå.")
             } else {
-                ForEach(rates) { rate in
-                    EarningRateCard(rate: rate)
+                ForEach(store.baseRates) { rate in
+                    ReferenceRateCard(rate: rate)
+                }
+            }
+        }
+    }
+
+    private var currentCampaignSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            LovableSectionHeading(eyebrow: "AKTUELL KAMPANJE", title: "Akkurat nå")
+
+            if store.activePromotions.isEmpty {
+                EmptyStoreDetailCard(text: "Ingen aktive kampanjer for denne butikken akkurat nå.")
+            } else {
+                ForEach(store.activePromotions) { rate in
+                    CurrentCampaignCard(rate: rate)
                 }
             }
         }
     }
 
     private var allMethodsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            SectionHeading(
+        VStack(alignment: .leading, spacing: 12) {
+            LovableSectionHeading(
+                eyebrow: "OVERSIKT",
                 title: "Alle opptjeningsmuligheter",
-                subtitle: "Slik kan du tjene poeng her."
+                subtitle: "EuroBonus og Trumf vises hver for seg - vi blander ikke bonusvalutaene."
             )
 
-            ForEach(store.sortedEarningRates) { rate in
-                EarningMethodRow(rate: rate)
+            let publishedRates = store.sortedEarningRates.filter { $0.status == .published }
+            if publishedRates.isEmpty {
+                EmptyStoreDetailCard(text: "Ingen publiserte opptjeningsmuligheter ennå.")
+            } else {
+                ForEach(publishedRates) { rate in
+                    EarningMethodCard(rate: rate)
+                }
             }
         }
     }
 
     @ViewBuilder
-    private var bestCombinationSection: some View {
+    private var actionSection: some View {
         if let combination = store.bestCombination {
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("BESTE KOMBINASJON")
-                        .font(.caption.weight(.bold))
-                        .tracking(2.2)
-                        .foregroundStyle(PoengjegerTheme.primary)
+            VStack(alignment: .leading, spacing: 14) {
+                LovableSectionHeading(eyebrow: "HANDLING", title: "Slik gjør du det")
 
-                    Text(combination.totalValueLabel)
-                        .font(.system(size: 38, weight: .bold, design: .serif))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(combination.summary)
-                        .font(.callout)
-                        .foregroundStyle(.primary)
-                        .lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    let includedRates = rates(in: combination)
-                    if !includedRates.isEmpty {
-                        VStack(alignment: .leading, spacing: 7) {
-                            ForEach(includedRates) { rate in
-                                HStack(spacing: 8) {
-                                    Circle()
-                                        .fill(PoengjegerTheme.programColor(slug: programSlug(for: rate)))
-                                        .frame(width: 7, height: 7)
-                                        .accessibilityHidden(true)
-
-                                    Text("\(rate.method.name): \(rate.rateLabel)")
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-                        }
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(combination.steps.sorted { $0.sortOrder < $1.sortOrder }.enumerated()), id: \.element.id) { index, step in
+                        StoreActionStepRow(index: index + 1, text: step.text)
                     }
 
-                    if let easierAlternativeLabel = combination.easierAlternativeLabel {
-                        Text(easierAlternativeLabel)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(PoengjegerTheme.primary)
+                    if let warningText = combination.warningText {
+                        Label(warningText, systemImage: "exclamationmark.triangle")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(PoengjegerTheme.warning)
+                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(PoengjegerTheme.neutralSoft)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .padding(.horizontal, 14)
+                            .padding(.top, 6)
                     }
 
                     NavigationLink(value: combination) {
-                        Label("Slik gjør du det", systemImage: "arrow.right")
+                        Label("Start handelen", systemImage: "arrow.right")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     .tint(PoengjegerTheme.primary)
+                    .padding(.horizontal, 14)
+                    .padding(.top, 14)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        environment.track(.init(
+                            name: "handoff_opened",
+                            surface: "store_detail_action",
+                            entityType: "earning_combination",
+                            entityID: combination.id,
+                            properties: ["store_id": store.id.uuidString]
+                        ))
+                    })
+
+                    Text("Du sendes videre til \(handoffDestinationNameForDisclosure(combination)). Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 18)
+                        .padding(.top, 10)
+                        .padding(.bottom, 16)
                 }
-                .padding(16)
                 .background(PoengjegerTheme.elevatedSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(PoengjegerTheme.border, lineWidth: 1)
                 }
             }
         }
@@ -179,15 +301,49 @@ struct StoreDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var categoryLine: String {
+        if let categoryName = store.category?.name {
+            return categoryName
+        }
+
+        return "Butikk"
+    }
+
     private func rates(in combination: EarningCombination) -> [StoreEarningRate] {
         combination.rateIDs.compactMap { rateID in
-            store.earningRates.first { $0.id == rateID }
+            store.earningRates.first { $0.id == rateID && $0.status == .published }
         }
     }
 
-    private func programSlug(for rate: StoreEarningRate) -> String? {
-        guard let programID = rate.method.programID else { return nil }
-        return environment.programs.first { $0.id == programID }?.slug
+    private func bestCombinationEyebrow(for combination: EarningCombination) -> String {
+        combination.rateIDs.count > 1 ? "BESTE KOMBINASJON" : "BESTE DOKUMENTERTE MULIGHET"
+    }
+
+    private func expiryText(for rates: [StoreEarningRate]) -> String? {
+        let expiryDates = rates.compactMap(\.endsAt).sorted()
+        guard let firstExpiry = expiryDates.first else { return nil }
+        return "Gyldig til \(shortDate(firstExpiry))"
+    }
+
+    private func sourceDestinationName(for url: URL) -> String {
+        let host = url.host()?.localizedLowercase ?? ""
+        if host.contains("trumf") {
+            return "Trumf"
+        }
+        if host.contains("sas") || host.contains("eurobonus") {
+            return "EuroBonus Shopping"
+        }
+        return url.host() ?? "Kilde"
+    }
+
+    private func handoffDestinationNameForDisclosure(_ combination: EarningCombination) -> String {
+        guard let url = combination.primaryHandoffURL else { return "riktig portal" }
+
+        if let matchingRate = store.earningRates.first(where: { $0.handoffURL == url }) {
+            return matchingRate.method.name
+        }
+
+        return sourceDestinationName(for: url)
     }
 
     private func shortDate(_ date: Date) -> String {
@@ -199,33 +355,151 @@ struct StoreDetailView: View {
                 .locale(Locale(identifier: "nb_NO"))
         )
     }
+
+    private func trackStoreDetailOpened() {
+        let programIDs = Set(store.earningRates.compactMap(\.method.programID))
+        environment.track(.init(
+            name: "store_detail_opened",
+            surface: "store_detail",
+            entityType: "store",
+            entityID: store.id,
+            properties: [
+                "program_count": "\(programIDs.count)",
+                "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
+                "has_best_combination": store.bestCombination == nil ? "false" : "true"
+            ]
+        ))
+
+        if let bestCombination = store.bestCombination {
+            environment.track(.init(
+                name: "best_combination_viewed",
+                surface: "store_detail",
+                entityType: "earning_combination",
+                entityID: bestCombination.id,
+                properties: [
+                    "store_id": store.id.uuidString,
+                    "mechanism_count": "\(bestCombination.rateIDs.count)"
+                ]
+            ))
+        }
+    }
 }
 
-private struct EarningRateCard: View {
+private struct EmptyBestOpportunityCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("BESTE DOKUMENTERTE MULIGHET")
+                .font(.caption.weight(.bold))
+                .tracking(2.6)
+                .foregroundStyle(PoengjegerTheme.primary)
+
+            Text("Ingen trygg kombinasjon ennå")
+                .font(.system(.title2, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+
+            Text("Redaksjonen har ikke publisert en anbefalt kombinasjon for denne butikken. Bruk vanlig opptjening og aktive kampanjer som separate valg.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+        }
+    }
+}
+
+private struct LovableSectionHeading: View {
+    let eyebrow: String
+    let title: String
+    var subtitle: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(eyebrow)
+                .font(.caption.weight(.bold))
+                .tracking(2.6)
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.system(.title2, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct ReferenceRateCard: View {
     let rate: StoreEarningRate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 10) {
-                MethodIcon(method: rate.method)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(rate.method.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(rate.method.name)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-
-                    Text(rate.rateLabel)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.primary)
-                        .fixedSize(horizontal: false, vertical: true)
+                if let checkedAt = rate.checkedAt {
+                    Label("Sist kontrollert \(checkedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+            }
 
-                Spacer(minLength: 0)
+            Spacer(minLength: 8)
+
+            Text(rate.rateLabel)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct CurrentCampaignCard: View {
+    let rate: StoreEarningRate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(rate.method.name)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                Spacer(minLength: 8)
+
+                Text(rate.rateLabel)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(PoengjegerTheme.warning)
+                    .multilineTextAlignment(.trailing)
             }
 
             if let normalRateLabel = rate.normalRateLabel {
-                Text("Normal: \(normalRateLabel)")
+                Text("Normalt: \(normalRateLabel)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -237,121 +511,316 @@ private struct EarningRateCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            Divider()
+
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 14) {
+                    campaignMeta
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    campaignMeta
+                }
+            }
+            .font(.caption.weight(.semibold))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.campaignSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(PoengjegerTheme.campaign.opacity(0.28), lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var campaignMeta: some View {
+        if let endsAt = rate.endsAt {
+            Label("Gyldig til \(endsAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "calendar")
+                .foregroundStyle(PoengjegerTheme.warning)
+        }
+
+        if let checkedAt = rate.checkedAt {
+            Label("Sist kontrollert \(checkedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct EarningMethodCard: View {
+    let rate: StoreEarningRate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .top, spacing: 10) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(rate.method.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        Text(rate.rateLabel)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.primary)
+
+                        if let normalRateLabel = rate.normalRateLabel {
+                            Text("(normalt \(normalRateLabel))")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Text(programBadge)
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(PoengjegerTheme.primarySoft)
+                    .foregroundStyle(PoengjegerTheme.primary)
+                    .clipShape(Capsule())
+            }
+
             if let requirementSummary = rate.requirementSummary {
-                Label(requirementSummary, systemImage: "checklist")
+                Text(requirementSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let warningText = rate.warningText {
-                Label(warningText, systemImage: "exclamationmark.triangle")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.warning)
+                Text(warningText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if let url = rate.handoffURL ?? rate.sourceURL {
-                Link(destination: url) {
-                    Label("Start hos \(destinationName(for: rate, url: url))", systemImage: "arrow.up.forward.app.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(PoengjegerTheme.primary)
-                .padding(.top, 4)
-                .accessibilityHint("Åpner \(destinationName(for: rate, url: url)) eksternt.")
+            if let checkedAt = rate.checkedAt {
+                Label("Sist kontrollert \(checkedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(rate.isBaseRate ? PoengjegerTheme.elevatedSurface : PoengjegerTheme.campaignSoft)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(rate.isBaseRate ? PoengjegerTheme.border : PoengjegerTheme.campaign.opacity(0.28), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }
 
-    private func destinationName(for rate: StoreEarningRate, url: URL) -> String {
-        if let sourceTitle = rate.sourceTitle, !sourceTitle.isEmpty {
-            return sourceTitle
-        }
-
-        let host = url.host()?.localizedLowercase ?? ""
-        if host.contains("trumf") {
+    private var programBadge: String {
+        let methodName = rate.method.name.localizedLowercase
+        if methodName.contains("trumf") {
             return "Trumf"
         }
-        if host.contains("sas") || host.contains("eurobonus") {
+        if methodName.contains("eurobonus") || methodName.contains("sas") {
             return "EuroBonus"
         }
-
-        return rate.method.name
+        return rate.method.type.displayName
     }
 }
 
-private struct EarningMethodRow: View {
-    let rate: StoreEarningRate
+private struct RecommendationExplanation: View {
+    let combination: EarningCombination
+    let rates: [StoreEarningRate]
+    let lastVerifiedAt: Date?
+    let sourceFormatter: (URL) -> String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            MethodIcon(method: rate.method)
+        VStack(alignment: .leading, spacing: 14) {
+            Divider()
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(rate.method.name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
+            Text("Derfor anbefaler vi denne")
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
 
-                    Spacer(minLength: 8)
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(rates) { rate in
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text(rate.method.name)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
 
-                    Text(rate.rateLabel)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.primary)
-                        .multilineTextAlignment(.trailing)
+                            Spacer(minLength: 8)
+
+                            Text(rate.rateLabel)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(PoengjegerTheme.primary)
+                                .multilineTextAlignment(.trailing)
+                        }
+
+                        if let sourceTitle = rate.sourceTitle {
+                            Text("Kilde: \(sourceTitle)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
 
-                if let requirementSummary = rate.requirementSummary {
-                    Text(requirementSummary)
-                        .font(.caption)
+                if rates.count > 1 {
+                    Divider()
+
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Totalt")
+                            .font(.subheadline.weight(.semibold))
+
+                        Spacer()
+
+                        Text(combination.totalValueLabel)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(PoengjegerTheme.primary)
+                    }
+                }
+            }
+
+            let requirements = requirementTexts
+            if !requirements.isEmpty {
+                ExplanationList(title: "Krav", items: requirements, systemImage: "checkmark.circle")
+            }
+
+            let warnings = warningTexts
+            if !warnings.isEmpty {
+                ExplanationList(title: "Viktige unntak", items: warnings, systemImage: "exclamationmark.triangle")
+            }
+
+            if let lastVerifiedAt {
+                Label("Sist kontrollert \(lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            let links = sourceLinks
+            if !links.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Kilder")
+                        .font(.caption.weight(.bold))
+                        .tracking(2.2)
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+
+                    ForEach(links, id: \.self) { url in
+                        Link(destination: url) {
+                            Label(sourceFormatter(url), systemImage: "arrow.up.right.square")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(PoengjegerTheme.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
                 }
             }
         }
-        .padding(.vertical, 9)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
+    }
+
+    private var requirementTexts: [String] {
+        rates.compactMap(\.requirementSummary).filter { !$0.isEmpty }
+    }
+
+    private var warningTexts: [String] {
+        let rateWarnings = rates.compactMap(\.warningText).filter { !$0.isEmpty }
+        guard let combinationWarning = combination.warningText, !combinationWarning.isEmpty else {
+            return rateWarnings
+        }
+        return rateWarnings + [combinationWarning]
+    }
+
+    private var sourceLinks: [URL] {
+        Array(Set(rates.compactMap { $0.sourceURL ?? $0.handoffURL }))
+            .sorted { $0.absoluteString < $1.absoluteString }
     }
 }
 
-private struct MethodIcon: View {
-    let method: EarningMethod
+private struct ExplanationList: View {
+    let title: String
+    let items: [String]
+    let systemImage: String
 
     var body: some View {
-        Image(systemName: iconName)
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(PoengjegerTheme.primary)
-            .frame(width: 30, height: 30)
-            .background(PoengjegerTheme.primarySoft)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .accessibilityHidden(true)
-    }
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title.uppercased())
+                .font(.caption.weight(.bold))
+                .tracking(2.2)
+                .foregroundStyle(.secondary)
 
-    private var iconName: String {
-        switch method.type {
+            ForEach(items, id: \.self) { item in
+                Label(item, systemImage: systemImage)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+private struct StoreActionStepRow: View {
+    let index: Int
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("\(index)")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(PoengjegerTheme.primary)
+                .frame(width: 28, height: 28)
+                .background(PoengjegerTheme.primarySoft)
+                .clipShape(Circle())
+                .accessibilityHidden(true)
+
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Steg \(index). \(text)")
+    }
+}
+
+private struct EmptyStoreDetailCard: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(PoengjegerTheme.elevatedSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(PoengjegerTheme.border, lineWidth: 1)
+            }
+    }
+}
+
+private extension EarningMethod.MethodType {
+    var displayName: String {
+        switch self {
         case .portal:
-            return "arrow.up.forward.app"
+            return "Portal"
         case .card:
-            return "creditcard"
+            return "Kort"
         case .loyalty:
-            return "person.text.rectangle"
+            return "Program"
         case .campaign:
-            return "tag"
+            return "Kampanje"
         case .manual:
-            return "checklist"
+            return "Manuell"
         }
     }
 }
@@ -359,5 +828,6 @@ private struct MethodIcon: View {
 #Preview {
     NavigationStack {
         StoreDetailView(store: SampleData.stores[0])
+            .environment(AppEnvironment.mock())
     }
 }

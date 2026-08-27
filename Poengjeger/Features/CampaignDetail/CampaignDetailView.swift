@@ -30,7 +30,7 @@ struct CampaignDetailView: View {
                 }
 
                 if let primarySource = campaign.sources.first {
-                    CampaignSourceCTA(source: primarySource)
+                    CampaignSourceCTA(campaign: campaign, source: primarySource)
                 }
 
                 if let primaryProgram {
@@ -62,6 +62,15 @@ struct CampaignDetailView: View {
                 onBack: { dismiss() },
                 onToggleFavorite: { toggleFavorite(in: &environment.userSession.favoriteCampaignIDs) }
             )
+        }
+        .task(id: campaign.id) {
+            environment.track(.init(
+                name: "campaign_detail_opened",
+                surface: "campaign_detail",
+                entityType: "campaign",
+                entityID: campaign.id,
+                properties: ["entry_point": "direct"]
+            ))
         }
     }
 
@@ -175,8 +184,22 @@ struct CampaignDetailView: View {
     private func toggleFavorite(in favoriteIDs: inout Set<UUID>) {
         if favoriteIDs.contains(campaign.id) {
             favoriteIDs.remove(campaign.id)
+            environment.track(.init(
+                name: "favorite_removed",
+                surface: "campaign_detail",
+                entityType: "campaign",
+                entityID: campaign.id,
+                properties: ["favorite_type": "campaign"]
+            ))
         } else {
             favoriteIDs.insert(campaign.id)
+            environment.track(.init(
+                name: "favorite_added",
+                surface: "campaign_detail",
+                entityType: "campaign",
+                entityID: campaign.id,
+                properties: ["favorite_type": "campaign"]
+            ))
         }
     }
 

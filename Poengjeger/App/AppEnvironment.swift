@@ -13,6 +13,7 @@ final class AppEnvironment {
 
     let campaignRepository: CampaignRepository
     let adminRepository: AdminRepository
+    let productAnalytics: ProductAnalytics
     @ObservationIgnored
     private let userSessionStore: UserSessionStore
     var userSession: UserSession {
@@ -35,11 +36,13 @@ final class AppEnvironment {
     init(
         campaignRepository: CampaignRepository,
         adminRepository: AdminRepository,
+        productAnalytics: ProductAnalytics,
         userSession: UserSession,
         userSessionStore: UserSessionStore = UserDefaultsUserSessionStore()
     ) {
         self.campaignRepository = campaignRepository
         self.adminRepository = adminRepository
+        self.productAnalytics = productAnalytics
         self.userSessionStore = userSessionStore
         self.userSession = userSessionStore.load() ?? userSession
     }
@@ -47,9 +50,11 @@ final class AppEnvironment {
     static func live() -> AppEnvironment {
         let repository: CampaignRepository
         let adminRepository: AdminRepository
+        let productAnalytics: ProductAnalytics
 
         if let configuration = SupabaseConfiguration.fromBundle() {
             repository = SupabaseCampaignRepository(configuration: configuration)
+            productAnalytics = SupabaseProductAnalytics(configuration: configuration)
             adminRepository = UnavailableAdminRepository(
                 reason: "Live admin krever egen admin-innlogging eller et separat adminverktøy. Denne iOS-klienten bruker bare publiserbar nøkkel."
             )
@@ -57,6 +62,7 @@ final class AppEnvironment {
             repository = MockCampaignRepository(
                 reason: "SUPABASE_HOST eller SUPABASE_PUBLISHABLE_KEY mangler i appens Info.plist."
             )
+            productAnalytics = NoopProductAnalytics()
             adminRepository = UnavailableAdminRepository(
                 reason: "Admin-kø er utilgjengelig før appkonfigurasjonen og admin-laget er koblet opp."
             )
@@ -65,6 +71,7 @@ final class AppEnvironment {
         return AppEnvironment(
             campaignRepository: repository,
             adminRepository: adminRepository,
+            productAnalytics: productAnalytics,
             userSession: .empty
         )
     }
@@ -73,6 +80,7 @@ final class AppEnvironment {
         AppEnvironment(
             campaignRepository: MockCampaignRepository(),
             adminRepository: MockAdminRepository(),
+            productAnalytics: NoopProductAnalytics(),
             userSession: .empty,
             userSessionStore: InMemoryUserSessionStore()
         )
@@ -80,7 +88,15 @@ final class AppEnvironment {
 
     func loadIfNeeded() async {
         guard loadState == .idle else { return }
+        track(.init(name: "app_opened", surface: "app"))
         await refresh()
+    }
+
+    func track(_ event: ProductAnalyticsEvent) {
+        let productAnalytics = productAnalytics
+        Task {
+            await productAnalytics.track(event)
+        }
     }
 
     func refresh() async {
@@ -133,7 +149,7 @@ final class AppEnvironment {
 
     var featuredStores: [Store] {
         StoreDiscoveryUseCase()
-            .storesWithEarning(from: stores)
+            .homeShortcutStores(from: stores)
             .prefix(4)
             .map { $0 }
     }

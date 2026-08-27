@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var environment
     @State private var searchText = ""
+    @State private var hasTrackedCurrentSearch = false
 
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -21,7 +22,7 @@ struct HomeView: View {
             LazyVStack(alignment: .leading, spacing: 28) {
                 header
 
-                searchField
+                searchSection
 
                 if environment.dataSource?.isFallback == true {
                     Text(environment.dataSource?.label ?? "Mock-data")
@@ -50,6 +51,9 @@ struct HomeView: View {
         .navigationDestination(for: Store.self) { store in
             StoreDetailView(store: store)
         }
+        .onChange(of: searchText) {
+            trackSearchStartedIfNeeded()
+        }
         .refreshable {
             await environment.refresh()
         }
@@ -74,6 +78,14 @@ struct HomeView: View {
         .padding(.bottom, -4)
     }
 
+    private var searchSection: some View {
+        searchField
+            .frame(maxWidth: 560)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, 10)
+            .padding(.bottom, 12)
+    }
+
     private var searchField: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
@@ -95,10 +107,10 @@ struct HomeView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 15)
+        .padding(.vertical, 17)
         .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
+        .shadow(color: PoengjegerTheme.shadow, radius: 12, y: 5)
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
@@ -109,7 +121,7 @@ struct HomeView: View {
     private var quickSuggestionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("FORSLAG")
+                Text("SNARVEIER")
                     .font(.caption.weight(.bold))
                     .tracking(2.2)
                     .foregroundStyle(.secondary)
@@ -118,7 +130,7 @@ struct HomeView: View {
                     .font(.system(.title2, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("Start her, eller søk etter det du skal kjøpe.")
+                Text("Start med en verifisert butikk, eller søk etter det du skal kjøpe.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -136,6 +148,9 @@ struct HomeView: View {
                         StoreResultRow(store: store)
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        trackStoreOpen(store, entryPoint: "suggestion")
+                    })
                 }
             }
         }
@@ -162,10 +177,44 @@ struct HomeView: View {
                         StoreResultRow(store: store)
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        trackStoreOpen(store, entryPoint: "search")
+                    })
                 }
             }
         }
     }
+
+    private func trackSearchStartedIfNeeded() {
+        let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedSearch.isEmpty else {
+            hasTrackedCurrentSearch = false
+            return
+        }
+
+        guard !hasTrackedCurrentSearch else { return }
+        hasTrackedCurrentSearch = true
+        environment.track(.init(
+            name: "store_search_started",
+            surface: "store_search",
+            properties: ["entry_point": "home"]
+        ))
+    }
+
+    private func trackStoreOpen(_ store: Store, entryPoint: String) {
+        environment.track(.init(
+            name: "store_search_result_opened",
+            surface: "store_search",
+            entityType: "store",
+            entityID: store.id,
+            properties: [
+                "entry_point": entryPoint,
+                "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
+                "has_best_combination": store.bestCombination == nil ? "false" : "true"
+            ]
+        ))
+    }
+
 }
 
 struct StoreCategoryRoute: Hashable {

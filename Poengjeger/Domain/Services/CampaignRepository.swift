@@ -35,3 +35,29 @@ enum CampaignDataSource: Equatable, Sendable {
 protocol CampaignRepository: Sendable {
     func fetchBootstrapData() async throws -> CampaignBootstrapData
 }
+
+struct ProductAnalyticsEvent: Sendable {
+    let name: String
+    let surface: String?
+    let entityType: String?
+    let entityID: UUID?
+    let properties: [String: String]
+
+    init(
+        name: String,
+        surface: String? = nil,
+        entityType: String? = nil,
+        entityID: UUID? = nil,
+        properties: [String: String] = [:]
+    ) {
+        self.name = name
+        self.surface = surface
+        self.entityType = entityType
+        self.entityID = entityID
+        self.properties = properties
+    }
+}
+
+protocol ProductAnalytics: Sendable {
+    func track(_ event: ProductAnalyticsEvent) async
+}

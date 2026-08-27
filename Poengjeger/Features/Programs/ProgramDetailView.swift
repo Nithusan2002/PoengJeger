@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ProgramDetailView: View {
+    @Environment(AppEnvironment.self) private var environment
+
     let program: BonusProgram
     let guide: ProgramGuide?
     let campaigns: [Campaign]
@@ -123,6 +125,18 @@ struct ProgramDetailView: View {
         .navigationTitle(program.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .task(id: program.id) {
+            environment.track(.init(
+                name: "guide_opened",
+                surface: "guide",
+                entityType: "guide",
+                entityID: guide?.id,
+                properties: [
+                    "program_id": program.id.uuidString,
+                    "entry_point": "guide"
+                ]
+            ))
+        }
     }
 }
 

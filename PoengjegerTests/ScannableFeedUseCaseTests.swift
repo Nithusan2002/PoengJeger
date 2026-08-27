@@ -65,6 +65,7 @@ struct ScannableFeedUseCaseTests {
         let environment = AppEnvironment(
             campaignRepository: repository,
             adminRepository: MockAdminRepository(),
+            productAnalytics: NoopProductAnalytics(),
             userSession: UserSession(
                 selectedProgramIDs: [SampleData.trumf.id, staleProgramID],
                 favoriteCampaignIDs: [availableCampaign.id]
@@ -96,6 +97,7 @@ struct ScannableFeedUseCaseTests {
         let environment = AppEnvironment(
             campaignRepository: MockCampaignRepository(),
             adminRepository: MockAdminRepository(),
+            productAnalytics: NoopProductAnalytics(),
             userSession: UserSession(selectedProgramIDs: [SampleData.trumf.id], favoriteCampaignIDs: []),
             userSessionStore: store
         )

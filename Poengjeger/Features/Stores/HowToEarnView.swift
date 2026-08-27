@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct HowToEarnView: View {
+    @Environment(AppEnvironment.self) private var environment
+    @Environment(\.openURL) private var openURL
+
     let store: Store
     let combination: EarningCombination
 
@@ -31,6 +34,18 @@ struct HowToEarnView: View {
         .navigationTitle("Slik gjør du det")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .task(id: combination.id) {
+            environment.track(.init(
+                name: "handoff_opened",
+                surface: "how_to_earn",
+                entityType: "earning_combination",
+                entityID: combination.id,
+                properties: [
+                    "store_id": store.id.uuidString,
+                    "requires_warning": combination.warningText == nil ? "false" : "true"
+                ]
+            ))
+        }
     }
 
     private var header: some View {
@@ -130,7 +145,19 @@ struct HowToEarnView: View {
     @ViewBuilder
     private var handoffButton: some View {
         if let url = combination.primaryHandoffURL {
-            Link(destination: url) {
+            Button {
+                environment.track(.init(
+                    name: "external_destination_opened",
+                    surface: "how_to_earn",
+                    entityType: "earning_combination",
+                    entityID: combination.id,
+                    properties: [
+                        "store_id": store.id.uuidString,
+                        "destination_type": handoffDestinationName(for: url)
+                    ]
+                ))
+                openURL(url)
+            } label: {
                 Label("Start handelen", systemImage: "arrow.up.forward.app.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)

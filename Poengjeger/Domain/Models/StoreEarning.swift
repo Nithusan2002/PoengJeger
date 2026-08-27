@@ -161,10 +161,15 @@ struct StoreSearchUseCase {
 }
 
 struct StoreDiscoveryUseCase {
+    func homeShortcutStores(from stores: [Store]) -> [Store] {
+        storesWithEarning(from: stores)
+            .sorted(by: compareHomeShortcutStores)
+    }
+
     func storesWithEarning(from stores: [Store]) -> [Store] {
         rankedStores(from: stores)
             .filter(\.isPublished)
-            .filter { $0.bestCombination != nil || !$0.sortedEarningRates.isEmpty }
+            .filter(\.hasVerifiedEarning)
     }
 
     func rankedStores(from stores: [Store]) -> [Store] {
@@ -174,8 +179,8 @@ struct StoreDiscoveryUseCase {
     }
 
     private func compareStores(_ first: Store, _ second: Store) -> Bool {
-        let firstHasEarning = first.bestCombination != nil || !first.sortedEarningRates.isEmpty
-        let secondHasEarning = second.bestCombination != nil || !second.sortedEarningRates.isEmpty
+        let firstHasEarning = first.hasVerifiedEarning
+        let secondHasEarning = second.hasVerifiedEarning
 
         if firstHasEarning != secondHasEarning {
             return firstHasEarning
@@ -191,6 +196,51 @@ struct StoreDiscoveryUseCase {
         return first.name.localizedCompare(second.name) == .orderedAscending
     }
 
+    private func compareHomeShortcutStores(_ first: Store, _ second: Store) -> Bool {
+        let firstHasActivePromotion = !first.activePromotions.isEmpty
+        let secondHasActivePromotion = !second.activePromotions.isEmpty
+
+        if firstHasActivePromotion != secondHasActivePromotion {
+            return firstHasActivePromotion
+        }
+
+        let firstCategoryPriority = homeCategoryPriority(for: first)
+        let secondCategoryPriority = homeCategoryPriority(for: second)
+
+        if firstCategoryPriority != secondCategoryPriority {
+            return firstCategoryPriority > secondCategoryPriority
+        }
+
+        let firstHasBestCombination = first.bestCombination != nil
+        let secondHasBestCombination = second.bestCombination != nil
+
+        if firstHasBestCombination != secondHasBestCombination {
+            return firstHasBestCombination
+        }
+
+        let firstValue = StoreDiscoveryUseCase.rankingValue(for: first)
+        let secondValue = StoreDiscoveryUseCase.rankingValue(for: second)
+
+        if firstValue != secondValue {
+            return firstValue > secondValue
+        }
+
+        return first.name.localizedCompare(second.name) == .orderedAscending
+    }
+
+    private func homeCategoryPriority(for store: Store) -> Int {
+        switch store.category?.slug {
+        case "dagligvare":
+            return 30
+        case "shopping":
+            return 20
+        case "reise":
+            return 10
+        default:
+            return 0
+        }
+    }
+
     static func rankingValue(for store: Store) -> Double {
         guard let label = store.bestCombination?.totalValueLabel else { return 0 }
         let normalized = label.replacingOccurrences(of: ",", with: ".")
@@ -204,6 +254,12 @@ struct StoreDiscoveryUseCase {
         }
 
         return value
+    }
+}
+
+private extension Store {
+    var hasVerifiedEarning: Bool {
+        bestCombination != nil || earningRates.contains { $0.isActive }
     }
 }
 

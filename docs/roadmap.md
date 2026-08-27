@@ -16,7 +16,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 - Kandidatkø som kan promotere funn til utkast, aldri direkte til publisert kampanje.
 - Enkel Guide-fane med læringsstier som forklarer EuroBonus- og Trumf-økosystemene, strategi, vanlige feller og aktive kampanjer uten å innføre en blogg- eller nyhetsflate.
 - Design- og brukerflytretningen er dokumentert i `docs/design-and-user-flow.md`.
-- Premiumabonnement er foretrukket kommersiell retning, men betalingslogikk og hard betalingsmur bygges først etter validering av gjentatt bruk. Lanseringsappen skal fortsatt ha et reelt gratisprodukt.
+- Premiumabonnement er foretrukket kommersiell retning, men betalingslogikk og hard betalingsmur bygges først etter validering av gjentatt bruk. Lanseringsappen skal fortsatt ha et reelt gratisprodukt. Analytics-planen er dokumentert i `docs/analytics-plan.md`.
 
 ## Neste valideringer
 
@@ -25,7 +25,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 3. Juster eksisterende SwiftUI-flyt mot `docs/design-and-user-flow.md`, spesielt Hjem, butikksøk, butikkside, Guide og kampanjedetalj.
 4. Velg og analyser eksplisitt godkjente kilder for EuroBonus og Trumf før automatisert overvåking utvides.
 5. Stram inn adminverktøyet videre med bedre session-håndtering og QA før bredere intern bruk. Første forenkling er gjort for én admin: kandidatkøen prioriterer lag draft/avvis fremfor flertrinns review.
-6. Instrumenter bruk av kampanjedetaljer, favoritter, varsler, filtre og Guide-innhold, og avklar hvordan premiumkandidater omtales i UI før betalingslogikk vurderes.
+6. Implementer første produktanalytics for butikk-/kampanjedetaljer, favoritter, varsler, filtre og Guide-innhold i tråd med `docs/analytics-plan.md`.
 
 ## Ikke i MVP uten ny beslutning
 

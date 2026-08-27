@@ -88,6 +88,7 @@ struct AdminIngestionUseCaseTests {
         let environment = AppEnvironment(
             campaignRepository: MockCampaignRepository(),
             adminRepository: repository,
+            productAnalytics: NoopProductAnalytics(),
             userSession: UserSession(selectedProgramIDs: [], favoriteCampaignIDs: []),
             userSessionStore: InMemoryUserSessionStore()
         )
@@ -115,6 +116,7 @@ struct AdminIngestionUseCaseTests {
         let environment = AppEnvironment(
             campaignRepository: MockCampaignRepository(),
             adminRepository: repository,
+            productAnalytics: NoopProductAnalytics(),
             userSession: UserSession(selectedProgramIDs: [], favoriteCampaignIDs: []),
             userSessionStore: InMemoryUserSessionStore()
         )
@@ -140,6 +142,7 @@ struct AdminIngestionUseCaseTests {
         let environment = AppEnvironment(
             campaignRepository: MockCampaignRepository(),
             adminRepository: FailingAdminRepository(),
+            productAnalytics: NoopProductAnalytics(),
             userSession: UserSession(selectedProgramIDs: [], favoriteCampaignIDs: []),
             userSessionStore: InMemoryUserSessionStore()
         )

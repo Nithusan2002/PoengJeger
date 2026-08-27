@@ -340,10 +340,26 @@ struct DetailQuickFactCard: View {
 }
 
 struct CampaignSourceCTA: View {
+    @Environment(AppEnvironment.self) private var environment
+    @Environment(\.openURL) private var openURL
+
+    let campaign: Campaign
     let source: CampaignSourceReference
 
     var body: some View {
-        Link(destination: source.url) {
+        Button {
+            environment.track(.init(
+                name: "external_destination_opened",
+                surface: "campaign_detail",
+                entityType: "campaign",
+                entityID: campaign.id,
+                properties: [
+                    "destination_type": "campaign_source",
+                    "source_name": source.sourceName
+                ]
+            ))
+            openURL(source.url)
+        } label: {
             Label("Åpne kampanjen hos \(source.sourceName)", systemImage: "arrow.up.right.square")
                 .font(.headline.weight(.semibold))
                 .frame(maxWidth: .infinity)
