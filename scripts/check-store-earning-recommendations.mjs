@@ -90,32 +90,74 @@ const sql = `
       and rate.status = 'published'
       and method.slug in ('trumf', 'sas-eurobonus-online-shopping')
     order by store.id, combo.sort_order, combo.created_at
+  ),
+  qa_from_expected as (
+    select
+      expected.store_id,
+      expected.store_name,
+      expected.expected_method_slug,
+      actual.actual_method_slug,
+      expected.expected_rate_label,
+      actual.total_value_label,
+      public.format_norwegian_decimal(expected.eurobonus_auto_points_per_100, 2) as expected_auto_eb_points_per_100,
+      case
+        when ambiguous.store_id is not null then 'needs_manual_review'
+        when actual.actual_method_slug is distinct from expected.expected_method_slug then 'wrong_best_method'
+        when expected.expected_method_slug = 'trumf'
+          and actual.total_value_label not ilike '%EB-poeng%'
+          then 'missing_eurobonus_equivalent_label'
+        when expected.expected_method_slug = 'trumf'
+          and (
+            actual.summary not ilike '%automatisk%'
+            or actual.summary not ilike '%engangsoverføring%'
+          )
+          then 'missing_transfer_explanation'
+        else 'ok'
+      end as qa_status
+    from expected_best expected
+    left join actual_best actual on actual.store_id = expected.store_id
+    left join manually_ambiguous_stores ambiguous on ambiguous.store_id = expected.store_id
+  ),
+  manual_without_expected as (
+    select
+      manual.store_id,
+      min(rate.store_name) as store_name,
+      null::text as expected_method_slug,
+      actual.actual_method_slug,
+      string_agg(rate.method_slug || ': ' || rate.rate_label, ' | ' order by rate.method_slug, rate.rate_label) as expected_rate_label,
+      actual.total_value_label,
+      null::text as expected_auto_eb_points_per_100,
+      'needs_manual_review'::text as qa_status
+    from manually_ambiguous_stores manual
+    join mixed_store_rates rate on rate.store_id = manual.store_id
+    left join actual_best actual on actual.store_id = manual.store_id
+    where not exists (
+      select 1
+      from expected_best expected
+      where expected.store_id = manual.store_id
+    )
+    group by manual.store_id, actual.actual_method_slug, actual.total_value_label
   )
   select
-    expected.store_name,
-    expected.expected_method_slug,
-    actual.actual_method_slug,
-    expected.expected_rate_label,
-    actual.total_value_label,
-    public.format_norwegian_decimal(expected.eurobonus_auto_points_per_100, 2) as expected_auto_eb_points_per_100,
-    case
-      when ambiguous.store_id is not null then 'needs_manual_review'
-      when actual.actual_method_slug is distinct from expected.expected_method_slug then 'wrong_best_method'
-      when expected.expected_method_slug = 'trumf'
-        and actual.total_value_label not ilike '%EB-poeng%'
-        then 'missing_eurobonus_equivalent_label'
-      when expected.expected_method_slug = 'trumf'
-        and (
-          actual.summary not ilike '%automatisk%'
-          or actual.summary not ilike '%engangsoverføring%'
-        )
-        then 'missing_transfer_explanation'
-      else 'ok'
-    end as qa_status
-  from expected_best expected
-  left join actual_best actual on actual.store_id = expected.store_id
-  left join manually_ambiguous_stores ambiguous on ambiguous.store_id = expected.store_id
-  order by qa_status desc, expected.store_name;
+    store_name,
+    expected_method_slug,
+    actual_method_slug,
+    expected_rate_label,
+    total_value_label,
+    expected_auto_eb_points_per_100,
+    qa_status
+  from qa_from_expected
+  union all
+  select
+    store_name,
+    expected_method_slug,
+    actual_method_slug,
+    expected_rate_label,
+    total_value_label,
+    expected_auto_eb_points_per_100,
+    qa_status
+  from manual_without_expected
+  order by qa_status desc, store_name;
 `;
 
 const rows = queryRows(sql);
