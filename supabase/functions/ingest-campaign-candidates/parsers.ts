@@ -81,10 +81,11 @@ export async function buildTrumfCandidates(
     .slice(0, limit);
 
   return Promise.all(merchants.map(async (merchant) => {
+    const shopSlug = normalizeTrumfShopSlug(merchant.urlName!, merchant.name);
     const sourceUrl = `https://trumfnetthandel.no/cashback/${
       encodeURIComponent(merchant.urlName!)
     }`;
-    const summary = merchant.cashbackDescription || merchant.basicRate || null;
+    const summary = trumfSummary(merchant.cashbackDescription || merchant.basicRate);
     const category = suggestMerchantCategory(categories, [
       merchant.name,
       merchant.urlName,
@@ -110,6 +111,7 @@ export async function buildTrumfCandidates(
         parser_key: source.parser_key,
         host_name: merchant.hostName ?? null,
         url_name: merchant.urlName,
+        shop_slug: shopSlug,
         bonus_type: "cashback",
         suggested_category_slug: category.slug,
         suggested_category_source: category.source,
@@ -118,6 +120,109 @@ export async function buildTrumfCandidates(
       },
     };
   }));
+}
+
+export function normalizeTrumfShopSlug(urlName: string, merchantName?: string): string {
+  const nameSeed = merchantName
+    ?.replace(/\.(no|com|se|dk|fi|net|org)\b/gi, " ")
+    .replace(/\b(no|norge|norway)\b/gi, " ");
+  const normalizedName = normalizeSearchText(nameSeed ?? merchantName ?? "");
+  if (normalizedName === "bad") {
+    return "badno";
+  }
+  if (normalizedName === "foto") {
+    return "fotono";
+  }
+  if (normalizedName === "bosch") {
+    return "bosch-home";
+  }
+  if (normalizedName === "siemens home") {
+    return "siemens";
+  }
+  if (normalizedName === "gina tricot") {
+    return "gina-tricot-ab";
+  }
+  if (normalizedName === "e wheels") {
+    return "e-wheels-2";
+  }
+  if (normalizedName === "disney") {
+    return "disney-1";
+  }
+  if (normalizedName === "jbl") {
+    return "jbl-com";
+  }
+  if (normalizedName === "ellos") {
+    return "ellos-3";
+  }
+  if (normalizedName === "lenovo") {
+    return "lenovo-2";
+  }
+  if (normalizedName === "bakeren og kokken") {
+    return "bagaren-och-kocken";
+  }
+  if (normalizedName === "bodystore") {
+    return "bodystore-com";
+  }
+  if (normalizedName === "gullfunn") {
+    return "gullfunn-1";
+  }
+  if (normalizedName === "l occitane") {
+    return "loccitane";
+  }
+  if (normalizedName === "elektroimportoren") {
+    return "elektroimportoren-no";
+  }
+  if (normalizedName === "fjord line") {
+    return "fjordline";
+  }
+  if (normalizedName === "vy express") {
+    return "vy-buss";
+  }
+  if (normalizedName === "askeladden navnelapper") {
+    return "navnelapper";
+  }
+  if (normalizedName === "inkmann") {
+    return "inkmann-2";
+  }
+  if (normalizedName === "lyko") {
+    return "lyko-dk";
+  }
+  if (normalizedName === "storytel") {
+    return "storytel-no";
+  }
+
+  const fallbackSeed = urlName
+    .replace(/^trumf[-_]?/i, "")
+    .replace(/[-_]?trumf$/i, "")
+    .replace(/[-_]?no$/i, "");
+
+  return slugify(nameSeed || fallbackSeed);
+}
+
+export function trumfSummary(value?: string): string | null {
+  const summary = value?.trim().replace(/(\d)\s*kr\b/gi, "$1 kr");
+  if (!summary) {
+    return null;
+  }
+
+  if (/\btrumf\b/i.test(summary)) {
+    return summary;
+  }
+
+  return `${summary} Trumf-bonus`;
+}
+
+export function normalizeSasShopSlug(slug?: string, name?: string): string | null {
+  const normalizedName = normalizeSearchText(name ?? "");
+  if (normalizedName === "under armour") {
+    return "under-armour";
+  }
+
+  if (!slug) {
+    return null;
+  }
+
+  return slugify(slug);
 }
 
 export async function buildSasCandidates(
@@ -135,6 +240,7 @@ export async function buildSasCandidates(
   return Promise.all(shops.map(async (shop) => {
     const summary = sasSummary(shop);
     const sourceUrl = sasSourceUrl(shop) || fallbackUrl;
+    const shopSlug = normalizeSasShopSlug(shop.slug, shop.name);
     const category = suggestMerchantCategory(categories, [
       shop.name,
       shop.slug,
@@ -161,7 +267,7 @@ export async function buildSasCandidates(
       metadata: {
         parser_key: source.parser_key,
         shop_uuid: shop.uuid,
-        shop_slug: shop.slug ?? null,
+        shop_slug: shopSlug,
         category_id: shop.categoryId ?? null,
         commission_type: shop.commission_type ?? null,
         currency: shop.currency ?? null,
@@ -336,6 +442,11 @@ function sasSourceUrl(shop: SasShopDetail): string | null {
 }
 
 function categorySlugFromKeywords(value: string): string | null {
+  const overrideSlug = categorySlugOverride(value);
+  if (overrideSlug) {
+    return overrideSlug;
+  }
+
   const rules: Array<{ slug: string; terms: string[] }> = [
     {
       slug: "dagligvare",
@@ -369,6 +480,12 @@ function categorySlugFromKeywords(value: string): string | null {
         "avg",
         "norton",
         "mcafee",
+      ],
+    },
+    {
+      slug: "boker-medier",
+      terms: [
+        "fotoknudsen",
       ],
     },
     {
@@ -452,6 +569,7 @@ function categorySlugFromKeywords(value: string): string | null {
         "floyd",
         "g star",
         "gina tricot",
+        "festkompaniet",
         "guttelus",
         "haglofs",
         "haglöfs",
@@ -524,6 +642,7 @@ function categorySlugFromKeywords(value: string): string | null {
         "kayani",
         "kicks",
         "kondomeriet",
+        "dentway",
         "l occitane",
         "loccitane",
         "lenson",
@@ -759,6 +878,147 @@ function categorySlugFromKeywords(value: string): string | null {
   return null;
 }
 
+function categorySlugOverride(value: string): string | null {
+  const overrides: Array<{ slug: string; terms: string[] }> = [
+    {
+      slug: "hus-hjem",
+      terms: [
+        "aeg",
+        "badno",
+        "bad no",
+        "bosch home",
+        "christiania glasmagasin",
+        "electrolux spares",
+        "fortum strom",
+        "fortum strøm",
+        "homeroom",
+        "jotex",
+        "lunehjem",
+        "lusini",
+        "lysman",
+        "tempur",
+        "tibber",
+        "trendcarpet",
+        "vidaxl",
+        "vida xl",
+      ],
+    },
+    {
+      slug: "dyr-kjaeledyr",
+      terms: [
+        "i love dogs",
+        "ilovedogs",
+        "vetzoo",
+        "zoo no",
+      ],
+    },
+    {
+      slug: "reise",
+      terms: [
+        "fjordline",
+        "football travel",
+        "vy buss",
+      ],
+    },
+    {
+      slug: "telecom",
+      terms: [
+        "ice",
+        "nordhost",
+        "plussmobil",
+        "trondermobil",
+        "trøndermobil",
+        "telia",
+      ],
+    },
+    {
+      slug: "klaer-sko",
+      terms: [
+        "ellos",
+        "mulberry",
+        "swims",
+        "suitable",
+        "under amour",
+        "under armour",
+      ],
+    },
+    {
+      slug: "sport-fritid",
+      terms: [
+        "e wheels",
+        "e-wheels",
+        "db",
+        "haglofs",
+        "haglöfs",
+        "outnorth",
+        "proteinfabrikken",
+        "skistart",
+        "skogstad sport",
+        "sportsmagasinet",
+        "treningspartner",
+      ],
+    },
+    {
+      slug: "barn-familie",
+      terms: [
+        "festkompaniet",
+        "guttelus",
+        "babyland",
+        "lappeliten",
+        "lekmer",
+        "navnelapper",
+        "patpat",
+        "polarn o pyret",
+        "polarnopyret",
+      ],
+    },
+    {
+      slug: "elektronikk",
+      terms: [
+        "farnell",
+        "razer",
+      ],
+    },
+    {
+      slug: "helse-skjonnhet",
+      terms: [
+        "bodystore",
+        "dentway",
+        "kost1",
+        "memira",
+        "oslo skin lab",
+      ],
+    },
+    {
+      slug: "boker-medier",
+      terms: [
+        "bokia",
+        "norli",
+        "nordic print",
+      ],
+    },
+    {
+      slug: "subscription",
+      terms: [
+        "bookbeat",
+        "fabel",
+        "nextory",
+        "readly",
+        "storytel",
+        "strim",
+      ],
+    },
+  ];
+
+  for (const override of overrides) {
+    if (override.terms.some((term) => matchesCategoryTerm(value, term))) {
+      return override.slug;
+    }
+  }
+
+  return null;
+}
+
 function matchesCategoryTerm(value: string, term: string): boolean {
   const normalizedTerm = normalizeSearchText(term);
   if (!normalizedTerm) {
@@ -783,6 +1043,10 @@ function normalizeSearchText(value: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function slugify(value: string): string {
+  return normalizeSearchText(value).replace(/\s+/g, "-");
 }
 
 async function stableHash(parts: unknown[]): Promise<string> {

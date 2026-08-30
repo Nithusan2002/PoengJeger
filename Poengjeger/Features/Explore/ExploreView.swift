@@ -27,10 +27,6 @@ struct ExploreView: View {
             .sorted { $0.localizedCompare($1) == .orderedAscending }
     }
 
-    private var earningStores: [Store] {
-        StoreDiscoveryUseCase().storesWithEarning(from: environment.publishedStores)
-    }
-
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
@@ -41,8 +37,6 @@ struct ExploreView: View {
                 campaignSection
 
                 categoryBrowseSection
-
-                earningStoresSection
             }
             .padding(.horizontal, 16)
             .padding(.top, 18)
@@ -72,7 +66,7 @@ struct ExploreView: View {
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Oppdag aktive kampanjer, kategorier og butikker med verifisert opptjening.")
+            Text("Oppdag aktive kampanjer og bla etter handlebehov.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -82,7 +76,7 @@ struct ExploreView: View {
 
     @ViewBuilder
     private var statusSection: some View {
-        if case let .failed(message) = environment.loadState, activeCampaigns.isEmpty && earningStores.isEmpty {
+        if case let .failed(message) = environment.loadState, activeCampaigns.isEmpty && categories.isEmpty {
             FeedStatusBanner(text: message)
         } else if environment.dataSource?.isFallback == true {
             Text(environment.dataSource?.label ?? "Mock-data")
@@ -175,61 +169,6 @@ struct ExploreView: View {
                         categoryName: category,
                         stores: rankedStores(in: category).prefix(3).map { $0 }
                     )
-                }
-            }
-        }
-    }
-
-    private var earningStoresSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("BUTIKKER")
-                    .font(.caption.weight(.bold))
-                    .tracking(2.2)
-                    .foregroundStyle(.secondary)
-
-                Text("Butikker med opptjening")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text("Et kort utvalg butikker der redaksjonen har verifisert minst én opptjeningsmulighet.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if earningStores.isEmpty {
-                Text("Ingen butikker med verifisert opptjening er publisert ennå.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PoengjegerTheme.elevatedSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(PoengjegerTheme.border, lineWidth: 1)
-                    }
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(earningStores.prefix(8)) { store in
-                        NavigationLink(value: store) {
-                            ExploreStoreMiniRow(store: store)
-                        }
-                        .buttonStyle(.plain)
-
-                        if store.id != earningStores.prefix(8).last?.id {
-                            Divider()
-                                .padding(.leading, 64)
-                        }
-                    }
-                }
-                .background(PoengjegerTheme.elevatedSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(PoengjegerTheme.border, lineWidth: 1)
                 }
             }
         }

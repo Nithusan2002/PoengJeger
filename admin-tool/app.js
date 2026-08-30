@@ -523,6 +523,20 @@
         "promoted_store_earning_rate_id",
         "ingest_kind",
         "parser_key",
+        "shop_slug",
+        "missing_bonus_value",
+        "suggested_category_slug",
+        "suggested_category_source",
+        "is_store_earning_candidate",
+        "suggested_method_slug",
+        "matched_store_id",
+        "matched_store_name",
+        "matched_store_status",
+        "matches_existing_store",
+        "has_existing_store_method_rate",
+        "needs_category_review",
+        "is_ready_for_store_earning",
+        "review_signal_label",
         "source_name",
         "suggested_program_name",
         "suggested_category_id",
@@ -537,7 +551,7 @@
 
     const response = await apiRequest(`/rest/v1/admin_ingestion_candidate_queue?${params.toString()}`);
 
-    return response.map(normalizeCandidate);
+    return response.map(normalizeCandidate).sort(compareCandidatesForReview);
   }
 
   async function fetchRole() {
@@ -719,6 +733,20 @@
       promotedStoreEarningRateId: candidate.promoted_store_earning_rate_id,
       ingestKind: candidate.ingest_kind,
       parserKey: candidate.parser_key,
+      shopSlug: candidate.shop_slug,
+      missingBonusValue: Boolean(candidate.missing_bonus_value),
+      suggestedCategorySlug: candidate.suggested_category_slug,
+      suggestedCategorySource: candidate.suggested_category_source,
+      isStoreEarningCandidate: Boolean(candidate.is_store_earning_candidate),
+      suggestedMethodSlug: candidate.suggested_method_slug,
+      matchedStoreId: candidate.matched_store_id,
+      matchedStoreName: candidate.matched_store_name,
+      matchedStoreStatus: candidate.matched_store_status,
+      matchesExistingStore: Boolean(candidate.matches_existing_store),
+      hasExistingStoreMethodRate: Boolean(candidate.has_existing_store_method_rate),
+      needsCategoryReview: Boolean(candidate.needs_category_review),
+      isReadyForStoreEarning: Boolean(candidate.is_ready_for_store_earning),
+      reviewSignalLabel: candidate.review_signal_label || "Trenger review",
       sourceName: candidate.source_name,
       suggestedProgramName: candidate.suggested_program_name,
       suggestedCategoryId: candidate.suggested_category_id,
@@ -943,15 +971,19 @@
 
     const total = state.candidates.length;
     const storeCandidates = state.candidates.filter(isStoreEarningCandidate).length;
+    const ready = state.candidates.filter((candidate) => candidate.isReadyForStoreEarning).length;
+    const categoryReview = state.candidates.filter((candidate) => candidate.needsCategoryReview).length;
     const promoted = state.candidates.filter((candidate) => (
       candidate.promotedCampaignId || candidate.promotedStoreEarningRateId
     )).length;
 
     elements.queueWorkbar.innerHTML = `
       ${renderWorkbarMetric("I filteret", total)}
+      ${renderWorkbarMetric("Klar", ready)}
       ${renderWorkbarMetric("Butikkfunn", storeCandidates)}
+      ${renderWorkbarMetric("Kategori usikker", categoryReview)}
       ${renderWorkbarMetric("Promotert", promoted)}
-      <span class="workbar-hint">Standardjobb: åpne første kandidat, lag draft eller avvis.</span>
+      <span class="workbar-hint">Sorter automatisk: klare butikkfunn først, usikre kategorier bak.</span>
     `;
   }
 
@@ -1046,6 +1078,7 @@
       item.innerHTML = `
         <div class="badge-row">
           ${renderBadge(candidate.status)}
+          ${renderCandidateSignalBadge(candidate)}
           ${candidate.suggestedProgramName ? renderMetaBadge(candidate.suggestedProgramName) : ""}
           ${candidate.suggestedCategoryName ? renderMetaBadge(candidate.suggestedCategoryName) : ""}
         </div>
@@ -1230,6 +1263,7 @@
       <div class="detail-copy">
         <div class="badge-row">
           ${renderBadge(candidate.status)}
+          ${renderCandidateSignalBadge(candidate)}
           ${candidate.suggestedProgramName ? renderMetaBadge(candidate.suggestedProgramName) : ""}
           ${candidate.suggestedCategoryName ? renderMetaBadge(candidate.suggestedCategoryName) : ""}
         </div>
@@ -1243,6 +1277,17 @@
             <span>Oppdaget ${formatDateTime(candidate.detectedAt)}</span>
           </div>
         </div>
+
+        <section>
+          <h3>Review-signal</h3>
+          <div class="signal-grid">
+            ${renderSignalItem("Shop slug", candidate.shopSlug || "Mangler", Boolean(candidate.shopSlug))}
+            ${renderSignalItem("Klar sats", candidate.missingBonusValue ? "Mangler verdi" : "Har verdi", !candidate.missingBonusValue)}
+            ${renderSignalItem("Kategori", candidate.needsCategoryReview ? "Usikker" : "Tydelig", !candidate.needsCategoryReview)}
+            ${renderSignalItem("Butikkmatch", candidate.matchesExistingStore ? candidate.matchedStoreName || "Matcher" : "Ny butikk", candidate.matchesExistingStore)}
+            ${renderSignalItem("Metode", candidate.hasExistingStoreMethodRate ? "Mulig duplikat" : candidate.suggestedMethodSlug || "Ikke butikk", !candidate.hasExistingStoreMethodRate)}
+          </div>
+        </section>
 
         <section>
           <h3>Kildelenke</h3>
@@ -3656,7 +3701,40 @@
   }
 
   function isStoreEarningCandidate(candidate) {
-    return candidate && ["trumf_netthandel", "sas_eurobonus_shopping"].includes(candidate.parserKey);
+    return candidate && (
+      candidate.isStoreEarningCandidate ||
+      ["trumf_netthandel", "sas_eurobonus_shopping"].includes(candidate.parserKey)
+    );
+  }
+
+  function compareCandidatesForReview(left, right) {
+    return candidateReviewRank(left) - candidateReviewRank(right) ||
+      new Date(right.detectedAt || 0).getTime() - new Date(left.detectedAt || 0).getTime() ||
+      left.title.localeCompare(right.title, "nb");
+  }
+
+  function candidateReviewRank(candidate) {
+    if (candidate.isReadyForStoreEarning && candidate.matchesExistingStore) {
+      return 0;
+    }
+
+    if (candidate.isReadyForStoreEarning) {
+      return 1;
+    }
+
+    if (candidate.needsCategoryReview || candidate.missingBonusValue) {
+      return 3;
+    }
+
+    if (candidate.hasExistingStoreMethodRate) {
+      return 4;
+    }
+
+    if (candidate.promotedCampaignId || candidate.promotedStoreEarningRateId) {
+      return 5;
+    }
+
+    return 2;
   }
 
   function summarizeIngestionResult(result, requestedSource) {
@@ -3798,6 +3876,36 @@
 
   function renderReadinessBadge(readiness) {
     return `<span class="badge ${escapeAttribute(readiness.level)}">${escapeHtml(readinessLabel(readiness))}</span>`;
+  }
+
+  function renderCandidateSignalBadge(candidate) {
+    const level = candidateSignalLevel(candidate);
+    return `<span class="badge ${escapeAttribute(level)}">${escapeHtml(candidate.reviewSignalLabel || "Trenger review")}</span>`;
+  }
+
+  function candidateSignalLevel(candidate) {
+    if (candidate.isReadyForStoreEarning) {
+      return "ready";
+    }
+
+    if (candidate.needsCategoryReview || candidate.missingBonusValue || candidate.hasExistingStoreMethodRate) {
+      return "warning";
+    }
+
+    if (candidate.promotedCampaignId || candidate.promotedStoreEarningRateId) {
+      return "promoted";
+    }
+
+    return "review";
+  }
+
+  function renderSignalItem(label, value, isPositive) {
+    return `
+      <span class="signal-item ${isPositive ? "positive" : "attention"}">
+        <strong>${escapeHtml(label)}</strong>
+        <span>${escapeHtml(value)}</span>
+      </span>
+    `;
   }
 
   function readinessLabel(readiness) {

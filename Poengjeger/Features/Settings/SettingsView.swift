@@ -181,7 +181,12 @@ private struct ProfileProgramSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ProfileSectionHeading(eyebrow: "BONUSPROGRAMMER", title: "Dine valg")
+            ProfileSectionHeading(eyebrow: "BONUSPROGRAMMER", title: "Mine programmer")
+
+            Text("Velg programmene du faktisk bruker. Valgene prioriterer relevante kampanjer, butikker og guider uten konto-tilkobling.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 10) {
                 Button {
@@ -204,15 +209,15 @@ private struct ProfileProgramSection: View {
 
             VStack(spacing: 0) {
                 ForEach(programs) { program in
-                    Button {
-                        toggleProgramSelection(program.id)
-                    } label: {
-                        ProfileProgramRow(
-                            program: program,
-                            isSelected: selectedProgramIDs.contains(program.id)
+                    ProfileProgramRow(
+                        program: program,
+                        isSelected: Binding(
+                            get: { selectedProgramIDs.contains(program.id) },
+                            set: { isSelected in
+                                setProgramSelection(program.id, isSelected: isSelected)
+                            }
                         )
-                    }
-                    .buttonStyle(.plain)
+                    )
 
                     if program.id != programs.last?.id {
                         Divider()
@@ -230,47 +235,42 @@ private struct ProfileProgramSection: View {
         }
     }
 
-    private func toggleProgramSelection(_ programID: UUID) {
-        if selectedProgramIDs.contains(programID) {
-            selectedProgramIDs.remove(programID)
-        } else {
+    private func setProgramSelection(_ programID: UUID, isSelected: Bool) {
+        if isSelected {
             selectedProgramIDs.insert(programID)
+        } else {
+            selectedProgramIDs.remove(programID)
         }
     }
 }
 
 private struct ProfileProgramRow: View {
     let program: BonusProgram
-    let isSelected: Bool
+    @Binding var isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(program.programColor)
-                .frame(width: 10, height: 10)
-                .accessibilityHidden(true)
+        Toggle(isOn: $isSelected) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(program.programColor)
+                    .frame(width: 10, height: 10)
+                    .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(program.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(program.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
 
-                Text(program.issuerName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    Text(program.issuerName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-
-            Spacer(minLength: 8)
-
-            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(isSelected ? PoengjegerTheme.primary : Color(uiColor: .tertiaryLabel))
-                .accessibilityHidden(true)
         }
         .padding(.horizontal, 14)
-        .frame(height: 62)
+        .frame(minHeight: 62)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        .tint(PoengjegerTheme.primary)
         .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
     }
 }

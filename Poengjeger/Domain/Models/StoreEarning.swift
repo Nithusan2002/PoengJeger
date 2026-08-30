@@ -41,13 +41,23 @@ struct Store: Identifiable, Hashable {
 
     var bestCombination: EarningCombination? {
         combinations
-            .filter { $0.status == .published }
+            .filter { $0.status == .published && isUsableCombination($0) }
             .sorted { $0.sortOrder < $1.sortOrder }
             .first
     }
 
     func matches(_ query: String) -> Bool {
         StoreSearchMatch(store: self, query: query).score > 0
+    }
+
+    private func isUsableCombination(_ combination: EarningCombination) -> Bool {
+        guard !combination.rateIDs.isEmpty else { return true }
+
+        let ratesByID = Dictionary(uniqueKeysWithValues: earningRates.map { ($0.id, $0) })
+        let includedRates = combination.rateIDs.compactMap { ratesByID[$0] }
+
+        guard includedRates.count == combination.rateIDs.count else { return false }
+        return includedRates.allSatisfy(\.isActive)
     }
 }
 
@@ -197,11 +207,11 @@ struct StoreDiscoveryUseCase {
     }
 
     private func compareHomeShortcutStores(_ first: Store, _ second: Store) -> Bool {
-        let firstHasActivePromotion = !first.activePromotions.isEmpty
-        let secondHasActivePromotion = !second.activePromotions.isEmpty
+        let firstHasCurrentEarning = hasCurrentEarning(for: first)
+        let secondHasCurrentEarning = hasCurrentEarning(for: second)
 
-        if firstHasActivePromotion != secondHasActivePromotion {
-            return firstHasActivePromotion
+        if firstHasCurrentEarning != secondHasCurrentEarning {
+            return firstHasCurrentEarning
         }
 
         let firstCategoryPriority = homeCategoryPriority(for: first)
@@ -226,6 +236,10 @@ struct StoreDiscoveryUseCase {
         }
 
         return first.name.localizedCompare(second.name) == .orderedAscending
+    }
+
+    private func hasCurrentEarning(for store: Store) -> Bool {
+        !store.activePromotions.isEmpty || store.earningRates.contains { $0.isActive }
     }
 
     private func homeCategoryPriority(for store: Store) -> Int {

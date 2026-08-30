@@ -769,6 +769,44 @@ button:disabled {
   line-height: 1.35;
 }
 
+.signal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+}
+
+.signal-item {
+  display: grid;
+  gap: 3px;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.signal-item strong {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.signal-item span {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.signal-item.positive {
+  border-color: rgba(14, 117, 95, 0.22);
+  background: var(--success-soft);
+}
+
+.signal-item.attention {
+  border-color: rgba(154, 91, 16, 0.24);
+  background: var(--warning-soft);
+}
+
 .detail-copy a {
   color: var(--accent);
   word-break: break-word;

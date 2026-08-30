@@ -2,34 +2,80 @@ import SwiftUI
 
 struct StoreDetailView: View {
     @Environment(AppEnvironment.self) private var environment
+    @Environment(\.dismiss) private var dismiss
     @State private var isRecommendationExpanded = false
 
     let store: Store
 
-    var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 28) {
-                header
-                bestOpportunitySection
-                referenceRateSection
-                currentCampaignSection
-                allMethodsSection
-                actionSection
-                sourceSection
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 36)
+    private var publishedRates: [StoreEarningRate] {
+        store.sortedEarningRates.filter { $0.status == .published }
+    }
+
+    private var bestRateIDs: Set<UUID> {
+        Set(store.bestCombination?.rateIDs ?? [])
+    }
+
+    private var bestOpportunityUsesPromotion: Bool {
+        store.activePromotions.contains { bestRateIDs.contains($0.id) }
+    }
+
+    private var visibleReferenceRates: [StoreEarningRate] {
+        if bestOpportunityUsesPromotion {
+            return store.baseRates
         }
-        .background(PoengjegerTheme.background)
-        .navigationTitle(store.name)
-        .navigationBarTitleDisplayMode(.inline)
+
+        return store.baseRates.filter { !bestRateIDs.contains($0.id) }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            topBar
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 30) {
+                    header
+                    bestOpportunitySection
+                    referenceRateSection
+                    currentCampaignSection
+                    allMethodsSection
+                    actionSection
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 12)
+                .padding(.bottom, 40)
+            }
+        }
+        .background(LovableStoreStyle.pageBackground)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(for: EarningCombination.self) { combination in
             HowToEarnView(store: store, combination: combination)
         }
         .task(id: store.id) {
             trackStoreDetailOpened()
         }
+    }
+
+    private var topBar: some View {
+        Button {
+            dismiss()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.left")
+                    .font(.subheadline.weight(.semibold))
+
+                Text("Tilbake")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundStyle(.secondary)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Tilbake")
+        .padding(.horizontal, 18)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(LovableStoreStyle.pageBackground)
     }
 
     private var header: some View {
@@ -85,13 +131,9 @@ struct StoreDetailView: View {
                 bestOpportunityMeta(rates: includedRates, verifiedAt: combination.lastVerifiedAt ?? store.lastVerifiedAt)
 
                 NavigationLink(value: combination) {
-                    Label("Slik gjør du det", systemImage: "arrow.right")
-                        .font(.headline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
+                    LovablePrimaryButtonLabel(title: "Slik gjør du det")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(PoengjegerTheme.primary)
+                .buttonStyle(.plain)
                 .simultaneousGesture(TapGesture().onEnded {
                     environment.track(.init(
                         name: "handoff_opened",
@@ -108,16 +150,22 @@ struct StoreDetailView: View {
                     }
                 } label: {
                     HStack {
-                        Text(isRecommendationExpanded ? "Skjul forklaring" : "Hvorfor er dette best?")
+                        Text("Hvorfor er dette best?")
                         Image(systemName: isRecommendationExpanded ? "chevron.up" : "chevron.down")
                             .font(.caption.weight(.bold))
                     }
                     .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .padding(.vertical, 13)
                     .frame(maxWidth: .infinity)
+                    .background(isRecommendationExpanded ? LovableStoreStyle.warningBackground : LovableStoreStyle.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(LovableStoreStyle.border, lineWidth: 1)
+                    }
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .tint(PoengjegerTheme.highlight)
+                .buttonStyle(.plain)
 
                 if isRecommendationExpanded {
                     RecommendationExplanation(
@@ -129,14 +177,13 @@ struct StoreDetailView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
-            .padding(18)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
+            .background(LovableStoreStyle.recommendationBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(LovableStoreStyle.primaryBorder, lineWidth: 1.2)
             }
             .accessibilityElement(children: .contain)
         } else {
@@ -161,8 +208,8 @@ struct StoreDetailView: View {
     @ViewBuilder
     private func metaItems(rates: [StoreEarningRate], verifiedAt: Date?) -> some View {
         if let expiryText = expiryText(for: rates) {
-            Label(expiryText, systemImage: "calendar")
-                .foregroundStyle(PoengjegerTheme.warning)
+            Text(expiryText)
+                .foregroundStyle(LovableStoreStyle.expiryText)
         }
 
         if let verifiedAt {
@@ -171,27 +218,25 @@ struct StoreDetailView: View {
         }
     }
 
+    @ViewBuilder
     private var referenceRateSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            LovableSectionHeading(eyebrow: "REFERANSEPUNKT", title: "Vanlig opptjening")
+        if !visibleReferenceRates.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                LovableSectionHeading(eyebrow: "REFERANSEPUNKT", title: "Vanlig opptjening")
 
-            if store.baseRates.isEmpty {
-                EmptyStoreDetailCard(text: "Ingen publisert grunnopptjening ennå.")
-            } else {
-                ForEach(store.baseRates) { rate in
+                ForEach(visibleReferenceRates) { rate in
                     ReferenceRateCard(rate: rate)
                 }
             }
         }
     }
 
+    @ViewBuilder
     private var currentCampaignSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            LovableSectionHeading(eyebrow: "AKTUELL KAMPANJE", title: "Akkurat nå")
+        if !store.activePromotions.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                LovableSectionHeading(eyebrow: "AKTUELL KAMPANJE", title: "Akkurat nå")
 
-            if store.activePromotions.isEmpty {
-                EmptyStoreDetailCard(text: "Ingen aktive kampanjer for denne butikken akkurat nå.")
-            } else {
                 ForEach(store.activePromotions) { rate in
                     CurrentCampaignCard(rate: rate)
                 }
@@ -199,18 +244,16 @@ struct StoreDetailView: View {
         }
     }
 
+    @ViewBuilder
     private var allMethodsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            LovableSectionHeading(
-                eyebrow: "OVERSIKT",
-                title: "Alle opptjeningsmuligheter",
-                subtitle: "EuroBonus og Trumf vises hver for seg - vi blander ikke bonusvalutaene."
-            )
+        if publishedRates.count > 1 {
+            VStack(alignment: .leading, spacing: 12) {
+                LovableSectionHeading(
+                    eyebrow: "OVERSIKT",
+                    title: "Alle opptjeningsmuligheter",
+                    subtitle: "EuroBonus og Trumf vises hver for seg - vi blander ikke bonusvalutaene."
+                )
 
-            let publishedRates = store.sortedEarningRates.filter { $0.status == .published }
-            if publishedRates.isEmpty {
-                EmptyStoreDetailCard(text: "Ingen publiserte opptjeningsmuligheter ennå.")
-            } else {
                 ForEach(publishedRates) { rate in
                     EarningMethodCard(rate: rate)
                 }
@@ -232,23 +275,19 @@ struct StoreDetailView: View {
                     if let warningText = combination.warningText {
                         Label(warningText, systemImage: "exclamationmark.triangle")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(PoengjegerTheme.warning)
+                            .foregroundStyle(.primary)
                             .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(PoengjegerTheme.neutralSoft)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .background(LovableStoreStyle.warningBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                             .padding(.horizontal, 14)
                             .padding(.top, 6)
                     }
 
                     NavigationLink(value: combination) {
-                        Label("Start handelen", systemImage: "arrow.right")
-                            .font(.headline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
+                        LovablePrimaryButtonLabel(title: "Start handelen")
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .tint(PoengjegerTheme.primary)
+                    .buttonStyle(.plain)
                     .padding(.horizontal, 14)
                     .padding(.top, 14)
                     .simultaneousGesture(TapGesture().onEnded {
@@ -271,11 +310,11 @@ struct StoreDetailView: View {
                         .padding(.top, 10)
                         .padding(.bottom, 16)
                 }
-                .background(PoengjegerTheme.elevatedSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(LovableStoreStyle.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(PoengjegerTheme.border, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(LovableStoreStyle.border, lineWidth: 1)
                 }
             }
         }
@@ -402,14 +441,32 @@ private struct EmptyBestOpportunityCard: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(18)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(LovableStoreStyle.recommendationBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(LovableStoreStyle.primaryBorder, lineWidth: 1.2)
         }
+    }
+}
+
+private struct LovablePrimaryButtonLabel: View {
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Text(title)
+            Image(systemName: "arrow.right")
+                .font(.subheadline.weight(.bold))
+        }
+        .font(.headline.weight(.semibold))
+        .foregroundStyle(.white)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
+        .background(LovableStoreStyle.primary)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
@@ -469,11 +526,11 @@ private struct ReferenceRateCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(LovableStoreStyle.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(LovableStoreStyle.border, lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
     }
@@ -526,11 +583,11 @@ private struct CurrentCampaignCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.campaignSoft)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(LovableStoreStyle.campaignBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(PoengjegerTheme.campaign.opacity(0.28), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(LovableStoreStyle.campaignBorder, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }
@@ -538,8 +595,8 @@ private struct CurrentCampaignCard: View {
     @ViewBuilder
     private var campaignMeta: some View {
         if let endsAt = rate.endsAt {
-            Label("Gyldig til \(endsAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "calendar")
-                .foregroundStyle(PoengjegerTheme.warning)
+            Text("Gyldig til \(endsAt.formatted(date: .abbreviated, time: .omitted))")
+                .foregroundStyle(LovableStoreStyle.expiryText)
         }
 
         if let checkedAt = rate.checkedAt {
@@ -608,11 +665,11 @@ private struct EarningMethodCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(LovableStoreStyle.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(LovableStoreStyle.border, lineWidth: 1)
         }
         .accessibilityElement(children: .contain)
     }
@@ -637,10 +694,8 @@ private struct RecommendationExplanation: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Divider()
-
             Text("Derfor anbefaler vi denne")
-                .font(.headline.weight(.semibold))
+                .font(.system(.title3, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -694,6 +749,12 @@ private struct RecommendationExplanation: View {
                 ExplanationList(title: "Viktige unntak", items: warnings, systemImage: "exclamationmark.triangle")
             }
 
+            Text(recommendationReason)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
             if let lastVerifiedAt {
                 Label("Sist kontrollert \(lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
                     .font(.caption)
@@ -719,6 +780,14 @@ private struct RecommendationExplanation: View {
                 }
             }
         }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(LovableStoreStyle.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(LovableStoreStyle.border, lineWidth: 1)
+        }
         .accessibilityElement(children: .contain)
     }
 
@@ -738,6 +807,14 @@ private struct RecommendationExplanation: View {
         Array(Set(rates.compactMap { $0.sourceURL ?? $0.handoffURL }))
             .sorted { $0.absoluteString < $1.absoluteString }
     }
+
+    private var recommendationReason: String {
+        if rates.count > 1 {
+            return "Dette er den beste dokumenterte kombinasjonen vi kjenner til akkurat nå. Portalopptjeningen registreres på klikket fra portalen, mens kortopptjeningen følger betalingskortet. Mekanismene er derfor vurdert som kombinerbare."
+        }
+
+        return "Dette er den beste dokumenterte muligheten vi kjenner til akkurat nå. Kontroller alltid vilkårene hos tilbyderen før bruk."
+    }
 }
 
 private struct ExplanationList: View {
@@ -753,10 +830,15 @@ private struct ExplanationList: View {
                 .foregroundStyle(.secondary)
 
             ForEach(items, id: \.self) { item in
-                Label(item, systemImage: systemImage)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
+                HStack(alignment: .top, spacing: 8) {
+                    Text("•")
+                        .accessibilityHidden(true)
+
+                    Text(item)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.subheadline)
+                .foregroundStyle(.primary)
             }
         }
     }
@@ -799,13 +881,61 @@ private struct EmptyStoreDetailCard: View {
             .foregroundStyle(.secondary)
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(LovableStoreStyle.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(PoengjegerTheme.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(LovableStoreStyle.border, lineWidth: 1)
             }
     }
+}
+
+private enum LovableStoreStyle {
+    static let primary = PoengjegerTheme.primary
+    static let primaryBorder = PoengjegerTheme.primaryBorder
+    static let border = PoengjegerTheme.border
+    static let expiryText = Color(red: 0.62, green: 0.31, blue: 0.09)
+    static let campaignBorder = Color(red: 0.89, green: 0.72, blue: 0.58)
+
+    static let pageBackground = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.06, green: 0.07, blue: 0.06, alpha: 1)
+        }
+
+        return UIColor(red: 0.99, green: 0.98, blue: 0.95, alpha: 1)
+    })
+
+    static let cardBackground = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.11, green: 0.13, blue: 0.12, alpha: 1)
+        }
+
+        return UIColor.white
+    })
+
+    static let recommendationBackground = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.10, green: 0.13, blue: 0.11, alpha: 1)
+        }
+
+        return UIColor(red: 0.97, green: 0.98, blue: 0.96, alpha: 1)
+    })
+
+    static let campaignBackground = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.17, green: 0.11, blue: 0.07, alpha: 1)
+        }
+
+        return UIColor(red: 1.00, green: 0.97, blue: 0.93, alpha: 1)
+    })
+
+    static let warningBackground = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.23, green: 0.18, blue: 0.10, alpha: 1)
+        }
+
+        return UIColor(red: 0.96, green: 0.90, blue: 0.78, alpha: 1)
+    })
 }
 
 private extension EarningMethod.MethodType {

@@ -63,6 +63,54 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeBestCombinationIgnoresCombinationsWithExpiredRates() {
+        let expiredRateID = UUID()
+        let activeRateID = UUID()
+        let expiredRate = makeEarningRate(
+            id: expiredRateID,
+            rateLabel: "Utløpt kampanje",
+            startsAt: Date(timeIntervalSinceNow: -172_800),
+            endsAt: Date(timeIntervalSinceNow: -86_400),
+            sortOrder: 1
+        )
+        let activeRate = makeEarningRate(
+            id: activeRateID,
+            rateLabel: "Aktiv opptjening",
+            startsAt: Date(timeIntervalSinceNow: -86_400),
+            endsAt: Date(timeIntervalSinceNow: 86_400),
+            sortOrder: 2
+        )
+        let expiredCombination = makeCombination(
+            title: "Utløpt anbefaling",
+            sortOrder: 1,
+            rateIDs: [expiredRateID]
+        )
+        let activeCombination = makeCombination(
+            title: "Aktiv anbefaling",
+            sortOrder: 2,
+            rateIDs: [activeRateID]
+        )
+        let store = makeStore(
+            earningRates: [expiredRate, activeRate],
+            combinations: [expiredCombination, activeCombination]
+        )
+
+        #expect(store.bestCombination?.title == "Aktiv anbefaling")
+    }
+
+    @Test
+    func storeBestCombinationIgnoresCombinationsWithMissingRates() {
+        let missingRateCombination = makeCombination(
+            title: "Mangler sats",
+            sortOrder: 1,
+            rateIDs: [UUID()]
+        )
+        let store = makeStore(earningRates: [], combinations: [missingRateCombination])
+
+        #expect(store.bestCombination == nil)
+    }
+
+    @Test
     func storeSearchAndDiscoveryHideUnpublishedStores() {
         let published = makeStore(name: "Synlig butikk", searchKeywords: ["telefon"])
         let draft = makeStore(name: "Skjult butikk", status: .draft, searchKeywords: ["telefon"])
@@ -86,6 +134,46 @@ struct StoreEarningUseCaseTests {
 
         #expect(stores.map(\.name) == ["Høyere verdi", "Lavere verdi"])
         #expect(StoreDiscoveryUseCase.rankingValue(for: lowerValue) == 2.5)
+    }
+
+    @Test
+    func homeShortcutStoresPreferTimelyAndEverydayStoresBeforePureValue() {
+        let activeTravelStore = makeStore(
+            name: "Aktiv reise",
+            category: SampleData.travelCategory,
+            earningRates: [
+                makeEarningRate(
+                    rateLabel: "4 % Trumf",
+                    startsAt: Date(timeIntervalSinceNow: -86_400),
+                    endsAt: Date(timeIntervalSinceNow: 86_400)
+                )
+            ],
+            combinations: []
+        )
+        let groceryStore = makeStore(
+            name: "Dagligvare",
+            category: SampleData.groceryCategory,
+            earningRates: [],
+            combinations: [makeCombination(totalValueLabel: "1 % Trumf")]
+        )
+        let shoppingStore = makeStore(
+            name: "Netthandel",
+            category: SampleData.shoppingCategory,
+            earningRates: [],
+            combinations: [makeCombination(totalValueLabel: "10 % Trumf")]
+        )
+        let highValueCardStore = makeStore(
+            name: "Korttilbud",
+            category: SampleData.cardCategory,
+            earningRates: [],
+            combinations: [makeCombination(totalValueLabel: "50 % Trumf")]
+        )
+
+        let stores = StoreDiscoveryUseCase().homeShortcutStores(
+            from: [highValueCardStore, shoppingStore, groceryStore, activeTravelStore]
+        )
+
+        #expect(stores.map(\.name) == ["Aktiv reise", "Dagligvare", "Netthandel", "Korttilbud"])
     }
 
     @Test
@@ -269,6 +357,7 @@ struct StoreEarningUseCaseTests {
     private func makeStore(
         name: String = "Testbutikk",
         status: Store.Status = .published,
+        category: CampaignCategory = SampleData.shoppingCategory,
         searchKeywords: [String] = [],
         earningRates: [StoreEarningRate]? = nil,
         combinations: [EarningCombination]? = nil
@@ -277,7 +366,7 @@ struct StoreEarningUseCaseTests {
             id: UUID(),
             slug: name.lowercased().replacingOccurrences(of: " ", with: "-"),
             name: name,
-            category: SampleData.shoppingCategory,
+            category: category,
             status: status,
             websiteURL: nil,
             searchKeywords: searchKeywords,
@@ -288,6 +377,7 @@ struct StoreEarningUseCaseTests {
     }
 
     private func makeEarningRate(
+        id: UUID = UUID(),
         status: StoreEarningRate.Status = .published,
         rateLabel: String = "1 % Trumf",
         startsAt: Date? = nil,
@@ -296,7 +386,7 @@ struct StoreEarningUseCaseTests {
         isBaseRate: Bool = false
     ) -> StoreEarningRate {
         StoreEarningRate(
-            id: UUID(),
+            id: id,
             method: EarningMethod(
                 id: UUID(),
                 slug: "trumf-netthandel",
@@ -326,7 +416,8 @@ struct StoreEarningUseCaseTests {
         status: EarningCombination.Status = .published,
         title: String = "Beste kombinasjon",
         totalValueLabel: String = "5 % Trumf",
-        sortOrder: Int = 1
+        sortOrder: Int = 1,
+        rateIDs: [UUID] = []
     ) -> EarningCombination {
         EarningCombination(
             id: UUID(),
@@ -339,7 +430,7 @@ struct StoreEarningUseCaseTests {
             primaryHandoffURL: nil,
             lastVerifiedAt: nil,
             sortOrder: sortOrder,
-            rateIDs: [],
+            rateIDs: rateIDs,
             steps: []
         )
     }
