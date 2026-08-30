@@ -190,6 +190,48 @@ export function normalizeTrumfShopSlug(urlName: string, merchantName?: string): 
   if (normalizedName === "storytel") {
     return "storytel-no";
   }
+  if (normalizedName === "vidaxl" || normalizedName === "vida xl") {
+    return "vida-xl-se";
+  }
+  if (normalizedName === "barbershop") {
+    return "barbershop-no";
+  }
+  if (normalizedName === "polarn o pyret") {
+    return "polarnopyret";
+  }
+  if (normalizedName === "parfym") {
+    return "parfymno";
+  }
+  if (normalizedName === "philips hue") {
+    return "philips-hue";
+  }
+  if (normalizedName === "skyshowtime") {
+    return "sky-showtime";
+  }
+  if (normalizedName === "sofas and more") {
+    return "sofas-more";
+  }
+  if (normalizedName === "tilbords") {
+    return "tilbords-1";
+  }
+  if (normalizedName === "urverket") {
+    return "urverket-no";
+  }
+  if (normalizedName === "vita") {
+    return "vita-no";
+  }
+  if (normalizedName === "vpg") {
+    return "vpg-no";
+  }
+  if (normalizedName === "zoo") {
+    return "zoo-se-1";
+  }
+  if (normalizedName === "cs megastore") {
+    return "computersalg";
+  }
+  if (normalizedName === "racketspesialisten") {
+    return "racketspecialisten";
+  }
 
   const fallbackSeed = urlName
     .replace(/^trumf[-_]?/i, "")
@@ -216,6 +258,9 @@ export function normalizeSasShopSlug(slug?: string, name?: string): string | nul
   const normalizedName = normalizeSearchText(name ?? "");
   if (normalizedName === "under armour") {
     return "under-armour";
+  }
+  if (normalizedName === "kinoklubb") {
+    return "kinoklubben";
   }
 
   if (!slug) {
@@ -891,14 +936,31 @@ function categorySlugOverride(value: string): string | null {
         "electrolux spares",
         "fortum strom",
         "fortum strøm",
+        "gront fokus",
+        "grønt fokus",
+        "hultens",
+        "hulténs",
         "homeroom",
         "jotex",
+        "nordic nest",
+        "onyx cookware",
+        "p lindberg",
+        "sharkninja",
+        "skeidar",
+        "slikkepott",
+        "sofas and more",
+        "smarta saker",
+        "smartasaker",
         "lunehjem",
         "lusini",
         "lysman",
         "tempur",
         "tibber",
+        "tilbords",
         "trendcarpet",
+        "vinlagringskompaniet",
+        "lanna mobler",
+        "länna møbler",
         "vidaxl",
         "vida xl",
       ],
@@ -908,16 +970,26 @@ function categorySlugOverride(value: string): string | null {
       terms: [
         "i love dogs",
         "ilovedogs",
+        "vivara",
         "vetzoo",
+        "zoo",
         "zoo no",
       ],
     },
     {
       slug: "reise",
       terms: [
+        "amisol",
         "fjordline",
         "football travel",
+        "omio",
+        "qatar airways",
+        "sembo",
+        "trip",
+        "tripx",
+        "viator",
         "vy buss",
+        "weloveholidays",
       ],
     },
     {
@@ -935,11 +1007,25 @@ function categorySlugOverride(value: string): string | null {
       slug: "klaer-sko",
       terms: [
         "ellos",
+        "liffner",
         "mulberry",
+        "oakley",
+        "pilgrim",
+        "puma",
+        "safira",
+        "superdry",
         "swims",
         "suitable",
+        "tiger of sweden",
+        "timarco",
         "under amour",
         "under armour",
+        "urban pioneers",
+        "urban pioneers concept store",
+        "vakre vene",
+        "viking footwear",
+        "wakakuu",
+        "weekday",
       ],
     },
     {
@@ -950,12 +1036,18 @@ function categorySlugOverride(value: string): string | null {
         "db",
         "haglofs",
         "haglöfs",
+        "north trampoline",
         "outnorth",
         "proteinfabrikken",
+        "racketspesialisten",
+        "racketspecialisten",
         "skistart",
         "skogstad sport",
         "sportsmagasinet",
+        "stormberg",
         "treningspartner",
+        "vpg",
+        "watery",
       ],
     },
     {
@@ -968,15 +1060,27 @@ function categorySlugOverride(value: string): string | null {
         "lekmer",
         "navnelapper",
         "patpat",
+        "partyking",
         "polarn o pyret",
         "polarnopyret",
+        "smaungene",
+        "småungene",
+        "superkul",
       ],
     },
     {
       slug: "elektronikk",
       terms: [
+        "cs megastore",
         "farnell",
+        "iphonehuset",
+        "philips hue",
         "razer",
+        "marshall",
+        "sackit",
+        "lux case",
+        "lux-case",
+        "xplora",
       ],
     },
     {
@@ -985,16 +1089,30 @@ function categorySlugOverride(value: string): string | null {
         "bodystore",
         "dentway",
         "kost1",
+        "maxulin",
         "memira",
+        "nordicfeel",
+        "nytelse",
         "oslo skin lab",
+        "parfym",
+        "sephora",
+        "senze of joy",
+        "soma",
+        "vita",
       ],
     },
     {
       slug: "boker-medier",
       terms: [
         "bokia",
+        "kinoklubb",
+        "kinoklubben",
         "norli",
         "nordic print",
+        "prime video",
+        "skyshowtime",
+        "sky showtime",
+        "vistaprint",
       ],
     },
     {
@@ -1006,6 +1124,12 @@ function categorySlugOverride(value: string): string | null {
         "readly",
         "storytel",
         "strim",
+      ],
+    },
+    {
+      slug: "dagligvare",
+      terms: [
+        "nespresso",
       ],
     },
   ];

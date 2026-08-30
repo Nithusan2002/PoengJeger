@@ -18,6 +18,7 @@ import {
 } from "./parsers.ts";
 
 const categories = new Map([
+  ["dagligvare", "cat-grocery"],
   ["elektronikk", "cat-electronics"],
   ["barn-familie", "cat-family"],
   ["boker-medier", "cat-media"],
@@ -135,6 +136,18 @@ test("Trumf shop slug fallback strips Trumf transport affixes", () => {
   assert.equal(normalizeTrumfShopSlug("inkmann", "Inkmann"), "inkmann-2");
   assert.equal(normalizeTrumfShopSlug("lyko", "LYKO"), "lyko-dk");
   assert.equal(normalizeTrumfShopSlug("storytel", "Storytel"), "storytel-no");
+  assert.equal(normalizeTrumfShopSlug("vidaxl", "VidaXL"), "vida-xl-se");
+  assert.equal(normalizeTrumfShopSlug("barbershop", "Barbershop"), "barbershop-no");
+  assert.equal(normalizeTrumfShopSlug("polarn-o-pyret", "Polarn O. Pyret"), "polarnopyret");
+  assert.equal(normalizeTrumfShopSlug("parfym", "Parfym"), "parfymno");
+  assert.equal(normalizeTrumfShopSlug("skyshowtime", "SkyShowtime"), "sky-showtime");
+  assert.equal(normalizeTrumfShopSlug("tilbords", "Tilbords"), "tilbords-1");
+  assert.equal(normalizeTrumfShopSlug("urverket", "Urverket"), "urverket-no");
+  assert.equal(normalizeTrumfShopSlug("vita", "Vita"), "vita-no");
+  assert.equal(normalizeTrumfShopSlug("vpg", "VPG"), "vpg-no");
+  assert.equal(normalizeTrumfShopSlug("zoo", "ZOO"), "zoo-se-1");
+  assert.equal(normalizeTrumfShopSlug("cs-megastore", "CS MEGASTORE"), "computersalg");
+  assert.equal(normalizeTrumfShopSlug("racketspesialisten", "Racketspesialisten"), "racketspecialisten");
 });
 
 test("Trumf summary labels plain cashback rates", () => {
@@ -213,6 +226,7 @@ test("SAS summary returns null instead of guessing missing values", () => {
 
 test("SAS shop slug applies editorial fixes for known source typos", () => {
   assert.equal(normalizeSasShopSlug("under-amour", "Under Armour"), "under-armour");
+  assert.equal(normalizeSasShopSlug("kinoklubb", "Kinoklubb"), "kinoklubben");
   assert.equal(normalizeSasShopSlug("vita-no", "VITA"), "vita-no");
   assert.equal(normalizeSasShopSlug(undefined, "Mangler slug"), null);
 });
@@ -415,6 +429,38 @@ test("category suggestion applies editorial overrides before broad keywords", ()
   assert.deepEqual(
     suggestMerchantCategory(categories, ["Oslo Skin Lab", "sport"]),
     { id: "cat-beauty", slug: "helse-skjonnhet", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Nespresso", "shopping"]),
+    { id: "cat-grocery", slug: "dagligvare", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Marshall", "shopping"]),
+    { id: "cat-electronics", slug: "elektronikk", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Maxulin", "shopping"]),
+    { id: "cat-beauty", slug: "helse-skjonnhet", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Länna Møbler", "shopping"]),
+    { id: "cat-home", slug: "hus-hjem", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["SkyShowtime", "shopping"]),
+    { id: "cat-media", slug: "boker-medier", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["SharkNinja", "shopping"]),
+    { id: "cat-home", slug: "hus-hjem", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Qatar Airways", "shopping"]),
+    { id: "cat-travel", slug: "reise", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["North Trampoline", "shopping"]),
+    { id: "cat-sport", slug: "sport-fritid", source: "keyword" },
   );
   assert.deepEqual(
     suggestMerchantCategory(categories, ["Db", "fashion"]),
