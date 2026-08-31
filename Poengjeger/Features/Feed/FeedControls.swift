@@ -54,8 +54,18 @@ struct FeedControlHeader: View {
                 TextField("Søk i kampanjer", text: $searchText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .submitLabel(.search)
                     .textFieldStyle(.roundedBorder)
                     .focused(isSearchFocused)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+
+                            Button("Ferdig") {
+                                isSearchFocused.wrappedValue = false
+                            }
+                        }
+                    }
                     .accessibilityLabel("Søk i kampanjer")
             }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var environment
+    @FocusState private var isSearchFocused: Bool
     @State private var searchText = ""
     @State private var hasTrackedCurrentSearch = false
 
@@ -95,6 +96,17 @@ struct HomeView: View {
             TextField("Søk butikk, kategori eller produkt", text: $searchText)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
+                .submitLabel(.search)
+                .focused($isSearchFocused)
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+
+                        Button("Ferdig") {
+                            isSearchFocused = false
+                        }
+                    }
+                }
 
             if isSearching {
                 Button {
