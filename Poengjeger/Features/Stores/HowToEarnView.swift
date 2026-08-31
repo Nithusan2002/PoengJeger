@@ -3,6 +3,7 @@ import SwiftUI
 struct HowToEarnView: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.openURL) private var openURL
+    @State private var isDetailDisclosureExpanded = false
 
     let store: Store
     let combination: EarningCombination
@@ -18,13 +19,13 @@ struct HowToEarnView: View {
 
                 stepsSection
 
-                if let warningText = combination.warningText {
-                    noticeSection(warningText)
-                }
+                compactNotice
 
                 handoffButton
 
-                handoffDisclosure
+                compactHandoffDisclosure
+
+                detailDisclosure
             }
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -76,6 +77,7 @@ struct HowToEarnView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(combination.summary)
+                    .lineLimit(2)
                     .font(.callout)
                     .foregroundStyle(.primary)
                     .lineSpacing(2)
@@ -127,61 +129,83 @@ struct HowToEarnView: View {
         }
     }
 
-    private func noticeSection(_ text: String) -> some View {
-        let buckets = HowToEarnNoticeBuckets(text: text)
+    @ViewBuilder
+    private var compactNotice: some View {
+        if let importantNotice = noticeBuckets?.importantItems.first {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(HowToEarnNoticeStyle.tint)
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
 
-        return VStack(alignment: .leading, spacing: 10) {
-            if !buckets.importantItems.isEmpty {
-                noticeCard(
-                    title: "Viktig før kjøp",
-                    items: buckets.importantItems,
-                    systemImage: "exclamationmark.triangle"
-                )
+                Text(importantNotice)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-
-            if !buckets.calculationItems.isEmpty {
-                noticeCard(
-                    title: "Beregning",
-                    items: buckets.calculationItems,
-                    systemImage: "equal.circle"
-                )
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(HowToEarnNoticeStyle.background)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(HowToEarnNoticeStyle.border, lineWidth: 1)
             }
+            .accessibilityElement(children: .combine)
         }
     }
 
-    private func noticeCard(title: String, items: [String], systemImage: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(HowToEarnNoticeStyle.tint)
-                .frame(width: 20)
-                .accessibilityHidden(true)
+    @ViewBuilder
+    private var detailDisclosure: some View {
+        DisclosureGroup(isExpanded: $isDetailDisclosureExpanded) {
+            VStack(alignment: .leading, spacing: 12) {
+                if let buckets = noticeBuckets {
+                    if !buckets.importantItems.isEmpty {
+                        detailList(title: "Vilkår", items: buckets.importantItems)
+                    }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .font(.caption.weight(.bold))
-                    .tracking(1.4)
-                    .textCase(.uppercase)
-                    .foregroundStyle(HowToEarnNoticeStyle.tint)
-
-                ForEach(items, id: \.self) { item in
-                    Text(item)
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
-                        .lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if !buckets.calculationItems.isEmpty {
+                        detailList(title: "Beregning", items: buckets.calculationItems)
+                    }
                 }
+
+                handoffDisclosure
             }
+            .padding(.top, 10)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle")
+                    .accessibilityHidden(true)
+
+                Text("Se beregning og vilkår")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundStyle(PoengjegerTheme.primary)
         }
         .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(HowToEarnNoticeStyle.background)
+        .background(PoengjegerTheme.elevatedSurface)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(HowToEarnNoticeStyle.border, lineWidth: 1)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
-        .accessibilityElement(children: .combine)
+    }
+
+    private func detailList(title: String, items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.caption.weight(.bold))
+                .tracking(1.4)
+                .foregroundStyle(.secondary)
+
+            ForEach(items, id: \.self) { item in
+                Text(item)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     @ViewBuilder
@@ -228,6 +252,23 @@ struct HowToEarnView: View {
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 10)
+    }
+
+    private var compactHandoffDisclosure: some View {
+        Text("Lenken kan gi Poengjeger provisjon.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 10)
+    }
+
+    private var noticeBuckets: HowToEarnNoticeBuckets? {
+        guard let warningText = combination.warningText, !warningText.isEmpty else {
+            return nil
+        }
+
+        return HowToEarnNoticeBuckets(text: warningText)
     }
 
     private var handoffDestinationNameForDisclosure: String {

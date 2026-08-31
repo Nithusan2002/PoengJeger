@@ -122,7 +122,7 @@ struct StoreDetailView: View {
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(combination.summary)
+                Text(TextListNormalizer.firstSentence(from: combination.summary))
                     .font(.callout)
                     .foregroundStyle(.primary)
                     .lineSpacing(2)
@@ -644,18 +644,18 @@ private struct EarningMethodCard: View {
                     .clipShape(Capsule())
             }
 
-            if let requirementSummary = rate.requirementSummary {
-                Text(requirementSummary)
+            if let disclosurePreview {
+                Text(disclosurePreview)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if let warningText = rate.warningText {
-                Text(warningText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            if rate.warningText != nil {
+                Label("Vilkår gjelder", systemImage: "info.circle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(PoengjegerTheme.primary)
             }
 
             if let checkedAt = rate.checkedAt {
@@ -685,9 +685,23 @@ private struct EarningMethodCard: View {
         }
         return rate.method.type.displayName
     }
+
+    private var disclosurePreview: String? {
+        if let requirementSummary = rate.requirementSummary, !requirementSummary.isEmpty {
+            return TextListNormalizer.firstSentence(from: requirementSummary)
+        }
+
+        if let warningText = rate.warningText, !warningText.isEmpty {
+            return TextListNormalizer.firstSentence(from: warningText)
+        }
+
+        return nil
+    }
 }
 
 private struct RecommendationExplanation: View {
+    @State private var isDetailDisclosureExpanded = false
+
     let combination: EarningCombination
     let rates: [StoreEarningRate]
     let lastVerifiedAt: Date?
@@ -751,10 +765,6 @@ private struct RecommendationExplanation: View {
                 ExplanationList(title: "Viktig", items: terms.importantItems, systemImage: "exclamationmark.triangle")
             }
 
-            if !terms.calculationItems.isEmpty {
-                ExplanationList(title: "Beregning", items: terms.calculationItems, systemImage: "equal.circle")
-            }
-
             Text(recommendationReason)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -768,21 +778,36 @@ private struct RecommendationExplanation: View {
             }
 
             let links = sourceLinks
-            if !links.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Kilder")
-                        .font(.caption.weight(.bold))
-                        .tracking(2.2)
-                        .foregroundStyle(.secondary)
+            if !terms.calculationItems.isEmpty || !links.isEmpty {
+                DisclosureGroup(isExpanded: $isDetailDisclosureExpanded) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if !terms.calculationItems.isEmpty {
+                            ExplanationList(title: "Beregning", items: terms.calculationItems, systemImage: "equal.circle")
+                        }
 
-                    ForEach(links, id: \.self) { url in
-                        Link(destination: url) {
-                            Label(sourceFormatter(url), systemImage: "arrow.up.right.square")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(PoengjegerTheme.primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                        if !links.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Kilder")
+                                    .font(.caption.weight(.bold))
+                                    .tracking(2.2)
+                                    .foregroundStyle(.secondary)
+
+                                ForEach(links, id: \.self) { url in
+                                    Link(destination: url) {
+                                        Label(sourceFormatter(url), systemImage: "arrow.up.right.square")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(PoengjegerTheme.primary)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                }
+                            }
                         }
                     }
+                    .padding(.top, 8)
+                } label: {
+                    Text("Se beregning og kilder")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PoengjegerTheme.primary)
                 }
             }
         }
@@ -940,6 +965,10 @@ private enum TextListNormalizer {
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
             .map { $0.hasSuffix(".") ? $0 : "\($0)." }
+    }
+
+    static func firstSentence(from text: String) -> String {
+        sentences(from: text).first ?? text
     }
 
     static func key(_ text: String) -> String {
