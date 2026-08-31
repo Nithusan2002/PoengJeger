@@ -25,7 +25,7 @@ struct ExploreView: View {
     }
 
     private var featuredStores: [Store] {
-        rankedStores.prefix(8).map { $0 }
+        rankedStores.prefix(4).map { $0 }
     }
 
     private var programsByID: [UUID: BonusProgram] {
@@ -128,7 +128,7 @@ struct ExploreView: View {
                     .font(.system(.title2, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("Kort liste over kampanjer der frist, krav eller verdi gjør dem verdt å sjekke.")
+                Text("Et lite redaksjonelt utvalg av kampanjer der frist, krav eller verdi gjør dem verdt å sjekke.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -153,10 +153,9 @@ struct ExploreView: View {
             } else {
                 ForEach(featuredCampaigns) { campaign in
                     NavigationLink(value: campaign) {
-                        CampaignCardView(
+                        ExploreCampaignTeaserRow(
                             campaign: campaign,
-                            primaryProgramName: primaryProgramName(for: campaign),
-                            isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
+                            primaryProgramName: primaryProgramName(for: campaign)
                         )
                     }
                     .buttonStyle(.plain)
@@ -226,7 +225,7 @@ struct ExploreView: View {
                     .font(.system(.title2, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("Bruk dette som startpunkt når du bare vil finne gode, verifiserte opptjeningsmuligheter.")
+                Text("Fire eksempler på sterk dokumentert opptjening. Bruk kategoriene over for full oversikt.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -265,6 +264,74 @@ struct ExploreView: View {
         }
 
         return programsByID[primaryProgramID]?.name
+    }
+}
+
+private struct ExploreCampaignTeaserRow: View {
+    let campaign: Campaign
+    let primaryProgramName: String?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: iconName)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(campaign.cardAccent)
+                .frame(width: 38, height: 38)
+                .background(campaign.cardAccent.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 8) {
+                TagRow(
+                    primaryProgramName: primaryProgramName,
+                    categoryName: campaign.category?.name,
+                    isFeatured: false
+                )
+
+                Text(campaign.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(campaign.opportunitySignal)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(campaign.cardAccent)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Kontrollert \(campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 6)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+                .padding(.top, 8)
+                .accessibilityHidden(true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var iconName: String {
+        if campaign.isExpiringSoon {
+            return "clock.badge.exclamationmark"
+        }
+
+        if campaign.isHighScore {
+            return "sparkles"
+        }
+
+        return "tag"
     }
 }
 
