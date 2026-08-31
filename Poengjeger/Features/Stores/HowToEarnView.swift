@@ -16,11 +16,11 @@ struct HowToEarnView: View {
             LazyVStack(alignment: .leading, spacing: 22) {
                 header
 
-                if let warningText = combination.warningText {
-                    warningCard(warningText)
-                }
-
                 stepsSection
+
+                if let warningText = combination.warningText {
+                    noticeSection(warningText)
+                }
 
                 handoffButton
 
@@ -65,7 +65,7 @@ struct HowToEarnView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("BESTE KOMBINASJON")
+                Text(combination.rateIDs.count > 1 ? "BESTE KOMBINASJON" : "BESTE DOKUMENTERTE MULIGHET")
                     .font(.caption.weight(.bold))
                     .tracking(2.2)
                     .foregroundStyle(PoengjegerTheme.primary)
@@ -127,19 +127,61 @@ struct HowToEarnView: View {
         }
     }
 
-    private func warningCard(_ text: String) -> some View {
-        Label(text, systemImage: "exclamationmark.triangle")
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(PoengjegerTheme.warning)
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(PoengjegerTheme.warningSoft)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(PoengjegerTheme.warning.opacity(0.18), lineWidth: 1)
+    private func noticeSection(_ text: String) -> some View {
+        let buckets = HowToEarnNoticeBuckets(text: text)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            if !buckets.importantItems.isEmpty {
+                noticeCard(
+                    title: "Viktig før kjøp",
+                    items: buckets.importantItems,
+                    systemImage: "exclamationmark.triangle"
+                )
             }
-            .accessibilityElement(children: .combine)
+
+            if !buckets.calculationItems.isEmpty {
+                noticeCard(
+                    title: "Beregning",
+                    items: buckets.calculationItems,
+                    systemImage: "equal.circle"
+                )
+            }
+        }
+    }
+
+    private func noticeCard(title: String, items: [String], systemImage: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(HowToEarnNoticeStyle.tint)
+                .frame(width: 20)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(HowToEarnNoticeStyle.tint)
+
+                ForEach(items, id: \.self) { item in
+                    Text(item)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HowToEarnNoticeStyle.background)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(HowToEarnNoticeStyle.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder
@@ -236,6 +278,67 @@ private struct StepInstructionRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Steg \(index). \(text)")
     }
+}
+
+private struct HowToEarnNoticeBuckets {
+    let importantItems: [String]
+    let calculationItems: [String]
+
+    init(text: String) {
+        let sentences = HowToEarnTextNormalizer.sentences(from: text)
+        calculationItems = HowToEarnTextNormalizer.unique(sentences.filter(Self.isCalculation))
+        importantItems = HowToEarnTextNormalizer.unique(sentences.filter { !Self.isCalculation($0) })
+    }
+
+    private static func isCalculation(_ text: String) -> Bool {
+        let normalized = text.localizedLowercase
+        return normalized.contains("beregningen")
+            || normalized.contains("trumf-krone")
+            || normalized.contains("automatisk overføring")
+            || normalized.contains("engangsoverføring")
+    }
+}
+
+private enum HowToEarnTextNormalizer {
+    static func unique(_ items: [String]) -> [String] {
+        var seen = Set<String>()
+        return items.filter { item in
+            let normalizedKey = key(item)
+            guard !seen.contains(normalizedKey) else { return false }
+            seen.insert(normalizedKey)
+            return true
+        }
+    }
+
+    static func sentences(from text: String) -> [String] {
+        text
+            .split(separator: ".", omittingEmptySubsequences: true)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { $0.hasSuffix(".") ? $0 : "\($0)." }
+    }
+
+    private static func key(_ text: String) -> String {
+        text
+            .localizedLowercase
+            .replacingOccurrences(of: ".", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "-", with: " ")
+            .split(separator: " ")
+            .joined(separator: " ")
+    }
+}
+
+private enum HowToEarnNoticeStyle {
+    static let tint = Color(red: 0.55, green: 0.34, blue: 0.08)
+    static let border = Color(red: 0.86, green: 0.75, blue: 0.53)
+    static let background = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.20, green: 0.16, blue: 0.09, alpha: 1)
+        }
+
+        return UIColor(red: 0.98, green: 0.93, blue: 0.80, alpha: 1)
+    })
 }
 
 #Preview {

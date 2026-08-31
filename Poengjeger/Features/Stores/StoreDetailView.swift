@@ -273,15 +273,16 @@ struct StoreDetailView: View {
                     }
 
                     if let warningText = combination.warningText {
-                        Label(warningText, systemImage: "exclamationmark.triangle")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .padding(14)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(LovableStoreStyle.warningBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .padding(.horizontal, 14)
-                            .padding(.top, 6)
+                        StoreNoticeCard(
+                            title: "Viktig før kjøp",
+                            text: warningText,
+                            systemImage: "exclamationmark.triangle",
+                            tint: LovableStoreStyle.noticeTint,
+                            background: LovableStoreStyle.noticeBackground,
+                            border: LovableStoreStyle.noticeBorder
+                        )
+                        .padding(.horizontal, 14)
+                        .padding(.top, 6)
                     }
 
                     NavigationLink(value: combination) {
@@ -744,9 +745,14 @@ private struct RecommendationExplanation: View {
                 ExplanationList(title: "Krav", items: requirements, systemImage: "checkmark.circle")
             }
 
-            let warnings = warningTexts
-            if !warnings.isEmpty {
-                ExplanationList(title: "Viktige unntak", items: warnings, systemImage: "exclamationmark.triangle")
+            let terms = ExplanationTextBuckets(requirements: requirements, warnings: warningTexts)
+
+            if !terms.importantItems.isEmpty {
+                ExplanationList(title: "Viktig", items: terms.importantItems, systemImage: "exclamationmark.triangle")
+            }
+
+            if !terms.calculationItems.isEmpty {
+                ExplanationList(title: "Beregning", items: terms.calculationItems, systemImage: "equal.circle")
             }
 
             Text(recommendationReason)
@@ -792,15 +798,15 @@ private struct RecommendationExplanation: View {
     }
 
     private var requirementTexts: [String] {
-        rates.compactMap(\.requirementSummary).filter { !$0.isEmpty }
+        TextListNormalizer.unique(rates.compactMap(\.requirementSummary).filter { !$0.isEmpty })
     }
 
     private var warningTexts: [String] {
         let rateWarnings = rates.compactMap(\.warningText).filter { !$0.isEmpty }
         guard let combinationWarning = combination.warningText, !combinationWarning.isEmpty else {
-            return rateWarnings
+            return TextListNormalizer.unique(rateWarnings)
         }
-        return rateWarnings + [combinationWarning]
+        return TextListNormalizer.unique(rateWarnings + [combinationWarning])
     }
 
     private var sourceLinks: [URL] {
@@ -841,6 +847,109 @@ private struct ExplanationList: View {
                 .foregroundStyle(.primary)
             }
         }
+    }
+}
+
+private struct StoreNoticeCard: View {
+    let title: String
+    let text: String
+    let systemImage: String
+    let tint: Color
+    let background: Color
+    let border: Color
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(tint)
+                .frame(width: 20)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+                    .foregroundStyle(tint)
+
+                Text(text)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(background)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct ExplanationTextBuckets {
+    let importantItems: [String]
+    let calculationItems: [String]
+
+    init(requirements: [String], warnings: [String]) {
+        let requirementSentences = Set(
+            requirements
+                .flatMap(TextListNormalizer.sentences)
+                .map(TextListNormalizer.key)
+        )
+        let warningSentences = warnings
+            .flatMap(TextListNormalizer.sentences)
+            .filter { !requirementSentences.contains(TextListNormalizer.key($0)) }
+
+        calculationItems = TextListNormalizer.unique(
+            warningSentences.filter(Self.isCalculation)
+        )
+        importantItems = TextListNormalizer.unique(
+            warningSentences.filter { !Self.isCalculation($0) }
+        )
+    }
+
+    private static func isCalculation(_ text: String) -> Bool {
+        let normalized = text.localizedLowercase
+        return normalized.contains("beregningen")
+            || normalized.contains("trumf-krone")
+            || normalized.contains("automatisk overføring")
+            || normalized.contains("engangsoverføring")
+    }
+}
+
+private enum TextListNormalizer {
+    static func unique(_ items: [String]) -> [String] {
+        var seen = Set<String>()
+        return items.filter { item in
+            let normalizedKey = key(item)
+            guard !seen.contains(normalizedKey) else { return false }
+            seen.insert(normalizedKey)
+            return true
+        }
+    }
+
+    static func sentences(from text: String) -> [String] {
+        text
+            .split(separator: ".", omittingEmptySubsequences: true)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { $0.hasSuffix(".") ? $0 : "\($0)." }
+    }
+
+    static func key(_ text: String) -> String {
+        text
+            .localizedLowercase
+            .replacingOccurrences(of: ".", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "-", with: " ")
+            .split(separator: " ")
+            .joined(separator: " ")
     }
 }
 
@@ -935,6 +1044,15 @@ private enum LovableStoreStyle {
         }
 
         return UIColor(red: 0.96, green: 0.90, blue: 0.78, alpha: 1)
+    })
+    static let noticeTint = Color(red: 0.55, green: 0.34, blue: 0.08)
+    static let noticeBorder = Color(red: 0.86, green: 0.75, blue: 0.53)
+    static let noticeBackground = Color(uiColor: UIColor { traits in
+        if traits.userInterfaceStyle == .dark {
+            return UIColor(red: 0.20, green: 0.16, blue: 0.09, alpha: 1)
+        }
+
+        return UIColor(red: 0.98, green: 0.93, blue: 0.80, alpha: 1)
     })
 }
 
