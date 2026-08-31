@@ -2,6 +2,11 @@ import SwiftUI
 
 struct ExploreView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var searchText = ""
+
+    private var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     private var activeCampaigns: [Campaign] {
         ScannableFeedUseCase().makeFeed(
@@ -15,16 +20,45 @@ struct ExploreView: View {
     }
 
     private var featuredCampaigns: [Campaign] {
-        activeCampaigns.prefix(6).map { $0 }
+        activeCampaigns.prefix(3).map { $0 }
+    }
+
+    private var matchingStores: [Store] {
+        StoreSearchUseCase().search(stores: environment.publishedStores, query: searchText)
+    }
+
+    private var rankedStores: [Store] {
+        StoreDiscoveryUseCase()
+            .rankedStores(from: environment.publishedStores)
+            .filter { $0.bestCombination != nil || !$0.sortedEarningRates.isEmpty }
+    }
+
+    private var featuredStores: [Store] {
+        rankedStores.prefix(8).map { $0 }
     }
 
     private var programsByID: [UUID: BonusProgram] {
         Dictionary(uniqueKeysWithValues: environment.programs.map { ($0.id, $0) })
     }
 
-    private var categories: [String] {
-        Array(Set(environment.publishedStores.compactMap { $0.category?.name }))
-            .sorted { $0.localizedCompare($1) == .orderedAscending }
+    private var categories: [ExploreCategorySummary] {
+        Dictionary(grouping: rankedStores) { store in
+            store.category?.name ?? "Andre butikker"
+        }
+        .map { categoryName, stores in
+            ExploreCategorySummary(
+                name: categoryName,
+                storeCount: stores.count,
+                topValueLabel: stores.first?.bestCombination?.totalValueLabel
+            )
+        }
+        .sorted { first, second in
+            if first.priority != second.priority {
+                return first.priority > second.priority
+            }
+
+            return first.name.localizedCompare(second.name) == .orderedAscending
+        }
     }
 
     var body: some View {
@@ -32,11 +66,19 @@ struct ExploreView: View {
             LazyVStack(alignment: .leading, spacing: 28) {
                 header
 
+                searchSection
+
                 statusSection
 
-                campaignSection
+                if isSearching {
+                    searchResultsSection
+                } else {
+                    campaignSection
 
-                categoryBrowseSection
+                    categoryBrowseSection
+
+                    featuredStoresSection
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 18)
@@ -62,16 +104,48 @@ struct ExploreView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Utforsk")
+            Text("Hva skal du handle?")
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Oppdag aktive kampanjer og bla etter handlebehov.")
+            Text("Søk etter butikk eller gå via en kategori før du kjøper.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var searchSection: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+
+            TextField("Søk butikk eller kategori", text: $searchText)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+
+            if isSearching {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel("Tøm søk")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityLabel("Søk etter butikk eller kategori")
     }
 
     @ViewBuilder
@@ -101,7 +175,7 @@ struct ExploreView: View {
                     .font(.system(.title2, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
 
-                Text("Publiserte kampanjer fra EuroBonus og Trumf, sortert etter frist og redaksjonell verdi.")
+                Text("Kort liste over kampanjer der frist, krav eller verdi gjør dem verdt å sjekke.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -138,6 +212,37 @@ struct ExploreView: View {
         }
     }
 
+    private var searchResultsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("SØKERESULTAT")
+                    .font(.caption.weight(.bold))
+                    .tracking(2.2)
+                    .foregroundStyle(.secondary)
+
+                Text("\(matchingStores.count) treff")
+                    .font(.system(.title2, design: .serif).weight(.bold))
+                    .foregroundStyle(.primary)
+            }
+
+            if matchingStores.isEmpty {
+                ContentUnavailableView(
+                    "Ingen butikker matcher søket",
+                    systemImage: "magnifyingglass",
+                    description: Text("Prøv butikknavn, kategori eller en mer generell varetype.")
+                )
+                .padding(.vertical, 24)
+            } else {
+                ForEach(matchingStores) { store in
+                    NavigationLink(value: store) {
+                        StoreResultRow(store: store)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
     private var categoryBrowseSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 6) {
@@ -149,6 +254,11 @@ struct ExploreView: View {
                 Text("Bla etter handlebehov")
                     .font(.system(.title2, design: .serif).weight(.bold))
                     .foregroundStyle(.primary)
+
+                Text("Velg kategori først, så får du full butikkoversikt på neste skjerm.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if categories.isEmpty {
@@ -164,20 +274,67 @@ struct ExploreView: View {
                             .stroke(PoengjegerTheme.border, lineWidth: 1)
                     }
             } else {
-                ForEach(categories, id: \.self) { category in
-                    ExploreCategoryGroup(
-                        categoryName: category,
-                        stores: rankedStores(in: category).prefix(3).map { $0 }
-                    )
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ],
+                    spacing: 12
+                ) {
+                    ForEach(categories) { category in
+                        NavigationLink(value: StoreCategoryRoute(name: category.name)) {
+                            ExploreCategoryTile(category: category)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
         }
     }
 
-    private func rankedStores(in category: String) -> [Store] {
-        StoreDiscoveryUseCase()
-            .rankedStores(from: environment.publishedStores)
-            .filter { $0.category?.name == category }
+    private var featuredStoresSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("BUTIKKER")
+                    .font(.caption.weight(.bold))
+                    .tracking(2.2)
+                    .foregroundStyle(.secondary)
+
+                Text("Høyest dokumentert opptjening")
+                    .font(.system(.title2, design: .serif).weight(.bold))
+                    .foregroundStyle(.primary)
+
+                Text("Bruk dette som startpunkt når du bare vil finne gode, verifiserte opptjeningsmuligheter.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if environment.loadState == .loading && featuredStores.isEmpty {
+                ProgressView("Laster butikker...")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 30)
+            } else if featuredStores.isEmpty {
+                Text("Ingen butikker med dokumentert opptjening er publisert ennå.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(PoengjegerTheme.elevatedSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(PoengjegerTheme.border, lineWidth: 1)
+                    }
+            } else {
+                ForEach(featuredStores) { store in
+                    NavigationLink(value: store) {
+                        ExploreStoreMiniRow(store: store)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     private func primaryProgramName(for campaign: Campaign) -> String? {
@@ -189,48 +346,122 @@ struct ExploreView: View {
     }
 }
 
-private struct ExploreCategoryGroup: View {
-    let categoryName: String
-    let stores: [Store]
+private struct ExploreCategorySummary: Identifiable {
+    let name: String
+    let storeCount: Int
+    let topValueLabel: String?
+
+    var id: String { name }
+
+    var priority: Int {
+        switch name.localizedLowercase {
+        case let value where value.contains("daglig"):
+            return 80
+        case let value where value.contains("barn") || value.contains("familie"):
+            return 70
+        case let value where value.contains("hus") || value.contains("hjem"):
+            return 65
+        case let value where value.contains("klær") || value.contains("sko"):
+            return 60
+        case let value where value.contains("elektronikk"):
+            return 55
+        case let value where value.contains("reise") || value.contains("hotell"):
+            return 50
+        default:
+            return 10
+        }
+    }
+}
+
+private struct ExploreCategoryTile: View {
+    let category: ExploreCategorySummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(categoryName)
-                    .font(.system(.title3, design: .serif).weight(.bold))
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                Image(systemName: iconName)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(PoengjegerTheme.primary)
+                    .frame(width: 36, height: 36)
+                    .background(PoengjegerTheme.primarySoft)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .accessibilityHidden(true)
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(category.name)
+                    .font(.headline.weight(.semibold))
                     .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.9)
 
-                Spacer()
+                Text("\(category.storeCount) butikker")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
-                NavigationLink(value: StoreCategoryRoute(name: categoryName)) {
-                    Label("Se alle", systemImage: "arrow.right")
-                        .font(.subheadline.weight(.semibold))
-                        .labelStyle(.titleAndIcon)
+                if let topValueLabel = category.topValueLabel {
+                    Text(shortValueLabel(topValueLabel))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(PoengjegerTheme.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
                 }
-                .foregroundStyle(PoengjegerTheme.primary)
-            }
-
-            VStack(spacing: 0) {
-                ForEach(stores) { store in
-                    NavigationLink(value: store) {
-                        ExploreStoreMiniRow(store: store)
-                    }
-                    .buttonStyle(.plain)
-
-                    if store.id != stores.last?.id {
-                        Divider()
-                            .padding(.leading, 64)
-                    }
-                }
-            }
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(PoengjegerTheme.border, lineWidth: 1)
             }
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 146, alignment: .topLeading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var iconName: String {
+        switch category.name.localizedLowercase {
+        case let value where value.contains("elektronikk"):
+            return "desktopcomputer"
+        case let value where value.contains("klær") || value.contains("sko"):
+            return "tshirt"
+        case let value where value.contains("sport") || value.contains("fritid"):
+            return "figure.run"
+        case let value where value.contains("helse") || value.contains("skjønnhet"):
+            return "cross.case"
+        case let value where value.contains("barn") || value.contains("familie"):
+            return "figure.2.and.child.holdinghands"
+        case let value where value.contains("hus") || value.contains("hjem"):
+            return "house"
+        case let value where value.contains("bil") || value.contains("motor"):
+            return "car"
+        case let value where value.contains("bøker") || value.contains("medier"):
+            return "book"
+        case let value where value.contains("dyr") || value.contains("kjæledyr"):
+            return "pawprint"
+        case let value where value.contains("programvare"):
+            return "app.badge"
+        case let value where value.contains("daglig"):
+            return "basket"
+        case let value where value.contains("reise") || value.contains("hotell"):
+            return "bed.double"
+        default:
+            return "square.grid.2x2"
+        }
+    }
+
+    private func shortValueLabel(_ label: String) -> String {
+        label
+            .replacingOccurrences(of: "EuroBonus-poeng", with: "EB-poeng")
+            .replacingOccurrences(of: "Trumf-bonus", with: "Trumf")
     }
 }
 
@@ -260,11 +491,20 @@ private struct ExploreStoreMiniRow: View {
             Text(valueLabel)
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(hasVerifiedEarning ? PoengjegerTheme.primary : .secondary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.trailing)
                 .minimumScaleFactor(0.8)
         }
         .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .frame(minHeight: 68)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
         .accessibilityElement(children: .combine)
     }
 
