@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-025: Gaver og opplevelser blir egen butikkategori i MVP
+- Status: Vedtatt
+- Bakgrunn: SAS EuroBonus Shopping og Trumf Netthandel har flere relevante butikker for opplevelsesgaver og personlige gaver. Uten egen kategori havner disse i "Annet", som gjør Utforsk mindre nyttig og øker manuelt redaksjonelt arbeid.
+- Beslutning: Poengjeger legger til `gaver-opplevelser` som egen kampanje-/butikkategori. Kategorien brukes for opplevelsesgaver, personlige gaver og tilsvarende gavebutikker. Energiaktører holdes fortsatt utenfor automatisk publisering inntil MVP-omfanget er vurdert, fordi de ofte har ny-kunde- og avtalevilkår som krever mer redaksjonell kontroll.
+- Konsekvens: Relevante gave-/opplevelsesbutikker kan publiseres og filtreres mer presist i appen. Parseren får navnebaserte overstyringer for kjente aktører, men uklare butikker skal fortsatt gå til review.
+
 ## ADR-024: Premium er foretrukket kommersiell retning, men betalingsmur venter
 - Status: Vedtatt
 - Bakgrunn: Poengjeger må kunne tjene penger uten å svekke tilliten til redaksjonell rangering og kampanjevurderinger. Affiliate og sponsing kan passe enkelte kampanjer, men skaper tydeligere interessekonflikter. Et premiumabonnement passer bedre med produktets verdi: spart tid, bedre prioritering og mer presise varsler for brukere som følger bonuskampanjer aktivt.

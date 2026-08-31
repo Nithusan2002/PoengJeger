@@ -9,6 +9,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 - Brukervalg av relevante bonusprogrammer innen EuroBonus og Trumf først.
 - Hovedvanen er "sjekk før du handler": søk butikk eller kategori før kjøp, se opptjeningsmuligheter og følg riktig handoff.
 - Butikksider viser vanlig opptjening, aktive kampanjer, alle relevante mekanismer og beste redaksjonelt definerte kombinasjon.
+- Butikkategorier dekker nå også gaver og opplevelser, fordi dette er en konkret handlejobb i EuroBonus-/Trumf-kildene og ellers havnet for mye nyttig innhold under "Annet".
 - Kampanjefeed beholdes som sekundær utforskflate og "populært akkurat nå", ikke som eneste kjerneløkke.
 - Begrensede relevante varsler.
 - Supabase-datamodell med redaksjonell kampanjeadministrasjon.

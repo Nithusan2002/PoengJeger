@@ -115,8 +115,22 @@ function executePromotionsSql(selectedMode, selectedLimit, note) {
     where store.id = rate.store_id;
 
     create temporary table tmp_inserted_combinations on commit drop as
-    with inserted as (
+    with source_rows as (
+      select
+        gen_random_uuid() as combination_id,
+        rate.store_id,
+        promoted.rate_id,
+        promoted.parser_key,
+        rate.rate_label,
+        rate.handoff_url,
+        store.name as store_name
+      from tmp_promoted_store_earning_rates promoted
+      join public.store_earning_rates rate on rate.id = promoted.rate_id
+      join public.stores store on store.id = rate.store_id
+    ),
+    inserted as (
       insert into public.earning_combinations (
+        id,
         store_id,
         status,
         title,
@@ -127,20 +141,24 @@ function executePromotionsSql(selectedMode, selectedLimit, note) {
         sort_order
       )
       select
-        rate.store_id,
+        source.combination_id,
+        source.store_id,
         'published',
-        ${methodTitle("promoted.parser_key")},
-        rate.rate_label,
-        ${methodSummary("promoted.parser_key", "store.name")},
-        rate.handoff_url,
+        ${methodTitle("source.parser_key")},
+        source.rate_label,
+        ${methodSummary("source.parser_key", "source.store_name")},
+        source.handoff_url,
         now(),
         0
-      from tmp_promoted_store_earning_rates promoted
-      join public.store_earning_rates rate on rate.id = promoted.rate_id
-      join public.stores store on store.id = rate.store_id
+      from source_rows source
       returning id, store_id
     )
-    select * from inserted;
+    select
+      inserted.id,
+      inserted.store_id,
+      source.rate_id
+    from inserted
+    join source_rows source on source.combination_id = inserted.id;
 
     insert into public.earning_combination_rates (
       combination_id,
@@ -149,13 +167,9 @@ function executePromotionsSql(selectedMode, selectedLimit, note) {
     )
     select
       combination.id,
-      promoted.rate_id,
+      combination.rate_id,
       0
     from tmp_inserted_combinations combination
-    join tmp_promoted_store_earning_rates promoted on true
-    join public.store_earning_rates rate
-      on rate.id = promoted.rate_id
-      and rate.store_id = combination.store_id
     on conflict do nothing;
 
     ${normalizeMixedSasTrumfRecommendationsSql(`
@@ -235,8 +249,21 @@ function executeDuplicateUpdatesSql(selectedLimit, note) {
     where combo.id = resolved.combo_id;
 
     create temporary table tmp_missing_duplicate_combinations on commit drop as
-    with inserted as (
+    with source_rows as (
+      select distinct
+        gen_random_uuid() as combination_id,
+        resolved.store_id,
+        resolved.rate_id,
+        resolved.parser_key,
+        resolved.rate_label,
+        resolved.source_url,
+        resolved.store_name
+      from tmp_resolved_duplicate_rates resolved
+      where resolved.combo_id is null
+    ),
+    inserted as (
       insert into public.earning_combinations (
+        id,
         store_id,
         status,
         title,
@@ -246,20 +273,25 @@ function executeDuplicateUpdatesSql(selectedLimit, note) {
         last_verified_at,
         sort_order
       )
-      select distinct
-        resolved.store_id,
+      select
+        source.combination_id,
+        source.store_id,
         'published',
-        ${methodTitle("resolved.parser_key")},
-        resolved.rate_label,
-        ${methodSummary("resolved.parser_key", "resolved.store_name")},
-        resolved.source_url,
+        ${methodTitle("source.parser_key")},
+        source.rate_label,
+        ${methodSummary("source.parser_key", "source.store_name")},
+        source.source_url,
         now(),
         0
-      from tmp_resolved_duplicate_rates resolved
-      where resolved.combo_id is null
+      from source_rows source
       returning id, store_id
     )
-    select * from inserted;
+    select
+      inserted.id,
+      inserted.store_id,
+      source.rate_id
+    from inserted
+    join source_rows source on source.combination_id = inserted.id;
 
     insert into public.earning_combination_rates (
       combination_id,
@@ -268,10 +300,9 @@ function executeDuplicateUpdatesSql(selectedLimit, note) {
     )
     select
       combination.id,
-      resolved.rate_id,
+      combination.rate_id,
       0
     from tmp_missing_duplicate_combinations combination
-    join tmp_resolved_duplicate_rates resolved on resolved.store_id = combination.store_id
     on conflict do nothing;
 
     update public.ingestion_candidates candidate

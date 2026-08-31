@@ -16,7 +16,11 @@ const sql = `
       rate.warning_text,
       position('%' in rate.rate_label) > 0
         and rate.rate_label not ilike '%opptil%' as is_exact_trumf_percent,
+      rate.rate_label ilike '%kr Trumf-bonus'
+        and rate.rate_label not ilike '%opptil%' as is_exact_trumf_fixed,
       rate.rate_label ilike '%per 100 kr%' as is_sas_per_100,
+      rate.rate_label ilike '%EuroBonus-poeng%'
+        and rate.rate_label not ilike '%per 100 kr%' as is_sas_fixed,
       public.extract_first_decimal(rate.rate_label) as documented_rate,
       case method.slug
         when 'trumf' then
@@ -24,11 +28,17 @@ const sql = `
             when position('%' in rate.rate_label) > 0
               and rate.rate_label not ilike '%opptil%'
               then public.extract_first_decimal(rate.rate_label) * 13.5
+            when rate.rate_label ilike '%kr Trumf-bonus'
+              and rate.rate_label not ilike '%opptil%'
+              then public.extract_first_decimal(rate.rate_label) * 13.5
             else null
           end
         when 'sas-eurobonus-online-shopping' then
           case
             when rate.rate_label ilike '%per 100 kr%'
+              then public.extract_first_decimal(rate.rate_label)
+            when rate.rate_label ilike '%EuroBonus-poeng%'
+              and rate.rate_label not ilike '%per 100 kr%'
               then public.extract_first_decimal(rate.rate_label)
             else null
           end

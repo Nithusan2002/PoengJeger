@@ -20,7 +20,9 @@ import {
 const categories = new Map([
   ["dagligvare", "cat-grocery"],
   ["elektronikk", "cat-electronics"],
+  ["gaver-opplevelser", "cat-gifts"],
   ["barn-familie", "cat-family"],
+  ["bil-motor", "cat-car"],
   ["boker-medier", "cat-media"],
   ["dyr-kjaeledyr", "cat-pets"],
   ["hotel", "cat-hotel"],
@@ -461,6 +463,26 @@ test("category suggestion applies editorial overrides before broad keywords", ()
   assert.deepEqual(
     suggestMerchantCategory(categories, ["North Trampoline", "shopping"]),
     { id: "cat-sport", slug: "sport-fritid", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Calstop", "kosttilskudd"]),
+    { id: "cat-beauty", slug: "helse-skjonnhet", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Detailshop", "bilpleieartikler"]),
+    { id: "cat-car", slug: "bil-motor", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["Beredd", "outdoor"]),
+    { id: "cat-sport", slug: "sport-fritid", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["YourSurprise", "personlige gaver"]),
+    { id: "cat-gifts", slug: "gaver-opplevelser", source: "keyword" },
+  );
+  assert.deepEqual(
+    suggestMerchantCategory(categories, ["YouWish", "opplevelsesgaver"]),
+    { id: "cat-gifts", slug: "gaver-opplevelser", source: "keyword" },
   );
   assert.deepEqual(
     suggestMerchantCategory(categories, ["Db", "fashion"]),
