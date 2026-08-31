@@ -2,11 +2,6 @@ import SwiftUI
 
 struct ExploreView: View {
     @Environment(AppEnvironment.self) private var environment
-    @State private var searchText = ""
-
-    private var isSearching: Bool {
-        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
 
     private var activeCampaigns: [Campaign] {
         ScannableFeedUseCase().makeFeed(
@@ -21,10 +16,6 @@ struct ExploreView: View {
 
     private var featuredCampaigns: [Campaign] {
         activeCampaigns.prefix(3).map { $0 }
-    }
-
-    private var matchingStores: [Store] {
-        StoreSearchUseCase().search(stores: environment.publishedStores, query: searchText)
     }
 
     private var rankedStores: [Store] {
@@ -66,19 +57,13 @@ struct ExploreView: View {
             LazyVStack(alignment: .leading, spacing: 28) {
                 header
 
-                searchSection
-
                 statusSection
 
-                if isSearching {
-                    searchResultsSection
-                } else {
-                    campaignSection
+                campaignSection
 
-                    categoryBrowseSection
+                categoryBrowseSection
 
-                    featuredStoresSection
-                }
+                featuredStoresSection
             }
             .padding(.horizontal, 16)
             .padding(.top, 18)
@@ -104,48 +89,16 @@ struct ExploreView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Hva skal du handle?")
+            Text("Utforsk")
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Søk etter butikk eller gå via en kategori før du kjøper.")
+            Text("Oppdag kampanjer, kategorier og butikker med dokumentert opptjening.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var searchSection: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-
-            TextField("Søk butikk eller kategori", text: $searchText)
-                .textInputAutocapitalization(.never)
-                .disableAutocorrection(true)
-
-            if isSearching {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityLabel("Tøm søk")
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 10, y: 4)
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
-        .accessibilityLabel("Søk etter butikk eller kategori")
     }
 
     @ViewBuilder
@@ -205,37 +158,6 @@ struct ExploreView: View {
                             primaryProgramName: primaryProgramName(for: campaign),
                             isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id)
                         )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    private var searchResultsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("SØKERESULTAT")
-                    .font(.caption.weight(.bold))
-                    .tracking(2.2)
-                    .foregroundStyle(.secondary)
-
-                Text("\(matchingStores.count) treff")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
-            }
-
-            if matchingStores.isEmpty {
-                ContentUnavailableView(
-                    "Ingen butikker matcher søket",
-                    systemImage: "magnifyingglass",
-                    description: Text("Prøv butikknavn, kategori eller en mer generell varetype.")
-                )
-                .padding(.vertical, 24)
-            } else {
-                ForEach(matchingStores) { store in
-                    NavigationLink(value: store) {
-                        StoreResultRow(store: store)
                     }
                     .buttonStyle(.plain)
                 }
