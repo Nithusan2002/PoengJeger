@@ -46,16 +46,12 @@ struct DetailTopBar: View {
 
             Spacer(minLength: 8)
 
-            Button(action: onToggleFavorite) {
-                Image(systemName: isFavorite ? "star.fill" : "star")
-                    .font(.title3.weight(.semibold))
-                    .frame(width: 38, height: 38)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(isFavorite ? PoengjegerTheme.highlight : PoengjegerTheme.accent)
-            .accessibilityLabel(isFavorite ? "Fjern favoritt" : "Lagre favoritt")
-            .accessibilityValue(isFavorite ? "Lagret" : "Ikke lagret")
+            SaveToggleButton(
+                isSaved: isFavorite,
+                savedAccessibilityLabel: "Fjern favoritt",
+                unsavedAccessibilityLabel: "Lagre favoritt",
+                action: onToggleFavorite
+            )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)

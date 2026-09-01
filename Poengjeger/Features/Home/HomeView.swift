@@ -11,7 +11,11 @@ struct HomeView: View {
     }
 
     private var matchingStores: [Store] {
-        StoreSearchUseCase().search(stores: environment.publishedStores, query: searchText)
+        StoreSearchUseCase().search(
+            stores: environment.publishedStores,
+            query: searchText,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
+        )
     }
 
     private var quickSuggestions: [Store] {
@@ -157,7 +161,7 @@ struct HomeView: View {
             } else {
                 ForEach(quickSuggestions) { store in
                     NavigationLink(value: store) {
-                        StoreResultRow(store: store)
+                        StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
                     .simultaneousGesture(TapGesture().onEnded {
@@ -186,7 +190,7 @@ struct HomeView: View {
             } else {
                 ForEach(matchingStores) { store in
                     NavigationLink(value: store) {
-                        StoreResultRow(store: store)
+                        StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
                     .simultaneousGesture(TapGesture().onEnded {
@@ -214,6 +218,7 @@ struct HomeView: View {
     }
 
     private func trackStoreOpen(_ store: Store, entryPoint: String) {
+        let bestCombination = store.bestCombination(for: environment.selectedFirstPhaseProgramIDs)
         environment.track(.init(
             name: "store_search_result_opened",
             surface: "store_search",
@@ -222,7 +227,7 @@ struct HomeView: View {
             properties: [
                 "entry_point": entryPoint,
                 "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
-                "has_best_combination": store.bestCombination == nil ? "false" : "true"
+                "has_best_combination": bestCombination == nil ? "false" : "true"
             ]
         ))
     }
@@ -235,6 +240,11 @@ struct StoreCategoryRoute: Hashable {
 
 struct StoreResultRow: View {
     let store: Store
+    var selectedProgramIDs: Set<UUID> = []
+
+    private var bestCombination: EarningCombination? {
+        store.bestCombination(for: selectedProgramIDs)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -250,7 +260,7 @@ struct StoreResultRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                if let bestCombination = store.bestCombination {
+                if let bestCombination {
                     Text(bestCombination.totalValueLabel)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(PoengjegerTheme.primary)

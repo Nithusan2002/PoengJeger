@@ -4,6 +4,7 @@ struct StoreDetailView: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.dismiss) private var dismiss
     @State private var isRecommendationExpanded = false
+    @State private var isFavorite = false
 
     let store: Store
 
@@ -11,20 +12,49 @@ struct StoreDetailView: View {
         store.sortedEarningRates.filter { $0.status == .published }
     }
 
+    private var selectedProgramIDs: Set<UUID> {
+        environment.selectedFirstPhaseProgramIDs
+    }
+
+    private var preferredCombination: EarningCombination? {
+        store.bestCombination(for: selectedProgramIDs)
+    }
+
     private var bestRateIDs: Set<UUID> {
-        Set(store.bestCombination?.rateIDs ?? [])
+        Set(preferredCombination?.rateIDs ?? [])
+    }
+
+    private var primaryRates: [StoreEarningRate] {
+        guard !selectedProgramIDs.isEmpty else { return publishedRates }
+        let selectedRates = publishedRates.filter { $0.matchesSelectedPrograms(selectedProgramIDs) }
+        return selectedRates.isEmpty ? publishedRates : selectedRates
+    }
+
+    private var secondaryRates: [StoreEarningRate] {
+        guard !selectedProgramIDs.isEmpty else { return [] }
+        return publishedRates.filter { !$0.matchesSelectedPrograms(selectedProgramIDs) }
+    }
+
+    private var activePromotions: [StoreEarningRate] {
+        primaryRates
+            .filter { !$0.isBaseRate && $0.isActive }
+            .sorted { $0.sortOrder < $1.sortOrder }
     }
 
     private var bestOpportunityUsesPromotion: Bool {
-        store.activePromotions.contains { bestRateIDs.contains($0.id) }
+        activePromotions.contains { bestRateIDs.contains($0.id) }
     }
 
     private var visibleReferenceRates: [StoreEarningRate] {
+        let baseRates = primaryRates
+            .filter(\.isBaseRate)
+            .sorted { $0.sortOrder < $1.sortOrder }
+
         if bestOpportunityUsesPromotion {
-            return store.baseRates
+            return baseRates
         }
 
-        return store.baseRates.filter { !bestRateIDs.contains($0.id) }
+        return baseRates.filter { !bestRateIDs.contains($0.id) }
     }
 
     var body: some View {
@@ -38,6 +68,7 @@ struct StoreDetailView: View {
                     referenceRateSection
                     currentCampaignSection
                     allMethodsSection
+                    otherMethodsSection
                     actionSection
                 }
                 .padding(.horizontal, 18)
@@ -51,26 +82,38 @@ struct StoreDetailView: View {
             HowToEarnView(store: store, combination: combination)
         }
         .task(id: store.id) {
+            isFavorite = environment.userSession.favoriteStoreIDs.contains(store.id)
             trackStoreDetailOpened()
         }
     }
 
     private var topBar: some View {
-        Button {
-            dismiss()
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "chevron.left")
-                    .font(.subheadline.weight(.semibold))
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left")
+                        .font(.subheadline.weight(.semibold))
 
-                Text("Tilbake")
-                    .font(.subheadline.weight(.semibold))
+                    Text("Tilbake")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
             }
-            .foregroundStyle(.secondary)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tilbake")
+
+            Spacer()
+
+            SaveToggleButton(
+                isSaved: isFavorite,
+                savedAccessibilityLabel: "Fjern butikk fra lagret",
+                unsavedAccessibilityLabel: "Lagre butikk",
+                action: toggleFavorite
+            )
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Tilbake")
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .padding(.bottom, 12)
@@ -108,7 +151,7 @@ struct StoreDetailView: View {
 
     @ViewBuilder
     private var bestOpportunitySection: some View {
-        if let combination = store.bestCombination {
+        if let combination = preferredCombination {
             let includedRates = rates(in: combination)
 
             VStack(alignment: .leading, spacing: 14) {
@@ -233,11 +276,11 @@ struct StoreDetailView: View {
 
     @ViewBuilder
     private var currentCampaignSection: some View {
-        if !store.activePromotions.isEmpty {
+        if !activePromotions.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 LovableSectionHeading(eyebrow: "AKTUELL KAMPANJE", title: "Akkurat nå")
 
-                ForEach(store.activePromotions) { rate in
+                ForEach(activePromotions) { rate in
                     CurrentCampaignCard(rate: rate)
                 }
             }
@@ -246,15 +289,32 @@ struct StoreDetailView: View {
 
     @ViewBuilder
     private var allMethodsSection: some View {
-        if publishedRates.count > 1 {
+        if primaryRates.count > 1 {
             VStack(alignment: .leading, spacing: 12) {
                 LovableSectionHeading(
                     eyebrow: "OVERSIKT",
-                    title: "Alle opptjeningsmuligheter",
+                    title: selectedProgramIDs.isEmpty ? "Alle opptjeningsmuligheter" : "Dine programmer først",
                     subtitle: "EuroBonus og Trumf vises hver for seg - vi blander ikke bonusvalutaene."
                 )
 
-                ForEach(publishedRates) { rate in
+                ForEach(primaryRates) { rate in
+                    EarningMethodCard(rate: rate)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var otherMethodsSection: some View {
+        if !secondaryRates.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                LovableSectionHeading(
+                    eyebrow: "ANDRE MULIGHETER",
+                    title: "Ikke valgt program",
+                    subtitle: "Disse er dokumentert, men ligger utenfor programmene du har valgt i Profil."
+                )
+
+                ForEach(secondaryRates) { rate in
                     EarningMethodCard(rate: rate)
                 }
             }
@@ -263,7 +323,7 @@ struct StoreDetailView: View {
 
     @ViewBuilder
     private var actionSection: some View {
-        if let combination = store.bestCombination {
+        if let combination = preferredCombination {
             VStack(alignment: .leading, spacing: 14) {
                 LovableSectionHeading(eyebrow: "HANDLING", title: "Slik gjør du det")
 
@@ -356,7 +416,17 @@ struct StoreDetailView: View {
     }
 
     private func bestCombinationEyebrow(for combination: EarningCombination) -> String {
-        combination.rateIDs.count > 1 ? "BESTE KOMBINASJON" : "BESTE DOKUMENTERTE MULIGHET"
+        if !selectedProgramIDs.isEmpty && !combinationUsesSelectedPrograms(combination) {
+            return "ANNEN DOKUMENTERT MULIGHET"
+        }
+
+        return combination.rateIDs.count > 1 ? "BESTE KOMBINASJON" : "BESTE DOKUMENTERTE MULIGHET"
+    }
+
+    private func combinationUsesSelectedPrograms(_ combination: EarningCombination) -> Bool {
+        guard !selectedProgramIDs.isEmpty else { return true }
+        let programIDs = Set(rates(in: combination).compactMap(\.method.programID))
+        return !programIDs.isEmpty && programIDs.isSubset(of: selectedProgramIDs)
     }
 
     private func expiryText(for rates: [StoreEarningRate]) -> String? {
@@ -397,7 +467,7 @@ struct StoreDetailView: View {
     }
 
     private func trackStoreDetailOpened() {
-        let programIDs = Set(store.earningRates.compactMap(\.method.programID))
+        let programIDs = Set(primaryRates.compactMap(\.method.programID))
         environment.track(.init(
             name: "store_detail_opened",
             surface: "store_detail",
@@ -405,12 +475,13 @@ struct StoreDetailView: View {
             entityID: store.id,
             properties: [
                 "program_count": "\(programIDs.count)",
-                "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
-                "has_best_combination": store.bestCombination == nil ? "false" : "true"
+                "has_active_campaign": activePromotions.isEmpty ? "false" : "true",
+                "has_best_combination": preferredCombination == nil ? "false" : "true",
+                "uses_selected_program": preferredCombination.map { combinationUsesSelectedPrograms($0) ? "true" : "false" } ?? "false"
             ]
         ))
 
-        if let bestCombination = store.bestCombination {
+        if let bestCombination = preferredCombination {
             environment.track(.init(
                 name: "best_combination_viewed",
                 surface: "store_detail",
@@ -420,6 +491,30 @@ struct StoreDetailView: View {
                     "store_id": store.id.uuidString,
                     "mechanism_count": "\(bestCombination.rateIDs.count)"
                 ]
+            ))
+        }
+    }
+
+    private func toggleFavorite() {
+        if isFavorite {
+            isFavorite = false
+            environment.userSession.favoriteStoreIDs.remove(store.id)
+            environment.track(.init(
+                name: "favorite_removed",
+                surface: "store_detail",
+                entityType: "store",
+                entityID: store.id,
+                properties: ["favorite_type": "store"]
+            ))
+        } else {
+            isFavorite = true
+            environment.userSession.favoriteStoreIDs.insert(store.id)
+            environment.track(.init(
+                name: "favorite_added",
+                surface: "store_detail",
+                entityType: "store",
+                entityID: store.id,
+                properties: ["favorite_type": "store"]
             ))
         }
     }

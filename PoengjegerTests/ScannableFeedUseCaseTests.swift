@@ -39,6 +39,7 @@ struct ScannableFeedUseCaseTests {
         let session = UserSession(
             selectedProgramIDs: [SampleData.trumf.id],
             favoriteCampaignIDs: [SampleData.campaigns[0].id],
+            favoriteStoreIDs: [SampleData.stores[0].id],
             notificationsEnabled: false
         )
 
@@ -46,6 +47,26 @@ struct ScannableFeedUseCaseTests {
         let decoded = try JSONDecoder().decode(UserSession.self, from: data)
 
         #expect(decoded == session)
+    }
+
+    @Test
+    func userSessionDecodesLegacyStorageWithoutStoreFavorites() throws {
+        let programID = SampleData.trumf.id.uuidString
+        let campaignID = SampleData.campaigns[0].id.uuidString
+        let json = """
+        {
+          "selectedProgramIDs": ["\(programID)"],
+          "favoriteCampaignIDs": ["\(campaignID)"],
+          "notificationsEnabled": false
+        }
+        """
+
+        let decoded = try JSONDecoder().decode(UserSession.self, from: Data(json.utf8))
+
+        #expect(decoded.selectedProgramIDs == [SampleData.trumf.id])
+        #expect(decoded.favoriteCampaignIDs == [SampleData.campaigns[0].id])
+        #expect(decoded.favoriteStoreIDs.isEmpty)
+        #expect(decoded.notificationsEnabled == false)
     }
 
     @MainActor
@@ -68,7 +89,8 @@ struct ScannableFeedUseCaseTests {
             productAnalytics: NoopProductAnalytics(),
             userSession: UserSession(
                 selectedProgramIDs: [SampleData.trumf.id, staleProgramID],
-                favoriteCampaignIDs: [availableCampaign.id]
+                favoriteCampaignIDs: [availableCampaign.id, UUID()],
+                favoriteStoreIDs: [SampleData.stores[0].id, UUID()]
             ),
             userSessionStore: InMemoryUserSessionStore()
         )
@@ -82,7 +104,10 @@ struct ScannableFeedUseCaseTests {
         #expect(environment.publishedStores.map(\.id) == SampleData.stores.map(\.id))
         #expect(environment.dataSource == .supabase)
         #expect(environment.userSession.selectedProgramIDs == [SampleData.trumf.id])
+        #expect(environment.userSession.favoriteCampaignIDs == [availableCampaign.id])
+        #expect(environment.userSession.favoriteStoreIDs == [SampleData.stores[0].id])
         #expect(environment.favoriteCampaigns.map(\.id) == [availableCampaign.id])
+        #expect(environment.favoriteStores.map(\.id) == [SampleData.stores[0].id])
     }
 
     @MainActor
@@ -91,6 +116,7 @@ struct ScannableFeedUseCaseTests {
         let persistedSession = UserSession(
             selectedProgramIDs: [SampleData.euroBonus.id],
             favoriteCampaignIDs: [],
+            favoriteStoreIDs: [SampleData.stores[0].id],
             notificationsEnabled: false
         )
         let store = InMemoryUserSessionStore(session: persistedSession)
@@ -107,6 +133,7 @@ struct ScannableFeedUseCaseTests {
         let updatedSession = UserSession(
             selectedProgramIDs: [SampleData.trumf.id],
             favoriteCampaignIDs: [SampleData.campaigns[0].id],
+            favoriteStoreIDs: [SampleData.stores[1].id],
             notificationsEnabled: true
         )
         environment.userSession = updatedSession

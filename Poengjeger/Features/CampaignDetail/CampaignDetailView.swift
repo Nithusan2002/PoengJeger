@@ -3,12 +3,11 @@ import SwiftUI
 struct CampaignDetailView: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.dismiss) private var dismiss
+    @State private var isFavorite = false
 
     let campaign: Campaign
 
     var body: some View {
-        @Bindable var environment = environment
-
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
                 campaignHeader
@@ -27,12 +26,13 @@ struct CampaignDetailView: View {
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .top, spacing: 0) {
             DetailTopBar(
-                isFavorite: environment.userSession.favoriteCampaignIDs.contains(campaign.id),
+                isFavorite: isFavorite,
                 onBack: { dismiss() },
-                onToggleFavorite: { toggleFavorite(in: &environment.userSession.favoriteCampaignIDs) }
+                onToggleFavorite: toggleFavorite
             )
         }
         .task(id: campaign.id) {
+            isFavorite = environment.userSession.favoriteCampaignIDs.contains(campaign.id)
             environment.track(.init(
                 name: "campaign_detail_opened",
                 surface: "campaign_detail",
@@ -338,9 +338,10 @@ struct CampaignDetailView: View {
         campaign.sortedRequirements.count > primaryRequirements.count
     }
 
-    private func toggleFavorite(in favoriteIDs: inout Set<UUID>) {
-        if favoriteIDs.contains(campaign.id) {
-            favoriteIDs.remove(campaign.id)
+    private func toggleFavorite() {
+        if isFavorite {
+            isFavorite = false
+            environment.userSession.favoriteCampaignIDs.remove(campaign.id)
             environment.track(.init(
                 name: "favorite_removed",
                 surface: "campaign_detail",
@@ -349,7 +350,8 @@ struct CampaignDetailView: View {
                 properties: ["favorite_type": "campaign"]
             ))
         } else {
-            favoriteIDs.insert(campaign.id)
+            isFavorite = true
+            environment.userSession.favoriteCampaignIDs.insert(campaign.id)
             environment.track(.init(
                 name: "favorite_added",
                 surface: "campaign_detail",

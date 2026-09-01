@@ -20,8 +20,8 @@ struct ExploreView: View {
 
     private var rankedStores: [Store] {
         StoreDiscoveryUseCase()
-            .rankedStores(from: environment.publishedStores)
-            .filter { $0.bestCombination != nil || !$0.sortedEarningRates.isEmpty }
+            .rankedStores(from: environment.publishedStores, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
+            .filter { $0.bestCombination(for: environment.selectedFirstPhaseProgramIDs) != nil || !$0.sortedEarningRates.isEmpty }
     }
 
     private var featuredStores: [Store] {
@@ -40,7 +40,7 @@ struct ExploreView: View {
             ExploreCategorySummary(
                 name: categoryName,
                 storeCount: stores.count,
-                topValueLabel: stores.first?.bestCombination?.totalValueLabel
+                topValueLabel: stores.first?.bestCombination(for: environment.selectedFirstPhaseProgramIDs)?.totalValueLabel
             )
         }
         .sorted { first, second in
@@ -250,7 +250,7 @@ struct ExploreView: View {
             } else {
                 ForEach(featuredStores) { store in
                     NavigationLink(value: store) {
-                        ExploreStoreMiniRow(store: store)
+                        ExploreStoreMiniRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
                 }
@@ -456,6 +456,7 @@ private struct ExploreCategoryTile: View {
 
 private struct ExploreStoreMiniRow: View {
     let store: Store
+    var selectedProgramIDs: Set<UUID> = []
 
     var body: some View {
         HStack(spacing: 12) {
@@ -498,11 +499,11 @@ private struct ExploreStoreMiniRow: View {
     }
 
     private var hasVerifiedEarning: Bool {
-        store.bestCombination != nil || !store.sortedEarningRates.isEmpty
+        store.bestCombination(for: selectedProgramIDs) != nil || !store.sortedEarningRates.isEmpty
     }
 
     private var valueLabel: String {
-        store.bestCombination?.totalValueLabel ?? "Ikke verifisert ennå"
+        store.bestCombination(for: selectedProgramIDs)?.totalValueLabel ?? "Ikke verifisert ennå"
     }
 }
 

@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-026: Publisert butikkopptjening får minimumsvakter
+- Status: Vedtatt
+- Bakgrunn: Butikkflyten er nå en sentral del av "sjekk før du handler". Kampanjepublisering hadde allerede databasevakter for kilde, kontrolltidspunkt og redaksjonell vurdering, mens butikkopptjening kunne publiseres med svakere minimumsgrunnlag.
+- Beslutning: Publiserte butikker, satser og kombinasjoner får fremoverrettede `NOT VALID`-constraints som håndhever minimumsfelt ved nye og oppdaterte rader uten å blokkere eksisterende historiske data. I tillegg får redaksjonen viewet `store_earning_publication_quality_issues` for å finne publiserte butikkopptjeningsrader med manglende kontrollfelt eller utløpte publiserte satser.
+- Konsekvens: Nye pilotdata må ha tydeligere kildegrunnlag før publisering. Eksisterende data må fortsatt gjennomgås redaksjonelt, men mangler blir synlige uten at migrasjonen gjør usikre antakelser eller automatisk arkiverer innhold.
+
 ## ADR-025: Gaver og opplevelser blir egen butikkategori i MVP
 - Status: Vedtatt
 - Bakgrunn: SAS EuroBonus Shopping og Trumf Netthandel har flere relevante butikker for opplevelsesgaver og personlige gaver. Uten egen kategori havner disse i "Annet", som gjør Utforsk mindre nyttig og øker manuelt redaksjonelt arbeid.

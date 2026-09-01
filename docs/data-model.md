@@ -22,6 +22,8 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 
 En publisert kampanje krever minst én kildehenvisning, `last_verified_at`, minst én kobling til bonusprogram og redaksjonell beslutning med kort konklusjon. Nye kildehenvisninger må bruke `https://`-URL. Dette håndheves i databasen for redaksjonell lagring.
 
+Publisert butikkopptjening har egne minimumsvakter: publiserte butikker må ha siste kontrolltidspunkt, publiserte satser må ha satslabel, kravtekst, kilde-URL, kildetittel og kontrolltidspunkt, og publiserte kombinasjoner må ha tittel, totalverdi, sammendrag og siste kontrolltidspunkt. `store_earning_publication_quality_issues` viser publiserte butikk-, sats- og kombinasjonsrader som fortsatt bør kontrolleres før pilot.
+
 Publiserte programguider kan leses av klienten for aktive bonusprogrammer. Utkast og arkiverte guider er kun tilgjengelige for redaksjonelle adminbrukere.
 
 Publiserte butikker, opptjeningsmetoder, satser og kombinasjoner kan leses av klienten. Utkast, arkiverte rader og redaksjonell administrasjon er begrenset til redaksjonelle roller via RLS.

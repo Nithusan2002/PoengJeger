@@ -5,18 +5,14 @@ struct CategoryStoresView: View {
     let categoryName: String
 
     private var stores: [Store] {
-        environment.publishedStores
-            .filter { $0.category?.name == categoryName }
-            .sorted { first, second in
-                let firstValue = rankingValue(for: first)
-                let secondValue = rankingValue(for: second)
+        StoreDiscoveryUseCase().rankedStores(
+            from: environment.publishedStores.filter { $0.category?.name == categoryName },
+            selectedProgramIDs: selectedProgramIDs
+        )
+    }
 
-                if firstValue != secondValue {
-                    return firstValue > secondValue
-                }
-
-                return first.name.localizedCompare(second.name) == .orderedAscending
-            }
+    private var selectedProgramIDs: Set<UUID> {
+        environment.selectedFirstPhaseProgramIDs
     }
 
     var body: some View {
@@ -36,7 +32,7 @@ struct CategoryStoresView: View {
                 } else {
                     ForEach(stores) { store in
                         NavigationLink(value: store) {
-                            CategoryStoreRow(store: store)
+                            CategoryStoreRow(store: store, selectedProgramIDs: selectedProgramIDs)
                         }
                         .buttonStyle(.plain)
                     }
@@ -80,25 +76,15 @@ struct CategoryStoresView: View {
         }
         .padding(.vertical, 4)
     }
-
-    private func rankingValue(for store: Store) -> Double {
-        guard let label = store.bestCombination?.totalValueLabel else { return 0 }
-        let normalized = label.replacingOccurrences(of: ",", with: ".")
-        let pattern = #"\d+(\.\d+)?"#
-
-        guard
-            let range = normalized.range(of: pattern, options: .regularExpression),
-            let value = Double(normalized[range])
-        else {
-            return 0
-        }
-
-        return value
-    }
 }
 
 private struct CategoryStoreRow: View {
     let store: Store
+    var selectedProgramIDs: Set<UUID> = []
+
+    private var bestCombination: EarningCombination? {
+        store.bestCombination(for: selectedProgramIDs)
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -114,7 +100,7 @@ private struct CategoryStoreRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                if let bestCombination = store.bestCombination {
+                if let bestCombination {
                     Text(bestCombination.totalValueLabel)
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(PoengjegerTheme.primary)

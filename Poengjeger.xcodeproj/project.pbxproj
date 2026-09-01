@@ -49,6 +49,7 @@
 		045 /* CampaignDetailPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 145 /* CampaignDetailPresentation.swift */; };
 		046 /* ProgramDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146 /* ProgramDetailComponents.swift */; };
 		047 /* ProgramDetailPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147 /* ProgramDetailPresentation.swift */; };
+		048 /* SaveToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148 /* SaveToggleButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -109,6 +110,7 @@
 		145 /* CampaignDetailPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignDetailPresentation.swift; sourceTree = "<group>"; };
 		146 /* ProgramDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailComponents.swift; sourceTree = "<group>"; };
 		147 /* ProgramDetailPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailPresentation.swift; sourceTree = "<group>"; };
+		148 /* SaveToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveToggleButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -238,6 +240,7 @@
 			children = (
 				111 /* MainTabView.swift */,
 				129 /* CampaignCardView.swift */,
+				148 /* SaveToggleButton.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -516,6 +519,7 @@
 				010 /* MockCampaignRepository.swift in Sources */,
 				021 /* MockAdminRepository.swift in Sources */,
 				011 /* MainTabView.swift in Sources */,
+				048 /* SaveToggleButton.swift in Sources */,
 				012 /* OnboardingView.swift in Sources */,
 				013 /* FeedView.swift in Sources */,
 				042 /* FeedControls.swift in Sources */,

@@ -25,6 +25,13 @@ struct MainTabView: View {
             }
 
             NavigationStack {
+                FavoritesView()
+            }
+            .tabItem {
+                Label("Lagret", systemImage: "star")
+            }
+
+            NavigationStack {
                 SettingsView()
             }
             .tabItem {

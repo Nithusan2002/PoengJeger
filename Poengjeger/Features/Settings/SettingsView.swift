@@ -7,38 +7,26 @@ struct SettingsView: View {
         environment.firstPhasePrograms
     }
 
-    private var selectedProgramCount: Int {
-        environment.userSession.selectedProgramIDs
-            .intersection(Set(programs.map(\.id)))
-            .count
-    }
-
     var body: some View {
         @Bindable var environment = environment
 
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
+            LazyVStack(alignment: .leading, spacing: 20) {
                 header
-
-                ProfileStatusCard(
-                    selectedProgramCount: selectedProgramCount,
-                    programCount: programs.count,
-                    favoriteCount: environment.favoriteCampaigns.count
-                )
-
-                notificationCard
 
                 ProfileProgramSection(
                     programs: programs,
                     selectedProgramIDs: $environment.userSession.selectedProgramIDs
                 )
 
+                notificationCard
+
                 #if DEBUG
                 debugSection(dataSourceLabel: environment.dataSource?.label)
                 #endif
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 28)
+            .padding(.horizontal, 18)
+            .padding(.top, 22)
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
@@ -48,13 +36,13 @@ struct SettingsView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Profil")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
+                .font(.system(.title, design: .rounded).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Styr hvilke bonusprogrammer som former søk, guider og anbefalte muligheter.")
-                .font(.body)
+            Text("Tilpass Poengjeger til programmene du faktisk bruker.")
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -64,8 +52,8 @@ struct SettingsView: View {
     private var notificationCard: some View {
         ProfileInfoCard(
             iconName: "bell.slash",
-            title: "Varsler kommer senere",
-            subtitle: "MVP-en viser relevante muligheter i appen først. Varsler aktiveres når redaksjonell kontroll og preferanser er klare."
+            title: "Varsler",
+            subtitle: "Kommer senere når redaksjonell kontroll og tydelige preferanser er klare."
         )
     }
 
@@ -104,73 +92,6 @@ struct SettingsView: View {
     #endif
 }
 
-private struct ProfileStatusCard: View {
-    let selectedProgramCount: Int
-    let programCount: Int
-    let favoriteCount: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.primary)
-                    .frame(width: 46, height: 46)
-                    .background(PoengjegerTheme.primarySoft)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Din Poengjeger")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-
-                    Text("Personlig visning uten konto-tilkobling.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            HStack(spacing: 10) {
-                ProfileMetricPill(value: "\(selectedProgramCount)/\(programCount)", label: "programmer")
-                ProfileMetricPill(value: "\(favoriteCount)", label: "lagret")
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
-        .accessibilityElement(children: .combine)
-    }
-}
-
-private struct ProfileMetricPill: View {
-    let value: String
-    let label: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.primary)
-
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.primaryTint)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-}
-
 private struct ProfileProgramSection: View {
     let programs: [BonusProgram]
     @Binding var selectedProgramIDs: Set<UUID>
@@ -180,31 +101,44 @@ private struct ProfileProgramSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ProfileSectionHeading(eyebrow: "BONUSPROGRAMMER", title: "Mine programmer")
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Mine programmer")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
 
-            Text("Velg programmene du faktisk bruker. Valgene prioriterer relevante kampanjer, butikker og guider uten konto-tilkobling.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 12)
 
-            HStack(spacing: 10) {
+                    Text("\(selectedProgramCount) av \(programs.count)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(PoengjegerTheme.primary)
+                }
+
+                Text("Prioriterer kampanjer, butikker og guider uten konto-tilkobling.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(spacing: 8) {
                 Button {
                     selectedProgramIDs = Set(programs.map(\.id))
                 } label: {
-                    Label("Velg alle", systemImage: "checkmark.circle")
+                    Label("Alle", systemImage: "checkmark.circle")
                 }
                 .disabled(programs.isEmpty)
 
                 Button {
                     selectedProgramIDs.subtract(Set(programs.map(\.id)))
                 } label: {
-                    Label("Tøm", systemImage: "xmark.circle")
+                    Label("Ingen", systemImage: "xmark.circle")
                 }
                 .disabled(selectedProgramCount == 0)
             }
-            .font(.subheadline.weight(.semibold))
+            .font(.caption.weight(.semibold))
             .buttonStyle(.bordered)
+            .controlSize(.small)
             .tint(PoengjegerTheme.primary)
 
             VStack(spacing: 0) {
@@ -221,17 +155,19 @@ private struct ProfileProgramSection: View {
 
                     if program.id != programs.last?.id {
                         Divider()
-                            .padding(.leading, 58)
+                            .padding(.leading, 44)
                     }
                 }
             }
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
-            .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(PoengjegerTheme.border, lineWidth: 1)
-            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
     }
 
@@ -250,10 +186,10 @@ private struct ProfileProgramRow: View {
 
     var body: some View {
         Toggle(isOn: $isSelected) {
-            HStack(spacing: 12) {
+            HStack(spacing: 11) {
                 Circle()
                     .fill(program.programColor)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 9, height: 9)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -267,8 +203,8 @@ private struct ProfileProgramRow: View {
                 }
             }
         }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 62)
+        .padding(.vertical, 12)
+        .frame(minHeight: 58)
         .contentShape(Rectangle())
         .tint(PoengjegerTheme.primary)
         .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
@@ -359,14 +295,14 @@ private struct ProfileSectionHeading: View {
     let title: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(eyebrow)
-                .font(.caption.weight(.bold))
-                .tracking(2.2)
+                .font(.caption2.weight(.bold))
+                .tracking(1.6)
                 .foregroundStyle(.secondary)
 
             Text(title)
-                .font(.system(.title2, design: .serif).weight(.bold))
+                .font(.headline.weight(.semibold))
                 .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

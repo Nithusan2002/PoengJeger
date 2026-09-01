@@ -111,12 +111,82 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeBestCombinationPrefersSelectedProgramBeforeGeneralSortOrder() {
+        let trumfRateID = UUID()
+        let euroBonusRateID = UUID()
+        let trumfRate = makeEarningRate(
+            id: trumfRateID,
+            rateLabel: "2 % Trumf",
+            programID: SampleData.trumf.id
+        )
+        let euroBonusRate = makeEarningRate(
+            id: euroBonusRateID,
+            rateLabel: "20 EuroBonus-poeng per 100 kr",
+            programID: SampleData.euroBonus.id
+        )
+        let euroBonusCombination = makeCombination(
+            title: "EuroBonus først",
+            totalValueLabel: "20 EuroBonus-poeng per 100 kr",
+            sortOrder: 1,
+            rateIDs: [euroBonusRateID]
+        )
+        let trumfCombination = makeCombination(
+            title: "Trumf først",
+            totalValueLabel: "2 % Trumf",
+            sortOrder: 2,
+            rateIDs: [trumfRateID]
+        )
+        let store = makeStore(
+            earningRates: [euroBonusRate, trumfRate],
+            combinations: [euroBonusCombination, trumfCombination]
+        )
+
+        #expect(store.bestCombination?.title == "EuroBonus først")
+        #expect(store.bestCombination(for: [SampleData.trumf.id])?.title == "Trumf først")
+        #expect(store.bestCombination(for: [SampleData.euroBonus.id])?.title == "EuroBonus først")
+    }
+
+    @Test
     func storeSearchAndDiscoveryHideUnpublishedStores() {
         let published = makeStore(name: "Synlig butikk", searchKeywords: ["telefon"])
         let draft = makeStore(name: "Skjult butikk", status: .draft, searchKeywords: ["telefon"])
 
         #expect(StoreSearchUseCase().search(stores: [draft, published], query: "telefon").map(\.name) == ["Synlig butikk"])
         #expect(StoreDiscoveryUseCase().rankedStores(from: [draft, published]).map(\.name) == ["Synlig butikk"])
+    }
+
+    @Test
+    func storeSearchRanksSelectedProgramEarningBeforeHigherOtherProgramValue() {
+        let trumfRateID = UUID()
+        let euroBonusRateID = UUID()
+        let trumfStore = makeStore(
+            name: "A Trumf-butikk",
+            searchKeywords: ["elektronikk"],
+            earningRates: [
+                makeEarningRate(id: trumfRateID, rateLabel: "2 % Trumf", programID: SampleData.trumf.id)
+            ],
+            combinations: [
+                makeCombination(totalValueLabel: "2 % Trumf", rateIDs: [trumfRateID])
+            ]
+        )
+        let euroBonusStore = makeStore(
+            name: "B EuroBonus-butikk",
+            searchKeywords: ["elektronikk"],
+            earningRates: [
+                makeEarningRate(id: euroBonusRateID, rateLabel: "20 EuroBonus-poeng per 100 kr", programID: SampleData.euroBonus.id)
+            ],
+            combinations: [
+                makeCombination(totalValueLabel: "20 EuroBonus-poeng per 100 kr", rateIDs: [euroBonusRateID])
+            ]
+        )
+
+        let stores = StoreSearchUseCase().search(
+            stores: [euroBonusStore, trumfStore],
+            query: "elektronikk",
+            selectedProgramIDs: [SampleData.trumf.id]
+        )
+
+        #expect(stores.map(\.name) == ["A Trumf-butikk", "B EuroBonus-butikk"])
     }
 
     @Test
@@ -228,7 +298,7 @@ struct StoreEarningUseCaseTests {
                         "source_title": "Trumf-kampanje",
                         "checked_at": "2026-08-24T11:00:00Z",
                         "starts_at": "2026-08-20T00:00:00Z",
-                        "ends_at": "2026-09-01T00:00:00Z",
+                        "ends_at": "2026-12-31T00:00:00Z",
                         "sort_order": 2,
                         "is_base_rate": false,
                         "earning_methods": {
@@ -380,6 +450,7 @@ struct StoreEarningUseCaseTests {
         id: UUID = UUID(),
         status: StoreEarningRate.Status = .published,
         rateLabel: String = "1 % Trumf",
+        programID: UUID? = SampleData.trumf.id,
         startsAt: Date? = nil,
         endsAt: Date? = nil,
         sortOrder: Int = 1,
@@ -392,7 +463,7 @@ struct StoreEarningUseCaseTests {
                 slug: "trumf-netthandel",
                 name: "Trumf netthandel",
                 type: .portal,
-                programID: SampleData.trumf.id,
+                programID: programID,
                 description: nil
             ),
             status: status,

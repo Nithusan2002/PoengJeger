@@ -40,10 +40,34 @@ struct Store: Identifiable, Hashable {
     }
 
     var bestCombination: EarningCombination? {
-        combinations
+        bestCombination(for: [])
+    }
+
+    func bestCombination(for selectedProgramIDs: Set<UUID>) -> EarningCombination? {
+        let usableCombinations = combinations
             .filter { $0.status == .published && isUsableCombination($0) }
+
+        if !selectedProgramIDs.isEmpty {
+            let selectedCombinations = usableCombinations
+                .filter { combinationMatchesSelectedPrograms($0, selectedProgramIDs: selectedProgramIDs) }
+                .sorted { $0.sortOrder < $1.sortOrder }
+
+            if let selectedCombination = selectedCombinations.first {
+                return selectedCombination
+            }
+        }
+
+        return usableCombinations
             .sorted { $0.sortOrder < $1.sortOrder }
             .first
+    }
+
+    func hasSelectedProgramEarning(for selectedProgramIDs: Set<UUID>) -> Bool {
+        guard !selectedProgramIDs.isEmpty else { return hasVerifiedEarning }
+
+        return bestCombination(for: selectedProgramIDs).map {
+            combinationMatchesSelectedPrograms($0, selectedProgramIDs: selectedProgramIDs)
+        } == true || earningRates.contains { $0.isActive && $0.matchesSelectedPrograms(selectedProgramIDs) }
     }
 
     func matches(_ query: String) -> Bool {
@@ -58,6 +82,16 @@ struct Store: Identifiable, Hashable {
 
         guard includedRates.count == combination.rateIDs.count else { return false }
         return includedRates.allSatisfy(\.isActive)
+    }
+
+    private func combinationMatchesSelectedPrograms(_ combination: EarningCombination, selectedProgramIDs: Set<UUID>) -> Bool {
+        guard !selectedProgramIDs.isEmpty else { return true }
+
+        let ratesByID = Dictionary(uniqueKeysWithValues: earningRates.map { ($0.id, $0) })
+        let includedRates = combination.rateIDs.compactMap { ratesByID[$0] }
+        let programIDs = Set(includedRates.compactMap(\.method.programID))
+
+        return !programIDs.isEmpty && programIDs.isSubset(of: selectedProgramIDs)
     }
 }
 
@@ -115,6 +149,11 @@ struct StoreEarningRate: Identifiable, Hashable {
         }
         return true
     }
+
+    func matchesSelectedPrograms(_ selectedProgramIDs: Set<UUID>) -> Bool {
+        guard !selectedProgramIDs.isEmpty, let programID = method.programID else { return true }
+        return selectedProgramIDs.contains(programID)
+    }
 }
 
 struct EarningCombination: Identifiable, Hashable {
@@ -146,6 +185,10 @@ struct EarningCombinationStep: Identifiable, Hashable {
 
 struct StoreSearchUseCase {
     func search(stores: [Store], query: String) -> [Store] {
+        search(stores: stores, query: query, selectedProgramIDs: [])
+    }
+
+    func search(stores: [Store], query: String, selectedProgramIDs: Set<UUID>) -> [Store] {
         stores
             .filter(\.isPublished)
             .map { store in
@@ -157,8 +200,15 @@ struct StoreSearchUseCase {
                     return first.match.score > second.match.score
                 }
 
-                let firstValue = StoreDiscoveryUseCase.rankingValue(for: first.store)
-                let secondValue = StoreDiscoveryUseCase.rankingValue(for: second.store)
+                let firstHasSelectedEarning = first.store.hasSelectedProgramEarning(for: selectedProgramIDs)
+                let secondHasSelectedEarning = second.store.hasSelectedProgramEarning(for: selectedProgramIDs)
+
+                if firstHasSelectedEarning != secondHasSelectedEarning {
+                    return firstHasSelectedEarning
+                }
+
+                let firstValue = StoreDiscoveryUseCase.rankingValue(for: first.store, selectedProgramIDs: selectedProgramIDs)
+                let secondValue = StoreDiscoveryUseCase.rankingValue(for: second.store, selectedProgramIDs: selectedProgramIDs)
 
                 if firstValue != secondValue {
                     return firstValue > secondValue
@@ -172,23 +222,46 @@ struct StoreSearchUseCase {
 
 struct StoreDiscoveryUseCase {
     func homeShortcutStores(from stores: [Store]) -> [Store] {
+        homeShortcutStores(from: stores, selectedProgramIDs: [])
+    }
+
+    func homeShortcutStores(from stores: [Store], selectedProgramIDs: Set<UUID>) -> [Store] {
         storesWithEarning(from: stores)
-            .sorted(by: compareHomeShortcutStores)
+            .sorted { compareHomeShortcutStores($0, $1, selectedProgramIDs: selectedProgramIDs) }
     }
 
     func storesWithEarning(from stores: [Store]) -> [Store] {
-        rankedStores(from: stores)
+        storesWithEarning(from: stores, selectedProgramIDs: [])
+    }
+
+    func storesWithEarning(from stores: [Store], selectedProgramIDs: Set<UUID>) -> [Store] {
+        rankedStores(from: stores, selectedProgramIDs: selectedProgramIDs)
             .filter(\.isPublished)
             .filter(\.hasVerifiedEarning)
     }
 
     func rankedStores(from stores: [Store]) -> [Store] {
+        rankedStores(from: stores, selectedProgramIDs: [])
+    }
+
+    func rankedStores(from stores: [Store], selectedProgramIDs: Set<UUID>) -> [Store] {
         stores
             .filter(\.isPublished)
-            .sorted(by: compareStores)
+            .sorted { compareStores($0, $1, selectedProgramIDs: selectedProgramIDs) }
     }
 
     private func compareStores(_ first: Store, _ second: Store) -> Bool {
+        compareStores(first, second, selectedProgramIDs: [])
+    }
+
+    private func compareStores(_ first: Store, _ second: Store, selectedProgramIDs: Set<UUID>) -> Bool {
+        let firstHasSelectedEarning = first.hasSelectedProgramEarning(for: selectedProgramIDs)
+        let secondHasSelectedEarning = second.hasSelectedProgramEarning(for: selectedProgramIDs)
+
+        if firstHasSelectedEarning != secondHasSelectedEarning {
+            return firstHasSelectedEarning
+        }
+
         let firstHasEarning = first.hasVerifiedEarning
         let secondHasEarning = second.hasVerifiedEarning
 
@@ -196,8 +269,8 @@ struct StoreDiscoveryUseCase {
             return firstHasEarning
         }
 
-        let firstValue = StoreDiscoveryUseCase.rankingValue(for: first)
-        let secondValue = StoreDiscoveryUseCase.rankingValue(for: second)
+        let firstValue = StoreDiscoveryUseCase.rankingValue(for: first, selectedProgramIDs: selectedProgramIDs)
+        let secondValue = StoreDiscoveryUseCase.rankingValue(for: second, selectedProgramIDs: selectedProgramIDs)
 
         if firstValue != secondValue {
             return firstValue > secondValue
@@ -207,8 +280,19 @@ struct StoreDiscoveryUseCase {
     }
 
     private func compareHomeShortcutStores(_ first: Store, _ second: Store) -> Bool {
-        let firstHasCurrentEarning = hasCurrentEarning(for: first)
-        let secondHasCurrentEarning = hasCurrentEarning(for: second)
+        compareHomeShortcutStores(first, second, selectedProgramIDs: [])
+    }
+
+    private func compareHomeShortcutStores(_ first: Store, _ second: Store, selectedProgramIDs: Set<UUID>) -> Bool {
+        let firstHasSelectedEarning = first.hasSelectedProgramEarning(for: selectedProgramIDs)
+        let secondHasSelectedEarning = second.hasSelectedProgramEarning(for: selectedProgramIDs)
+
+        if firstHasSelectedEarning != secondHasSelectedEarning {
+            return firstHasSelectedEarning
+        }
+
+        let firstHasCurrentEarning = hasCurrentEarning(for: first, selectedProgramIDs: selectedProgramIDs)
+        let secondHasCurrentEarning = hasCurrentEarning(for: second, selectedProgramIDs: selectedProgramIDs)
 
         if firstHasCurrentEarning != secondHasCurrentEarning {
             return firstHasCurrentEarning
@@ -221,21 +305,32 @@ struct StoreDiscoveryUseCase {
             return firstCategoryPriority > secondCategoryPriority
         }
 
-        let firstHasBestCombination = first.bestCombination != nil
-        let secondHasBestCombination = second.bestCombination != nil
+        let firstHasBestCombination = first.bestCombination(for: selectedProgramIDs) != nil
+        let secondHasBestCombination = second.bestCombination(for: selectedProgramIDs) != nil
 
         if firstHasBestCombination != secondHasBestCombination {
             return firstHasBestCombination
         }
 
-        let firstValue = StoreDiscoveryUseCase.rankingValue(for: first)
-        let secondValue = StoreDiscoveryUseCase.rankingValue(for: second)
+        let firstValue = StoreDiscoveryUseCase.rankingValue(for: first, selectedProgramIDs: selectedProgramIDs)
+        let secondValue = StoreDiscoveryUseCase.rankingValue(for: second, selectedProgramIDs: selectedProgramIDs)
 
         if firstValue != secondValue {
             return firstValue > secondValue
         }
 
         return first.name.localizedCompare(second.name) == .orderedAscending
+    }
+
+    private func hasCurrentEarning(for store: Store, selectedProgramIDs: Set<UUID>) -> Bool {
+        guard !selectedProgramIDs.isEmpty else {
+            return !store.activePromotions.isEmpty || store.earningRates.contains { $0.isActive }
+        }
+
+        let rates = store.earningRates.filter { $0.matchesSelectedPrograms(selectedProgramIDs) }
+        let hasSelectedPromotion = rates.contains { !$0.isBaseRate && $0.isActive }
+        let hasSelectedRate = rates.contains(where: \.isActive)
+        return hasSelectedPromotion || hasSelectedRate
     }
 
     private func hasCurrentEarning(for store: Store) -> Bool {
@@ -256,7 +351,11 @@ struct StoreDiscoveryUseCase {
     }
 
     static func rankingValue(for store: Store) -> Double {
-        guard let label = store.bestCombination?.totalValueLabel else { return 0 }
+        rankingValue(for: store, selectedProgramIDs: [])
+    }
+
+    static func rankingValue(for store: Store, selectedProgramIDs: Set<UUID>) -> Double {
+        guard let label = store.bestCombination(for: selectedProgramIDs)?.totalValueLabel else { return 0 }
         let normalized = label.replacingOccurrences(of: ",", with: ".")
         let pattern = #"\d+(\.\d+)?"#
 

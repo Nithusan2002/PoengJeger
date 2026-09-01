@@ -27,8 +27,6 @@ struct LearnView: View {
                 }
                 .padding(.bottom, 8)
 
-                LearnChecklistCard()
-
                 if environment.loadState == .loading && programs.isEmpty {
                     ProgressView("Laster programmer...")
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -135,48 +133,6 @@ private struct LearnProgramCard: View {
                 .stroke(PoengjegerTheme.border, lineWidth: 1)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-private struct LearnChecklistCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Bruk guidene slik", systemImage: "checklist")
-                .font(.headline.weight(.bold))
-                .foregroundStyle(.primary)
-
-            VStack(alignment: .leading, spacing: 10) {
-                LearnChecklistRow(text: "Start med programmet som er relevant for kjøpet ditt.")
-                LearnChecklistRow(text: "Sjekk verdi, krav og vanlige feller før du åpner kampanjen.")
-                LearnChecklistRow(text: "Gå tilbake til aktive kampanjer når du vet hva som faktisk passer.")
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.primaryTint)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
-        }
-    }
-}
-
-private struct LearnChecklistRow: View {
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.success)
-                .accessibilityHidden(true)
-
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
     }
 }
 

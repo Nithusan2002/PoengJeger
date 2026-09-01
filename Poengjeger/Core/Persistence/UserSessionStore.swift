@@ -6,15 +6,15 @@ protocol UserSessionStore {
 }
 
 struct UserDefaultsUserSessionStore: UserSessionStore {
-    private let defaults: UserDefaults
-    private let key = "no.poengjeger.user-session"
+    private let writer: UserDefaultsSessionWriter
+    private let saveQueue = DispatchQueue(label: "no.poengjeger.user-session-store", qos: .utility)
 
     init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+        writer = UserDefaultsSessionWriter(defaults: defaults, key: "no.poengjeger.user-session")
     }
 
     func load() -> UserSession? {
-        guard let data = defaults.data(forKey: key) else {
+        guard let data = writer.loadData() else {
             return nil
         }
 
@@ -22,10 +22,32 @@ struct UserDefaultsUserSessionStore: UserSessionStore {
     }
 
     func save(_ session: UserSession) {
-        guard let data = try? JSONEncoder().encode(session) else {
-            return
-        }
+        let writer = writer
 
+        saveQueue.async {
+            guard let data = try? JSONEncoder().encode(session) else {
+                return
+            }
+
+            writer.save(data)
+        }
+    }
+}
+
+private final class UserDefaultsSessionWriter: @unchecked Sendable {
+    private let defaults: UserDefaults
+    private let key: String
+
+    init(defaults: UserDefaults, key: String) {
+        self.defaults = defaults
+        self.key = key
+    }
+
+    func loadData() -> Data? {
+        defaults.data(forKey: key)
+    }
+
+    func save(_ data: Data) {
         defaults.set(data, forKey: key)
     }
 }

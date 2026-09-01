@@ -111,6 +111,8 @@ final class AppEnvironment {
             stores = bootstrapData.stores
             dataSource = bootstrapData.dataSource
             userSession.selectedProgramIDs.formIntersection(Set(programs.map(\.id)))
+            userSession.favoriteCampaignIDs.formIntersection(Set(campaigns.map(\.id)))
+            userSession.favoriteStoreIDs.formIntersection(Set(stores.map(\.id)))
             loadState = .loaded
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? "Kunne ikke hente kampanjedata akkurat nå."
@@ -120,6 +122,10 @@ final class AppEnvironment {
 
     var favoriteCampaigns: [Campaign] {
         campaigns.filter { userSession.favoriteCampaignIDs.contains($0.id) }
+    }
+
+    var favoriteStores: [Store] {
+        publishedStores.filter { userSession.favoriteStoreIDs.contains($0.id) }
     }
 
     var firstPhasePrograms: [BonusProgram] {
@@ -149,7 +155,7 @@ final class AppEnvironment {
 
     var featuredStores: [Store] {
         StoreDiscoveryUseCase()
-            .homeShortcutStores(from: stores)
+            .homeShortcutStores(from: stores, selectedProgramIDs: selectedFirstPhaseProgramIDs)
             .prefix(4)
             .map { $0 }
     }
@@ -234,5 +240,5 @@ private struct UnavailableAdminRepository: AdminRepository {
 }
 
 private extension UserSession {
-    static let empty = UserSession(selectedProgramIDs: [], favoriteCampaignIDs: [])
+    static let empty = UserSession(selectedProgramIDs: [], favoriteCampaignIDs: [], favoriteStoreIDs: [])
 }
