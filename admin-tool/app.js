@@ -1982,12 +1982,6 @@
               ${renderMetaBadge(program.name)}
             </div>
 
-            <section class="draft-readiness" aria-live="polite">
-              ${renderProgramGuideReadiness(readiness)}
-            </section>
-
-            ${renderProgramGuideSchemaNotice()}
-
             <div class="detail-grid">
               <label class="field">
                 <span>Program</span>
@@ -2044,19 +2038,34 @@
 
           <aside class="program-guide-preview-pane">
             <div class="preview-sticky">
-              <div class="preview-heading">
-                <div>
-                  <span>Forhåndsvisning</span>
-                  <strong>${escapeHtml(programGuideTitle(draft, program))}</strong>
+              <section class="program-guide-side-section">
+                <div class="preview-heading">
+                  <div>
+                    <span>Review</span>
+                    <strong>Publiseringssjekk</strong>
+                  </div>
                 </div>
-                <div class="preview-mode-tabs" aria-label="Preview mode">
-                  <span class="active">Mobil</span>
-                  <span>Artikkel</span>
+                <div class="draft-readiness" aria-live="polite">
+                  ${renderProgramGuideReadiness(readiness)}
                 </div>
-              </div>
-              <div id="program-guide-live-preview">
-                ${renderProgramGuidePreview(program, draft)}
-              </div>
+                ${renderProgramGuideSchemaNotice()}
+              </section>
+
+              <section class="program-guide-side-section">
+                <div class="preview-heading">
+                  <div>
+                    <span>Forhåndsvisning</span>
+                    <strong>${escapeHtml(programGuideTitle(draft, program))}</strong>
+                  </div>
+                  <div class="preview-mode-tabs" aria-label="Preview mode">
+                    <span class="active">Mobil</span>
+                    <span>Artikkel</span>
+                  </div>
+                </div>
+                <div id="program-guide-live-preview">
+                  ${renderProgramGuidePreview(program, draft)}
+                </div>
+              </section>
             </div>
           </aside>
         </div>

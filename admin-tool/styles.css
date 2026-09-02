@@ -866,7 +866,13 @@ button:disabled {
   position: sticky;
   top: 12px;
   display: grid;
+  gap: 18px;
+}
+
+.program-guide-side-section {
+  display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .preview-heading,
@@ -1444,7 +1450,7 @@ code {
   }
 }
 
-/* Hybrid editorial workspace: flat page sections, framed work surfaces. */
+/* Editorial workspace: flat page sections with divider-based work areas. */
 .workspace-nav {
   gap: 0;
   margin-bottom: 18px;
@@ -1515,9 +1521,10 @@ code {
 .module-panel {
   min-height: calc(100vh - 164px);
   padding: 0;
-  border: 1px solid var(--border);
+  border: 0;
+  border-top: 1px solid var(--border);
   border-radius: 0;
-  background: var(--surface);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -1533,7 +1540,7 @@ code {
   border: 0;
   border-bottom: 1px solid var(--border);
   border-radius: 0;
-  background: var(--surface);
+  background: transparent;
 }
 
 .message.error,
@@ -1550,7 +1557,7 @@ code {
 .content-grid {
   grid-template-columns: minmax(280px, clamp(320px, 25vw, 440px)) minmax(0, 1fr);
   gap: 0;
-  background: var(--surface);
+  background: transparent;
 }
 
 .queue-list-shell,
@@ -1564,7 +1571,7 @@ code {
   padding: 0;
   border-right: 1px solid var(--border);
   border-radius: 0;
-  background: var(--surface-raised);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -1597,7 +1604,7 @@ code {
   padding: 18px 20px 24px;
   border: 0;
   border-radius: 0;
-  background: var(--surface);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -1656,7 +1663,8 @@ code {
 }
 
 .program-guide-editor-layout {
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.42fr);
+  gap: 28px;
 }
 
 @media (max-width: 1100px) {
