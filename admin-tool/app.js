@@ -1080,7 +1080,7 @@
   function setSidebarCollapsed(isCollapsed) {
     state.sidebarCollapsed = Boolean(isCollapsed);
     elements.workspaceFrame.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
-    elements.workspaceNavToggle.textContent = state.sidebarCollapsed ? "Meny" : "Skjul meny";
+    elements.workspaceNavToggle.textContent = state.sidebarCollapsed ? "Vis meny" : "Skjul meny";
     elements.workspaceNavToggle.setAttribute("aria-expanded", state.sidebarCollapsed ? "false" : "true");
     window.localStorage.setItem(SIDEBAR_STORAGE_KEY, state.sidebarCollapsed ? "true" : "false");
   }
