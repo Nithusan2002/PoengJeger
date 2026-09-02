@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Poengjeger Admin</title>
-    <link rel="stylesheet" href="./styles.css?v=2026090214" />
+    <link rel="stylesheet" href="./styles.css?v=2026090215" />
   </head>
   <body>
     <div class="shell">
@@ -30,19 +30,23 @@
           </button>
 
           <nav id="workspace-nav" class="workspace-nav hidden" aria-label="Adminseksjoner">
-            <button class="nav-item active" type="button" data-panel-target="queue-panel">
+            <button class="nav-item active" type="button" data-panel-target="queue-panel" title="Kø">
+              <span class="nav-icon" aria-hidden="true">K</span>
               <span>Kø</span>
               <small>Nye funn</small>
             </button>
-            <button class="nav-item" type="button" data-panel-target="campaign-panel">
+            <button class="nav-item" type="button" data-panel-target="campaign-panel" title="Kampanjer">
+              <span class="nav-icon" aria-hidden="true">✦</span>
               <span>Kampanjer</span>
               <small>Draft</small>
             </button>
-            <button class="nav-item" type="button" data-panel-target="store-earning-panel">
+            <button class="nav-item" type="button" data-panel-target="store-earning-panel" title="Butikker">
+              <span class="nav-icon" aria-hidden="true">B</span>
               <span>Butikker</span>
               <small>Draft</small>
             </button>
-            <button class="nav-item" type="button" data-panel-target="program-guide-panel">
+            <button class="nav-item" type="button" data-panel-target="program-guide-panel" title="Guider">
+              <span class="nav-icon" aria-hidden="true">G</span>
               <span>Guider</span>
               <small>Sjeldnere</small>
             </button>
@@ -281,6 +285,6 @@
     </div>
 
     <script src="./config.local.js?v=local"></script>
-    <script src="./app.js?v=2026090214"></script>
+    <script src="./app.js?v=2026090215"></script>
   </body>
 </html>

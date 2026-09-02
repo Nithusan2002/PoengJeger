@@ -1507,65 +1507,127 @@ code {
 
 /* Editorial workspace: flat page sections with divider-based work areas. */
 .workspace-frame {
-  grid-template-columns: 176px minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: 216px minmax(0, 1fr);
+  gap: 32px;
 }
 
 .workspace-frame.sidebar-collapsed {
-  display: block;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 24px;
 }
 
 .workspace-frame.sidebar-collapsed .workspace-sidebar {
-  position: fixed;
-  top: clamp(112px, 15vh, 164px);
-  left: clamp(20px, 3vw, 40px);
-  z-index: 30;
-  width: max-content;
-  padding-top: 0;
+  width: 58px;
 }
 
 .workspace-frame.sidebar-collapsed .sidebar-toggle {
   justify-content: center;
-  width: max-content;
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  font-size: 0;
 }
 
-.workspace-frame.sidebar-collapsed .workspace-nav {
+.workspace-frame.sidebar-collapsed .sidebar-toggle::before {
+  content: "→";
+  font-size: 1rem;
+}
+
+.workspace-frame.sidebar-collapsed .nav-item {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  min-height: 46px;
+  padding: 0.68rem 0.5rem;
+  border-left-color: transparent;
+}
+
+.workspace-frame.sidebar-collapsed .nav-item span:not(.nav-icon),
+.workspace-frame.sidebar-collapsed .nav-item small {
   display: none;
+}
+
+.workspace-frame.sidebar-collapsed .nav-item.active {
+  border-left-color: var(--accent);
 }
 
 .workspace-nav {
   grid-template-columns: 1fr;
-  gap: 3px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   border: 0;
-  border-left: 1px solid var(--border);
+  border-left: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
 
+.workspace-sidebar {
+  width: 216px;
+  padding: 10px;
+  border-radius: 18px;
+  background: #101722;
+  box-shadow: var(--shadow);
+}
+
+.sidebar-toggle {
+  min-height: 42px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+.sidebar-toggle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 .nav-item {
-  min-height: 48px;
-  padding: 0.72rem 0.95rem;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 2px;
+  min-height: 50px;
+  padding: 0.72rem 0.78rem;
   border: 0;
   border-left: 3px solid transparent;
-  border-radius: 0;
+  border-radius: 12px;
   background: transparent;
+  color: rgba(248, 250, 252, 0.72);
 }
 
 .nav-item:hover:not(:disabled) {
-  background: var(--surface-muted);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
   box-shadow: none;
   transform: none;
 }
 
 .nav-item.active {
-  background: var(--surface-muted);
+  background: rgba(104, 182, 211, 0.16);
+  color: #ffffff;
   border-left-color: var(--accent);
   box-shadow: none;
+}
+
+.nav-item .nav-icon {
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-self: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #9bd3e6;
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+.nav-item span:not(.nav-icon) {
+  min-width: 0;
+}
+
+.nav-item small {
+  grid-column: 2;
+  color: rgba(248, 250, 252, 0.54);
 }
 
 .personal-dashboard {
@@ -1805,41 +1867,43 @@ code {
 }
 
 @media (max-width: 1100px) {
-  .workspace-frame,
-  .workspace-frame.sidebar-collapsed {
+  .workspace-frame {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .workspace-frame.sidebar-collapsed {
+    grid-template-columns: 58px minmax(0, 1fr);
     gap: 16px;
   }
 
   .workspace-sidebar {
     position: static;
+    width: 100%;
     padding-top: 0;
   }
 
   .sidebar-toggle {
-    width: max-content;
+    width: 100%;
   }
 
   .workspace-nav {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     border-left: 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .workspace-frame.sidebar-collapsed .workspace-nav {
-    display: none;
+    border-bottom: 0;
   }
 
   .nav-item {
+    grid-template-columns: 24px minmax(0, 1fr);
     justify-items: start;
     padding-inline: 0.8rem;
-    border-left: 0;
-    border-bottom: 3px solid transparent;
+    border-left: 3px solid transparent;
+    border-bottom: 0;
     text-align: left;
   }
 
   .nav-item.active {
-    border-bottom-color: var(--accent);
+    border-left-color: var(--accent);
   }
 
   .content-grid {
@@ -1871,6 +1935,10 @@ code {
 
   .nav-item.active {
     box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .workspace-frame.sidebar-collapsed .nav-item {
+    border-bottom: 0;
   }
 
   .ops-card,
