@@ -1,5 +1,6 @@
 insert into public.program_guides (
   program_id,
+  title,
   status,
   intro_text,
   strategy,
@@ -30,6 +31,7 @@ insert into public.program_guides (
 values
   (
     (select id from public.bonus_programs where slug = 'sas-eurobonus'),
+    'Slik fungerer SAS EuroBonus',
     'published',
     'EuroBonus fungerer best når du vet hva poengene skal brukes til. Start med målet ditt, finn ut omtrent hvor mange bonuspoeng du trenger, og bygg opptjeningen rundt kjøp du faktisk ville gjort.',
     'Lag et enkelt poengkart: flyreiser, dagligvarer, netthandel, hotell, leiebil, abonnementer og kortbruk. Poenget er ikke å handle mer, men å samle eksisterende kjøp i færre, riktige kanaler når pris og vilkår fortsatt er gode.',
@@ -79,6 +81,7 @@ values
   ),
   (
     (select id from public.bonus_programs where slug = 'trumf'),
+    'Slik fungerer Trumf',
     'published',
     'Trumf er enklere enn mange poengprogrammer fordi bonusen har tydelig kroneverdi. Den viktigste vurderingen er likevel om totalprisen fortsatt er god etter at bonusen er regnet inn.',
     'Bruk Trumf som rabatt på kjøp du uansett ville gjort. Ekstra bonus er mest interessant når prisen, butikkvalget og vilkårene fortsatt er fornuftige uten at bonusen må redde regnestykket.',
@@ -126,6 +129,7 @@ values
   ),
   (
     (select id from public.bonus_programs where slug = 'spenn'),
+    'Slik fungerer Spenn',
     'published',
     'Spenn er mest nyttig når du allerede bruker partnerne. Start med kampanjer som passer et kjøp du faktisk skal gjøre.',
     'Bruk Spenn når partneren allerede passer planene dine. Ikke jag små poeng hvis du må kjøpe noe ekstra.',
@@ -165,31 +169,9 @@ values
     ],
     '2026-08-10T00:00:00Z'
   )
-on conflict (program_id) do update
-set
-  status = excluded.status,
-  intro_text = excluded.intro_text,
-  strategy = excluded.strategy,
-  value_estimate_label = excluded.value_estimate_label,
-  value_estimate_detail = excluded.value_estimate_detail,
-  expiration_summary = excluded.expiration_summary,
-  expiration_detail = excluded.expiration_detail,
-  guide_kicker = excluded.guide_kicker,
-  reading_time_label = excluded.reading_time_label,
-  strategy_section_title = excluded.strategy_section_title,
-  decision_section_title = excluded.decision_section_title,
-  earning_decision_label = excluded.earning_decision_label,
-  redemption_decision_label = excluded.redemption_decision_label,
-  risk_decision_label = excluded.risk_decision_label,
-  earning_section_title = excluded.earning_section_title,
-  earning_section_intro = excluded.earning_section_intro,
-  redemption_section_title = excluded.redemption_section_title,
-  redemption_section_intro = excluded.redemption_section_intro,
-  risk_section_title = excluded.risk_section_title,
-  risk_section_intro = excluded.risk_section_intro,
-  campaigns_section_title = excluded.campaigns_section_title,
-  campaigns_section_intro = excluded.campaigns_section_intro,
-  earning_tips = excluded.earning_tips,
-  redemption_tips = excluded.redemption_tips,
-  risk_notes = excluded.risk_notes,
-  last_reviewed_at = excluded.last_reviewed_at;
+on conflict do nothing;
+
+/*
+  program_guides intentionally allows multiple articles per program. The seed
+  data is therefore insert-only after the initial reset.
+*/

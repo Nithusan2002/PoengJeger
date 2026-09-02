@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProgramHero: View {
     let program: BonusProgram
+    let title: String
     let kicker: String
     let readingTimeLabel: String
     let lastReviewedAt: Date?
@@ -16,7 +17,7 @@ struct ProgramHero: View {
                         .font(.caption.weight(.bold))
                         .foregroundStyle(PoengjegerTheme.accent)
 
-                    Text(program.name)
+                    Text(title)
                         .font(.title.weight(.bold))
                         .foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)

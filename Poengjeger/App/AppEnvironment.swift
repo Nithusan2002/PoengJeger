@@ -164,6 +164,13 @@ final class AppEnvironment {
         programGuides.first { $0.programID == program.id && $0.status == .published }
     }
 
+    func publishedGuides(for programs: [BonusProgram]) -> [ProgramGuide] {
+        let programIDs = Set(programs.map(\.id))
+        return programGuides.filter { guide in
+            guide.status == .published && programIDs.contains(guide.programID)
+        }
+    }
+
     func loadAdminQueueIfNeeded() async {
         guard adminLoadState == .idle else { return }
         await refreshAdminQueue()

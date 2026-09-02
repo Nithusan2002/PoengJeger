@@ -70,7 +70,9 @@
   ];
   const PROGRAM_GUIDE_MARKDOWN_COLUMNS = ["body_markdown"];
   const PROGRAM_GUIDE_COLUMNS = [
-    ...PROGRAM_GUIDE_BASE_COLUMNS.slice(0, 9),
+    ...PROGRAM_GUIDE_BASE_COLUMNS.slice(0, 2),
+    "title",
+    ...PROGRAM_GUIDE_BASE_COLUMNS.slice(2, 9),
     ...PROGRAM_GUIDE_MARKDOWN_COLUMNS,
     ...PROGRAM_GUIDE_MANUAL_COPY_COLUMNS,
     ...PROGRAM_GUIDE_BASE_COLUMNS.slice(9)
@@ -91,6 +93,8 @@
     selectedCampaignId: null,
     selectedStoreEarningRateId: null,
     selectedProgramGuideProgramId: null,
+    selectedProgramGuideId: null,
+    newProgramGuideDraft: null,
     activePanelId: "queue-panel",
     loading: false,
     programGuideManualCopyAvailable: true,
@@ -132,6 +136,7 @@
     programGuideDetailPanel: document.querySelector("#program-guide-detail-panel"),
     programGuideList: document.querySelector("#program-guide-list"),
     programGuideMessage: document.querySelector("#program-guide-message"),
+    programGuideNewButton: document.querySelector("#program-guide-new-button"),
     programGuidePanel: document.querySelector("#program-guide-panel"),
     programGuideRefreshButton: document.querySelector("#program-guide-refresh-button"),
     queueList: document.querySelector("#queue-list"),
@@ -161,6 +166,7 @@
   elements.campaignRefreshButton.addEventListener("click", refreshCampaigns);
   elements.storeEarningRefreshButton.addEventListener("click", refreshStoreEarningRates);
   elements.programGuideRefreshButton.addEventListener("click", refreshProgramGuides);
+  elements.programGuideNewButton.addEventListener("click", startNewProgramGuide);
   elements.signOutButton.addEventListener("click", signOut);
   elements.statusFilter.addEventListener("change", refreshQueue);
   elements.campaignStatusFilter.addEventListener("change", refreshCampaigns);
@@ -419,14 +425,21 @@
 
       if (!state.programs.length) {
         state.selectedProgramGuideProgramId = null;
+        state.selectedProgramGuideId = null;
+        state.newProgramGuideDraft = null;
         renderProgramGuideList();
         renderEmptyProgramGuideDetail("Ingen bonusprogrammer er tilgjengelige.");
         setMessage(elements.programGuideMessage, "Ingen programmer å vise.", "muted");
         return;
       }
 
-      if (!state.programs.some((program) => program.id === state.selectedProgramGuideProgramId)) {
-        state.selectedProgramGuideProgramId = state.programs[0].id;
+      if (state.selectedProgramGuideId && !state.programGuides.some((guide) => guide.id === state.selectedProgramGuideId)) {
+        state.selectedProgramGuideId = null;
+      }
+
+      if (!state.selectedProgramGuideId && !state.newProgramGuideDraft && state.programGuides.length) {
+        state.selectedProgramGuideId = state.programGuides[0].id;
+        state.selectedProgramGuideProgramId = state.programGuides[0].programId;
       }
 
       renderProgramGuideList();
@@ -434,7 +447,7 @@
       if (state.programGuideManualCopyAvailable) {
         setMessage(
           elements.programGuideMessage,
-          `Viser ${state.programs.length} program${state.programs.length === 1 ? "" : "mer"}.`,
+          `Viser ${state.programGuides.length} guide${state.programGuides.length === 1 ? "" : "r"}.`,
           "success"
         );
       } else {
@@ -712,7 +725,7 @@
 
   function isMissingProgramGuideManualCopyColumn(error) {
     const message = String(error && error.message ? error.message : error);
-    return [...PROGRAM_GUIDE_MARKDOWN_COLUMNS, ...PROGRAM_GUIDE_MANUAL_COPY_COLUMNS].some((column) => message.includes(`program_guides.${column}`));
+    return ["title", ...PROGRAM_GUIDE_MARKDOWN_COLUMNS, ...PROGRAM_GUIDE_MANUAL_COPY_COLUMNS].some((column) => message.includes(`program_guides.${column}`));
   }
 
   function sleep(milliseconds) {
@@ -852,6 +865,7 @@
       id: guide.id,
       programId: guide.program_id,
       status: guide.status,
+      title: guide.title || "",
       introText: guide.intro_text || "",
       bodyMarkdown: guide.body_markdown || "",
       strategy: guide.strategy || "",
@@ -1197,31 +1211,52 @@
   function renderProgramGuideList() {
     elements.programGuideList.innerHTML = "";
 
-    state.programs.forEach((program) => {
-      const guide = guideForProgram(program.id);
+    const guides = [...state.programGuides];
+
+    if (state.newProgramGuideDraft) {
+      guides.unshift(state.newProgramGuideDraft);
+    }
+
+    if (!guides.length) {
+      const item = document.createElement("li");
+      item.className = "queue-item";
+      item.innerHTML = `
+        <h3>Ingen guider ennå</h3>
+        <p>Trykk Ny guide for å opprette første guide.</p>
+      `;
+      elements.programGuideList.appendChild(item);
+      return;
+    }
+
+    guides.forEach((guide) => {
+      const program = programForGuide(guide);
       const item = document.createElement("li");
       item.className = "queue-item";
 
-      if (program.id === state.selectedProgramGuideProgramId) {
+      if ((guide.isNewDraft && state.selectedProgramGuideId === "new") || guide.id === state.selectedProgramGuideId) {
         item.classList.add("selected");
       }
 
       item.innerHTML = `
         <div class="badge-row">
-          ${renderProgramGuideBadge(guide ? guide.status : "draft")}
-          ${renderMetaBadge(program.slug)}
+          ${renderProgramGuideBadge(guide.status)}
+          ${renderMetaBadge(program ? program.slug : "uten-program")}
         </div>
-        <h3>${escapeHtml(program.name)}</h3>
-        <p>${escapeHtml(guide ? firstTextLine(markdownExcerpt(programGuideEditorMarkdown(guide, program)), "Ingen guideinnhold ennå.") : "Ingen guide opprettet ennå.")}</p>
+        <h3>${escapeHtml(programGuideTitle(guide, program))}</h3>
+        <p>${escapeHtml(firstTextLine(markdownExcerpt(programGuideEditorMarkdown(guide, program)), "Ingen guideinnhold ennå."))}</p>
         <div class="candidate-meta">
-          <span>${guide ? `Sist oppdatert ${formatDateTime(guide.updatedAt)}` : "Ikke opprettet"}</span>
+          <span>${guide.updatedAt ? `Sist oppdatert ${formatDateTime(guide.updatedAt)}` : "Ikke lagret"}</span>
           <span>•</span>
-          <span>${guide && guide.lastReviewedAt ? `Kontrollert ${formatDateTime(guide.lastReviewedAt)}` : "Ikke kontrollert"}</span>
+          <span>${guide.lastReviewedAt ? `Kontrollert ${formatDateTime(guide.lastReviewedAt)}` : "Ikke kontrollert"}</span>
         </div>
       `;
 
       item.addEventListener("click", function () {
-        state.selectedProgramGuideProgramId = program.id;
+        state.selectedProgramGuideId = guide.isNewDraft ? "new" : guide.id;
+        state.selectedProgramGuideProgramId = guide.programId;
+        if (!guide.isNewDraft) {
+          state.newProgramGuideDraft = null;
+        }
         renderProgramGuideList();
         renderProgramGuideDetail();
       });
@@ -1926,15 +1961,15 @@
   }
 
   function renderProgramGuideDetail() {
-    const program = state.programs.find((entry) => entry.id === state.selectedProgramGuideProgramId);
+    const guide = selectedProgramGuide();
+    const draft = guide || state.newProgramGuideDraft;
+    const program = draft ? programForGuide(draft) : null;
 
-    if (!program) {
-      renderEmptyProgramGuideDetail("Velg et program for å redigere guiden.");
+    if (!draft || !program) {
+      renderEmptyProgramGuideDetail("Velg eller opprett en guide.");
       return;
     }
 
-    const guide = guideForProgram(program.id);
-    const draft = guide || emptyProgramGuideDraft(program.id);
     const readiness = programGuideReadiness(draft);
 
     elements.programGuideDetailPanel.classList.remove("empty");
@@ -1956,7 +1991,9 @@
             <div class="detail-grid">
               <label class="field">
                 <span>Program</span>
-                <input type="text" value="${escapeAttribute(program.name)}" disabled />
+                <select name="programId">
+                  ${renderSelectOptions(state.programs, draft.programId)}
+                </select>
               </label>
 
               <label class="field">
@@ -1968,8 +2005,18 @@
             </div>
 
             <label class="field">
+              <span>Tittel</span>
+              <input
+                name="title"
+                type="text"
+                placeholder="For eksempel: Slik fungerer ${escapeAttribute(program ? program.name : "programmet")}"
+                value="${escapeAttribute(programGuideTitle(draft, program))}"
+              />
+            </label>
+
+            <label class="field">
               <span>Guideinnhold</span>
-              <textarea name="bodyMarkdown" rows="24" class="markdown-editor" placeholder="# ${escapeAttribute(program.name)}&#10;&#10;Kort intro til programmet.&#10;&#10;## Slik tjener du poeng&#10;- Punkt én&#10;- Punkt to">${escapeHtml(
+              <textarea name="bodyMarkdown" rows="24" class="markdown-editor" placeholder="# ${escapeAttribute(programGuideTitle(draft, program))}&#10;&#10;Kort intro til programmet.&#10;&#10;## Slik tjener du poeng&#10;- Punkt én&#10;- Punkt to">${escapeHtml(
                 programGuideEditorMarkdown(draft, program)
               )}</textarea>
               <span class="hint">Skriv Markdown: # overskrift, ## seksjon, vanlige avsnitt og punktlister med -. Rå HTML lagres som tekst og rendres ikke som HTML i appen.</span>
@@ -2000,7 +2047,7 @@
               <div class="preview-heading">
                 <div>
                   <span>Forhåndsvisning</span>
-                  <strong>${escapeHtml(program.name)}</strong>
+                  <strong>${escapeHtml(programGuideTitle(draft, program))}</strong>
                 </div>
                 <div class="preview-mode-tabs" aria-label="Preview mode">
                   <span class="active">Mobil</span>
@@ -2019,22 +2066,22 @@
     const form = elements.programGuideDetailPanel.querySelector("#program-guide-editor-form");
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
-      await saveProgramGuideEditor(form, program, guide, null);
+      await saveProgramGuideEditor(form, guide, null);
     });
 
     elements.programGuideDetailPanel.querySelectorAll("[data-guide-action]").forEach((button) => {
       button.addEventListener("click", async function () {
-        await saveProgramGuideEditor(form, program, guide, button.getAttribute("data-guide-action"));
+        await saveProgramGuideEditor(form, guide, button.getAttribute("data-guide-action"));
       });
     });
 
     form.addEventListener("input", function () {
-      updateProgramGuideDraftAssist(form, program);
+      updateProgramGuideDraftAssist(form);
     });
     form.addEventListener("change", function () {
-      updateProgramGuideDraftAssist(form, program);
+      updateProgramGuideDraftAssist(form);
     });
-    updateProgramGuideDraftAssist(form, program);
+    updateProgramGuideDraftAssist(form);
   }
 
   function renderEmptyProgramGuideDetail(message) {
@@ -2042,11 +2089,13 @@
     elements.programGuideDetailPanel.innerHTML = `<p>${escapeHtml(message)}</p>`;
   }
 
-  function emptyProgramGuideDraft(programId) {
+  function emptyProgramGuideDraft(programId, title = "") {
     return {
       id: null,
+      isNewDraft: true,
       programId,
       status: "draft",
+      title,
       introText: "",
       bodyMarkdown: "",
       strategy: "",
@@ -2077,11 +2126,16 @@
     };
   }
 
-  function collectProgramGuideDraftFromForm(form, program) {
+  function collectProgramGuideDraftFromForm(form) {
     const formData = new FormData(form);
+    const programId = String(formData.get("programId") || state.programs[0]?.id || "").trim();
     return {
-      ...emptyProgramGuideDraft(program.id),
+      ...emptyProgramGuideDraft(programId),
+      id: state.selectedProgramGuideId === "new" ? null : state.selectedProgramGuideId,
+      isNewDraft: state.selectedProgramGuideId === "new",
+      programId,
       status: String(formData.get("status") || "draft"),
+      title: String(formData.get("title") || "").trim(),
       bodyMarkdown: String(formData.get("bodyMarkdown") || "").trim(),
       campaignsSectionTitle: "",
       campaignsSectionIntro: "",
@@ -2092,6 +2146,11 @@
   function programGuideReadiness(guide) {
     const bodyMarkdown = guide.bodyMarkdown || "";
     const checks = [
+      {
+        label: "Tittel",
+        complete: Boolean(guide.title),
+        help: "Gi guiden en tydelig tittel."
+      },
       {
         label: "Guideinnhold",
         complete: Boolean(bodyMarkdown),
@@ -2151,7 +2210,7 @@
     const intro = guide.introText || "";
     const strategy = guide.strategy || "";
 
-    sections.push(`# ${program.name}`);
+    sections.push(`# ${programGuideTitle(guide, program)}`);
 
     if (intro) {
       sections.push(intro);
@@ -2250,12 +2309,13 @@
 
   function renderProgramGuidePreview(program, guide) {
     const markdown = programGuideEditorMarkdown(guide, program);
+    const title = programGuideTitle(guide, program);
 
     return `
       <div class="program-preview-device">
         <div class="program-preview-device-bar">
           <span></span>
-          <strong>${escapeHtml(program.name)}</strong>
+          <strong>${escapeHtml(title)}</strong>
           <span></span>
         </div>
 
@@ -2264,7 +2324,7 @@
             <div class="program-preview-mark">${escapeHtml(programInitials(program))}</div>
             <div>
               <span>PROGRAMGUIDE</span>
-              <h3>${escapeHtml(program.name)}</h3>
+              <h3>${escapeHtml(title)}</h3>
             </div>
           </header>
 
@@ -2277,8 +2337,9 @@
     `;
   }
 
-  function updateProgramGuideDraftAssist(form, program) {
-    const draft = collectProgramGuideDraftFromForm(form, program);
+  function updateProgramGuideDraftAssist(form) {
+    const draft = collectProgramGuideDraftFromForm(form);
+    const program = programForGuide(draft);
     const readinessContainer = form.querySelector(".draft-readiness");
     const previewContainer = form.querySelector("#program-guide-live-preview");
 
@@ -2321,7 +2382,7 @@
     }
   }
 
-  async function saveProgramGuideEditor(form, program, originalGuide, action) {
+  async function saveProgramGuideEditor(form, originalGuide, action) {
     if (!state.programGuideManualCopyAvailable) {
       setMessage(
         elements.programGuideMessage,
@@ -2332,7 +2393,7 @@
     }
 
     const formData = new FormData(form);
-    const payload = collectProgramGuideFormData(formData, program, originalGuide, action);
+    const payload = collectProgramGuideFormData(formData, originalGuide, action);
     const validationErrors = validateProgramGuidePayload(payload);
 
     if (validationErrors.length) {
@@ -2346,7 +2407,10 @@
     });
 
     try {
-      await upsertProgramGuide(payload);
+      const savedGuideId = await upsertProgramGuide(payload);
+      state.newProgramGuideDraft = null;
+      state.selectedProgramGuideId = savedGuideId || payload.id;
+      state.selectedProgramGuideProgramId = payload.programId;
       setMessage(elements.programGuideMessage, "Programguiden ble lagret.", "success");
       await refreshProgramGuides();
     } catch (error) {
@@ -2366,7 +2430,7 @@
     return `
       <div class="schema-notice">
         Databasen mangler nye guidefelter. Admin viser eksisterende innhold, men Markdown-redigering krever migrasjonen
-        <code>20260902080000_add_program_guide_markdown_body.sql</code>.
+        <code>20260902083000_allow_multiple_program_guides.sql</code>.
       </div>
     `;
   }
@@ -2654,11 +2718,14 @@
     return errors;
   }
 
-  function collectProgramGuideFormData(formData, program, originalGuide, action) {
+  function collectProgramGuideFormData(formData, originalGuide, action) {
     const now = new Date().toISOString();
+    const programId = String(formData.get("programId") || state.programs[0]?.id || "").trim();
+    const program = state.programs.find((entry) => entry.id === programId) || null;
     let status = String(formData.get("status") || "draft");
     let lastReviewedAt = String(formData.get("lastReviewedAt") || "").trim();
     const bodyMarkdown = String(formData.get("bodyMarkdown") || "").trim();
+    const title = String(formData.get("title") || "").trim() || programGuideTitle({ title: "" }, program);
     const introText = markdownExcerpt(bodyMarkdown);
 
     if (action === "publish") {
@@ -2672,8 +2739,9 @@
 
     return {
       id: originalGuide ? originalGuide.id : null,
-      programId: program.id,
+      programId,
       status,
+      title,
       introText,
       bodyMarkdown,
       strategy: bodyMarkdown,
@@ -2705,6 +2773,14 @@
 
   function validateProgramGuidePayload(payload) {
     const errors = [];
+
+    if (!payload.programId) {
+      errors.push("Program mangler.");
+    }
+
+    if (!payload.title) {
+      errors.push("Guidetittel mangler.");
+    }
 
     if (payload.status === "published") {
       if (!payload.bodyMarkdown) {
@@ -3133,6 +3209,7 @@
   async function upsertProgramGuide(payload) {
     const body = {
       program_id: payload.programId,
+      title: payload.title || null,
       status: payload.status,
       intro_text: payload.introText || null,
       body_markdown: payload.bodyMarkdown || null,
@@ -3170,16 +3247,17 @@
           Prefer: "return=minimal"
         }
       });
-      return;
+      return payload.id;
     }
 
-    await apiRequest("/rest/v1/program_guides", {
+    const created = await apiRequest("/rest/v1/program_guides", {
       method: "POST",
       body: [body],
       extraHeaders: {
-        Prefer: "return=minimal"
+        Prefer: "return=representation"
       }
     });
+    return created[0]?.id || null;
   }
 
   async function saveStoreEarningRate(payload) {
@@ -3251,6 +3329,8 @@
     state.selectedCampaignId = null;
     state.selectedStoreEarningRateId = null;
     state.selectedProgramGuideProgramId = null;
+    state.selectedProgramGuideId = null;
+    state.newProgramGuideDraft = null;
     elements.loginForm.reset();
     renderEmptyDetail("Velg en kandidat for detaljer.");
     renderEmptyCampaignDetail("Velg en kampanje for å redigere draften.");
@@ -3822,8 +3902,38 @@
     return state.earningMethods;
   }
 
+  function selectedProgramGuide() {
+    if (state.selectedProgramGuideId === "new") {
+      return state.newProgramGuideDraft;
+    }
+
+    return state.programGuides.find((guide) => guide.id === state.selectedProgramGuideId) || null;
+  }
+
+  function programForGuide(guide) {
+    return state.programs.find((program) => program.id === guide?.programId) || null;
+  }
+
+  function programGuideTitle(guide, program) {
+    return guide?.title || (program ? `Slik fungerer ${program.name}` : "Ny guide");
+  }
+
+  function startNewProgramGuide() {
+    const program = state.programs[0];
+    if (!program) {
+      setMessage(elements.programGuideMessage, "Opprett et bonusprogram før du lager en guide.", "error");
+      return;
+    }
+
+    state.selectedProgramGuideId = "new";
+    state.selectedProgramGuideProgramId = program.id;
+    state.newProgramGuideDraft = emptyProgramGuideDraft(program.id, `Slik fungerer ${program.name}`);
+    renderProgramGuideList();
+    renderProgramGuideDetail();
+  }
+
   function guideForProgram(programId) {
-    return state.programGuides.find((guide) => guide.programId === programId) || null;
+    return state.programGuides.find((guide) => guide.programId === programId && guide.status === "published") || null;
   }
 
   function splitTextareaLines(value) {

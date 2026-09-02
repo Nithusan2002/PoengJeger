@@ -98,7 +98,7 @@ select public.grant_editorial_role(
 - redigerer draft-felt, krav og primærkilde
 - foreslår redaksjonell vurdering via Edge Function uten å lagre automatisk
 - lagrer eller publiserer kampanjer uten SQL Editor
-- vedlikeholder `program_guides` per bonusprogram med ett Markdown-felt for hele guiden, draft/published/archived-status og redaksjonelt kontrolltidspunkt
+- vedlikeholder flere `program_guides` per bonusprogram med egen tittel, ett Markdown-felt for hele guiden, draft/published/archived-status og redaksjonelt kontrolltidspunkt
 
 ## AI-forslag
 

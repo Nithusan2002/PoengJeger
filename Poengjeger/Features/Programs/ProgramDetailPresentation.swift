@@ -58,6 +58,10 @@ extension Optional where Wrapped == ProgramGuide {
 }
 
 extension ProgramGuide {
+    func titleText(for program: BonusProgram) -> String {
+        title?.programGuideNonEmpty ?? "Slik fungerer \(program.name)"
+    }
+
     var bodyMarkdownExcerpt: String? {
         bodyMarkdown?
             .programGuideMarkdownBlocks
@@ -79,7 +83,7 @@ extension ProgramGuide {
         }
 
         var sections: [String] = []
-        sections.append("# \(program.name)")
+        sections.append("# \(titleText(for: program))")
 
         if let intro = introText?.programGuideNonEmpty {
             sections.append(intro)

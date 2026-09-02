@@ -10,6 +10,7 @@ struct ProgramGuide: Identifiable, Hashable, Sendable {
     let id: UUID
     let programID: UUID
     let status: Status
+    let title: String?
     let introText: String?
     let bodyMarkdown: String?
     let strategy: String
@@ -41,6 +42,7 @@ struct ProgramGuide: Identifiable, Hashable, Sendable {
         id: UUID,
         programID: UUID,
         status: Status,
+        title: String? = nil,
         introText: String?,
         bodyMarkdown: String? = nil,
         strategy: String,
@@ -71,6 +73,7 @@ struct ProgramGuide: Identifiable, Hashable, Sendable {
         self.id = id
         self.programID = programID
         self.status = status
+        self.title = title
         self.introText = introText
         self.bodyMarkdown = bodyMarkdown
         self.strategy = strategy

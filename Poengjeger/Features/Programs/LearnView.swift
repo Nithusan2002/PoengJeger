@@ -12,12 +12,13 @@ struct LearnView: View {
         [.all] + programs.map { .program($0.id, $0.name) }
     }
 
-    private var visiblePrograms: [BonusProgram] {
+    private var visibleGuides: [ProgramGuide] {
+        let guides = environment.publishedGuides(for: programs)
         switch selectedFilter {
         case .all:
-            return programs
+            return guides
         case let .program(programID, _):
-            return programs.filter { $0.id == programID }
+            return guides.filter { $0.programID == programID }
         }
     }
 
@@ -35,27 +36,29 @@ struct LearnView: View {
                 } else {
                     LearnFilterBar(filters: filters, selection: $selectedFilter)
 
-                    if visiblePrograms.isEmpty {
+                    if visibleGuides.isEmpty {
                         LearnFilteredEmptyState(filterTitle: selectedFilter.title)
                     } else {
                         LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(visiblePrograms) { program in
-                                NavigationLink {
-                                    ProgramDetailView(
-                                        program: program,
-                                        guide: environment.programGuide(for: program)
-                                    )
-                                } label: {
-                                    LearnGuideRow(
-                                        program: program,
-                                        guide: environment.programGuide(for: program)
-                                    )
-                                }
-                                .buttonStyle(.plain)
+                            ForEach(visibleGuides) { guide in
+                                if let program = programs.first(where: { $0.id == guide.programID }) {
+                                    NavigationLink {
+                                        ProgramDetailView(
+                                            program: program,
+                                            guide: guide
+                                        )
+                                    } label: {
+                                        LearnGuideRow(
+                                            program: program,
+                                            guide: guide
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
 
-                                if program.id != visiblePrograms.last?.id {
-                                    Divider()
-                                        .padding(.leading, 78)
+                                    if guide.id != visibleGuides.last?.id {
+                                        Divider()
+                                            .padding(.leading, 78)
+                                    }
                                 }
                             }
                         }
@@ -157,16 +160,16 @@ private struct LearnFilterBar: View {
 
 private struct LearnGuideRow: View {
     let program: BonusProgram
-    let guide: ProgramGuide?
+    let guide: ProgramGuide
 
     private var isReviewed: Bool {
-        guide?.lastReviewedAt != nil
+        guide.lastReviewedAt != nil
     }
 
     private var previewText: String {
-        guide?.introText?.nonEmpty
-            ?? guide?.bodyMarkdownExcerpt
-            ?? guide?.strategy.nonEmpty
+        guide.introText?.nonEmpty
+            ?? guide.bodyMarkdownExcerpt
+            ?? guide.strategy.nonEmpty
             ?? "Guide kommer når innholdet er redaksjonelt kontrollert."
     }
 
@@ -182,7 +185,7 @@ private struct LearnGuideRow: View {
             .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 7) {
-                Text("Slik fungerer \(program.name)")
+                Text(guide.titleText(for: program))
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)

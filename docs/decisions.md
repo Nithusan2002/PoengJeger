@@ -160,3 +160,9 @@
 - Bakgrunn: Den strukturerte guideeditoren ble for tung å bruke redaksjonelt, og guideopplevelsen skal ikke lenke videre til kampanjer.
 - Beslutning: `program_guides` får `body_markdown` som primær innholdskilde. Adminflaten viser ett stort Markdown-felt for hele guiden, mens iOS-klienten renderer en begrenset native Markdown-artikkel med overskrifter, avsnitt og punktlister. Eldre strukturerte felter beholdes som fallback for eksisterende innhold.
 - Konsekvens: Redaksjonen kan skrive og endre guider raskere, og guiden blir en ren forklaringsflate. Vi unngår rå HTML-rendering i appen av sikkerhets- og QA-hensyn, men må kjøre migrasjonen før publisering av nye Markdown-baserte guider.
+
+## ADR-018: Ett bonusprogram kan ha flere guideartikler
+
+- Status: Vedtatt
+- Beslutning: `program_guides` skal ikke ha unik begrensning på `program_id`. Hver guide får egen `title`, mens `body_markdown` fortsatt er primærkilden for hele artikkelinnholdet. Adminflaten oppretter nye guider som drafts og lar redaksjonen velge bonusprogram, tittel og status.
+- Konsekvens: Appens Lær-fane viser alle publiserte guider på tvers av programmer. Kampanjeinnganger som trenger én guide bruker fortsatt den første publiserte guiden for programmet. Publiserte guider må ha både tittel og innhold.

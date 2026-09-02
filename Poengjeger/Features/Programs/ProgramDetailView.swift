@@ -15,6 +15,7 @@ struct ProgramDetailView: View {
             LazyVStack(alignment: .leading, spacing: 18) {
                 ProgramHero(
                     program: program,
+                    title: guide?.titleText(for: program) ?? program.name,
                     kicker: guide.guideKickerText,
                     readingTimeLabel: guide.readingTimeLabelText,
                     lastReviewedAt: guide?.lastReviewedAt
@@ -31,7 +32,7 @@ struct ProgramDetailView: View {
             .padding(.bottom, 28)
         }
         .background(PoengjegerTheme.background)
-        .navigationTitle(program.name)
+        .navigationTitle(guide?.titleText(for: program) ?? program.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
         .task(id: program.id) {
