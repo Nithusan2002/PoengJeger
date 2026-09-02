@@ -1165,6 +1165,47 @@ button:disabled {
   color: var(--text);
 }
 
+.program-preview-decision {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.program-preview-decision > strong {
+  color: var(--text);
+}
+
+.program-preview-decision-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.program-preview-decision-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+
+.program-preview-decision-grid span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.program-preview-decision-grid p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.42;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -2248,6 +2248,7 @@
     form.addEventListener("change", function () {
       updateProgramGuideDraftAssist(form, program);
     });
+    updateProgramGuideDraftAssist(form, program);
   }
 
   function renderEmptyProgramGuideDetail(message) {
@@ -2409,12 +2410,18 @@
     const guideKicker = guide.guideKicker || "PROGRAMGUIDE";
     const readingTimeLabel = guide.readingTimeLabel || "4 min lesing";
     const strategyTitle = guide.strategySectionTitle || "Slik bør du bruke det";
+    const decisionTitle = guide.decisionSectionTitle || "Før du går videre";
+    const earningDecisionLabel = guide.earningDecisionLabel || "Tjen poeng når";
+    const redemptionDecisionLabel = guide.redemptionDecisionLabel || "Bruk poeng når";
+    const riskDecisionLabel = guide.riskDecisionLabel || "Stopp opp hvis";
     const earningTitle = guide.earningSectionTitle || "Slik tjener du poeng";
     const earningIntro = guide.earningSectionIntro || "Start her før du går for en kampanje.";
     const redemptionTitle = guide.redemptionSectionTitle || "Slik bruker du poengene smart";
     const redemptionIntro = guide.redemptionSectionIntro || "Bruk poengene der du ser hva du får igjen.";
     const riskTitle = guide.riskSectionTitle || "Vanlige feller";
     const riskIntro = guide.riskSectionIntro || "Ting som kan gjøre en god kampanje mindre god.";
+    const campaignsTitle = guide.campaignsSectionTitle || "Kampanjer nå";
+    const campaignsIntro = guide.campaignsSectionIntro || `Aktive kampanjer knyttet til ${program.name}.`;
 
     return `
       <div class="program-preview-device">
@@ -2452,6 +2459,15 @@
             <p>${escapeHtml(strategy)}</p>
           </section>
 
+          <section class="program-preview-decision">
+            <strong>${escapeHtml(decisionTitle)}</strong>
+            <div class="program-preview-decision-grid">
+              ${renderPreviewDecision(earningDecisionLabel, guide.earningTips[0])}
+              ${renderPreviewDecision(redemptionDecisionLabel, guide.redemptionTips[0])}
+              ${renderPreviewDecision(riskDecisionLabel, guide.riskNotes[0])}
+            </div>
+          </section>
+
           <section class="program-preview-section">
             <span>${escapeHtml(earningTitle)}</span>
             <p>${escapeHtml(earningIntro)}</p>
@@ -2469,7 +2485,22 @@
             <p>${escapeHtml(riskIntro)}</p>
             ${renderPreviewTips(guide.riskNotes)}
           </section>
+
+          <section class="program-preview-section">
+            <span>${escapeHtml(campaignsTitle)}</span>
+            <p>${escapeHtml(campaignsIntro)}</p>
+            <p class="program-preview-empty">Aktive kampanjekort vises her i appen.</p>
+          </section>
         </article>
+      </div>
+    `;
+  }
+
+  function renderPreviewDecision(label, value) {
+    return `
+      <div>
+        <span>${escapeHtml(label)}</span>
+        <p>${escapeHtml(value || "Første punkt fra seksjonen vises her.")}</p>
       </div>
     `;
   }
@@ -2501,6 +2532,8 @@
     if (previewContainer) {
       previewContainer.innerHTML = renderProgramGuidePreview(program, draft);
     }
+
+    updateProgramGuidePublishButtonState(form, programGuideReadiness(draft));
   }
 
   async function saveCampaignEditor(form, originalCampaign, overrideStatus) {
@@ -3335,6 +3368,22 @@
           : ""
         : `Publisering blokkert: ${resolvedReadiness.blockers.map((check) => check.label).join(", ")}.`;
     });
+  }
+
+  function updateProgramGuidePublishButtonState(form, readiness) {
+    const publishButton = form.querySelector('[data-guide-action="publish"]');
+    if (!publishButton) {
+      return;
+    }
+
+    const canPublish = readiness.isPublishReady;
+    publishButton.disabled = !canPublish;
+    publishButton.title = canPublish
+      ? ""
+      : `Publisering blokkert: ${readiness.checks
+        .filter((check) => !check.complete)
+        .map((check) => check.label)
+        .join(", ")}.`;
   }
 
   async function upsertProgramGuide(payload) {
