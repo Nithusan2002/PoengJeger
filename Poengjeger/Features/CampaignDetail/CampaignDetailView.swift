@@ -49,8 +49,7 @@ struct CampaignDetailView: View {
                 NavigationLink {
                     ProgramDetailView(
                         program: primaryProgram,
-                        guide: primaryProgramGuide,
-                        campaigns: environment.firstPhaseCampaigns
+                        guide: primaryProgramGuide
                     )
                 } label: {
                     Label(primaryProgram.name.uppercased(), systemImage: "book")
@@ -198,8 +197,7 @@ struct CampaignDetailView: View {
         if let primaryProgram {
             ProgramGuideCTA(
                 program: primaryProgram,
-                guide: primaryProgramGuide,
-                campaigns: environment.firstPhaseCampaigns
+                guide: primaryProgramGuide
             )
         }
     }

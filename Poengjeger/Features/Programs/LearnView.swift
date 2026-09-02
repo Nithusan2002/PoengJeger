@@ -2,30 +2,29 @@ import SwiftUI
 
 struct LearnView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var selectedFilter: LearnGuideFilter = .all
 
     private var programs: [BonusProgram] {
         environment.firstPhasePrograms
     }
 
+    private var filters: [LearnGuideFilter] {
+        [.all] + programs.map { .program($0.id, $0.name) }
+    }
+
+    private var visiblePrograms: [BonusProgram] {
+        switch selectedFilter {
+        case .all:
+            return programs
+        case let .program(programID, _):
+            return programs.filter { $0.id == programID }
+        }
+    }
+
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("GUIDER")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.accent)
-
-                    Text("Forstå poengene før du handler")
-                        .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text("Korte programguider som forklarer hva du bør sjekke, når kampanjer er nyttige og hvilke feller som kan spise opp verdien.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.bottom, 8)
+            LazyVStack(alignment: .leading, spacing: 18) {
+                LearnHeader()
 
                 if environment.loadState == .loading && programs.isEmpty {
                     ProgressView("Laster programmer...")
@@ -34,21 +33,38 @@ struct LearnView: View {
                 } else if programs.isEmpty {
                     LearnEmptyState()
                 } else {
-                    ForEach(programs) { program in
-                        NavigationLink {
-                            ProgramDetailView(
-                                program: program,
-                                guide: environment.programGuide(for: program),
-                                campaigns: environment.campaigns
-                            )
-                        } label: {
-                            LearnProgramCard(
-                                program: program,
-                                guide: environment.programGuide(for: program),
-                                activeCampaignCount: activeCampaignCount(for: program)
-                            )
+                    LearnFilterBar(filters: filters, selection: $selectedFilter)
+
+                    if visiblePrograms.isEmpty {
+                        LearnFilteredEmptyState(filterTitle: selectedFilter.title)
+                    } else {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(visiblePrograms) { program in
+                                NavigationLink {
+                                    ProgramDetailView(
+                                        program: program,
+                                        guide: environment.programGuide(for: program)
+                                    )
+                                } label: {
+                                    LearnGuideRow(
+                                        program: program,
+                                        guide: environment.programGuide(for: program)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+
+                                if program.id != visiblePrograms.last?.id {
+                                    Divider()
+                                        .padding(.leading, 78)
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .background(PoengjegerTheme.elevatedSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(PoengjegerTheme.border, lineWidth: 1)
+                        }
                     }
                 }
             }
@@ -61,16 +77,87 @@ struct LearnView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
     }
+}
 
-    private func activeCampaignCount(for program: BonusProgram) -> Int {
-        environment.firstPhaseCampaigns.filter { $0.isActive && $0.linkedProgramIDs.contains(program.id) }.count
+private enum LearnGuideFilter: Hashable, Identifiable {
+    case all
+    case program(UUID, String)
+
+    var id: String {
+        switch self {
+        case .all:
+            return "all"
+        case let .program(programID, _):
+            return programID.uuidString
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .all:
+            return "Alle"
+        case let .program(_, name):
+            return name
+        }
     }
 }
 
-private struct LearnProgramCard: View {
+private struct LearnHeader: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Guider")
+                .font(.largeTitle.weight(.bold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Korte forklaringer for EuroBonus og Trumf, skrevet for valgene du tar før du handler.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.bottom, 2)
+    }
+}
+
+private struct LearnFilterBar: View {
+    let filters: [LearnGuideFilter]
+    @Binding var selection: LearnGuideFilter
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(filters) { filter in
+                    Button {
+                        selection = filter
+                    } label: {
+                        Text(filter.title)
+                            .font(.subheadline.weight(.bold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(selection == filter ? .primary : PoengjegerTheme.accent)
+                    .background(selection == filter ? PoengjegerTheme.primaryTint : PoengjegerTheme.elevatedSurface)
+                    .clipShape(Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(selection == filter ? PoengjegerTheme.primaryBorder : PoengjegerTheme.border, lineWidth: 1)
+                    }
+                    .accessibilityAddTraits(selection == filter ? .isSelected : [])
+                }
+            }
+            .padding(.vertical, 2)
+        }
+        .scrollClipDisabled()
+    }
+}
+
+private struct LearnGuideRow: View {
     let program: BonusProgram
     let guide: ProgramGuide?
-    let activeCampaignCount: Int
 
     private var isReviewed: Bool {
         guide?.lastReviewedAt != nil
@@ -78,60 +165,55 @@ private struct LearnProgramCard: View {
 
     private var previewText: String {
         guide?.introText?.nonEmpty
+            ?? guide?.bodyMarkdownExcerpt
             ?? guide?.strategy.nonEmpty
-            ?? "Guide kommer. Aktive kampanjer vises likevel."
+            ?? "Guide kommer når innholdet er redaksjonelt kontrollert."
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 14) {
-                ProgramMark(program: program, size: 50)
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(program.programColor.opacity(0.12))
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(program.name)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.78)
+                ProgramMark(program: program, size: 42)
+            }
+            .frame(width: 56, height: 56)
+            .accessibilityHidden(true)
 
-                    Text(previewText)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+            VStack(alignment: .leading, spacing: 7) {
+                Text("Slik fungerer \(program.name)")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                Spacer(minLength: 8)
-
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
+                Text(previewText)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 8) {
+                    LearnCardPill(
+                        title: isReviewed ? "Kontrollert" : "Utkast",
+                        systemImage: isReviewed ? "checkmark.seal" : "exclamationmark.triangle",
+                        tint: isReviewed ? PoengjegerTheme.success : PoengjegerTheme.warning
+                    )
+                }
             }
 
-            HStack(spacing: 8) {
-                LearnCardPill(
-                    title: "\(activeCampaignCount) aktive",
-                    systemImage: "ticket",
-                    tint: PoengjegerTheme.accent
-                )
+            Spacer(minLength: 8)
 
-                LearnCardPill(
-                    title: isReviewed ? "Kontrollert" : "Utkast",
-                    systemImage: isReviewed ? "checkmark.seal" : "exclamationmark.triangle",
-                    tint: isReviewed ? PoengjegerTheme.success : PoengjegerTheme.warning
-                )
-            }
+            Image(systemName: "chevron.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.top, 18)
+                .accessibilityHidden(true)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
         .contentShape(Rectangle())
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
-        }
         .accessibilityElement(children: .combine)
     }
 }
@@ -160,7 +242,31 @@ private struct LearnEmptyState: View {
             Text("Ingen programmer ennå")
                 .font(.headline.weight(.semibold))
 
-            Text("Når EuroBonus og Trumf er klare, vises de her med guider og aktive kampanjer.")
+            Text("Når EuroBonus og Trumf er klare, vises de her med redaksjonelt kontrollerte guider.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
+    }
+}
+
+private struct LearnFilteredEmptyState: View {
+    let filterTitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Ingen guider i \(filterTitle)")
+                .font(.headline.weight(.semibold))
+
+            Text("Prøv et annet filter, eller kom tilbake når nye programguider er publisert.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

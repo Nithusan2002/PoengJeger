@@ -66,7 +66,6 @@ struct DetailIntro: View {
     let campaign: Campaign
     let primaryProgram: BonusProgram?
     let primaryProgramGuide: ProgramGuide?
-    let campaigns: [Campaign]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -76,8 +75,7 @@ struct DetailIntro: View {
                         NavigationLink {
                             ProgramDetailView(
                                 program: primaryProgram,
-                                guide: primaryProgramGuide,
-                                campaigns: campaigns
+                                guide: primaryProgramGuide
                             )
                         } label: {
                             Label(primaryProgram.name.uppercased(), systemImage: "book")
@@ -370,14 +368,12 @@ struct CampaignSourceCTA: View {
 struct ProgramGuideCTA: View {
     let program: BonusProgram
     let guide: ProgramGuide?
-    let campaigns: [Campaign]
 
     var body: some View {
         NavigationLink {
             ProgramDetailView(
                 program: program,
-                guide: guide,
-                campaigns: campaigns
+                guide: guide
             )
         } label: {
             Label(programGuideTitle, systemImage: "graduationcap")

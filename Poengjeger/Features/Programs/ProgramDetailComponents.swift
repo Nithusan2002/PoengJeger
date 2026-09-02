@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ProgramHero: View {
     let program: BonusProgram
-    let activeCampaignCount: Int
     let introText: String
     let kicker: String
     let readingTimeLabel: String
@@ -25,7 +24,6 @@ struct ProgramHero: View {
 
                     HStack(spacing: 8) {
                         ProgramHeroMetaPill(text: readingTimeLabel, systemImage: "book")
-                        ProgramHeroMetaPill(text: "\(activeCampaignCount) aktive", systemImage: "ticket")
                     }
                 }
 
@@ -297,6 +295,55 @@ struct ProgramTipSection: View {
     }
 }
 
+struct ProgramMarkdownArticle: View {
+    let markdown: String
+
+    private var blocks: [ProgramGuideMarkdownBlock] {
+        markdown.programGuideMarkdownBlocks
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
+                switch block {
+                case let .heading(level, text):
+                    Text(text)
+                        .font(font(for: level))
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, level == 1 ? 4 : 10)
+
+                case let .paragraph(text):
+                    ProgramGuideParagraph(text: text)
+
+                case let .bullet(text):
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Circle()
+                            .fill(PoengjegerTheme.accent)
+                            .frame(width: 6, height: 6)
+                            .accessibilityHidden(true)
+
+                        ProgramGuideParagraph(text: text)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func font(for level: Int) -> Font {
+        switch level {
+        case 1:
+            return .title2.weight(.bold)
+        case 2:
+            return .title3.weight(.bold)
+        default:
+            return .headline.weight(.bold)
+        }
+    }
+}
+
 struct ProgramGuideParagraph: View {
     let text: String
 
@@ -326,114 +373,6 @@ struct ProgramEmptyGuideRow: View {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .stroke(PoengjegerTheme.border, lineWidth: 1)
             }
-    }
-}
-
-struct ProgramCampaignSection: View {
-    let program: BonusProgram
-    let title: String
-    let subtitle: String
-    let campaigns: [Campaign]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Label(title, systemImage: "ticket")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if campaigns.isEmpty {
-                ProgramEmptyGuideRow(text: "Ingen aktive kampanjer for \(program.name) akkurat nå.")
-            } else {
-                VStack(alignment: .leading, spacing: 14) {
-                    ForEach(campaigns.prefix(2)) { campaign in
-                        NavigationLink {
-                            CampaignDetailView(campaign: campaign)
-                        } label: {
-                            ProgramCampaignPreview(campaign: campaign)
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    NavigationLink {
-                        ProgramCampaignListView(program: program, campaigns: campaigns)
-                    } label: {
-                        Label("Se alle kampanjer", systemImage: "ticket")
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color(red: 0.09, green: 0.12, blue: 0.18))
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                    .accessibilityLabel("Se alle aktive kampanjer for \(program.name)")
-                }
-            }
-        }
-    }
-}
-
-struct ProgramCampaignPreview: View {
-    let campaign: Campaign
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(campaign.editorialAssessment?.estimatedValueText?.programGuideNonEmpty ?? campaign.editorialSummary.programGuideNonEmpty ?? "Aktiv kampanje")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.8)
-
-                Spacer(minLength: 8)
-
-                if let endDateText = campaign.endDate?.relativeDeadlineText {
-                    Text(endDateText)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.red)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                }
-            }
-
-            Text(campaign.title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-        }
-        .padding(.vertical, 4)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-    }
-}
-
-struct ProgramCampaignListView: View {
-    let program: BonusProgram
-    let campaigns: [Campaign]
-
-    var body: some View {
-        List(campaigns) { campaign in
-            NavigationLink {
-                CampaignDetailView(campaign: campaign)
-            } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(campaign.title)
-                        .font(.headline)
-                    Text(campaign.displaySummary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-            }
-        }
-        .navigationTitle(program.name)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

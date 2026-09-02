@@ -5,7 +5,7 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 ## Kampanjeinnhold
 
 - `bonus_programs`: støttede bonusprogrammer.
-- `program_guides`: redaksjonelle strategiguider per bonusprogram med publiseringsstatus, intro, nøkkelfelter for verdi/utløp, redigerbar display-copy for guide-/seksjonstitler, tipsseksjoner og siste kontrolltidspunkt.
+- `program_guides`: redaksjonelle strategiguider per bonusprogram med publiseringsstatus, Markdown-body (`body_markdown`), automatisk utdrag/legacy-intro og siste kontrolltidspunkt. Eldre strukturerte guidefelter finnes fortsatt som fallback for eksisterende innhold.
 - `campaign_categories`: kampanjekategorier.
 - `stores`: butikker og partnere brukeren kan søke opp før kjøp, med kategori, publiseringsstatus, URL og siste kontrolltidspunkt.
 - `earning_methods`: opptjeningsmekanismer som EuroBonus Shopping, Trumf, betalingskort eller tidsbegrenset kampanje.

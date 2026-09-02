@@ -68,8 +68,10 @@
     "campaigns_section_title",
     "campaigns_section_intro"
   ];
+  const PROGRAM_GUIDE_MARKDOWN_COLUMNS = ["body_markdown"];
   const PROGRAM_GUIDE_COLUMNS = [
     ...PROGRAM_GUIDE_BASE_COLUMNS.slice(0, 9),
+    ...PROGRAM_GUIDE_MARKDOWN_COLUMNS,
     ...PROGRAM_GUIDE_MANUAL_COPY_COLUMNS,
     ...PROGRAM_GUIDE_BASE_COLUMNS.slice(9)
   ];
@@ -710,7 +712,7 @@
 
   function isMissingProgramGuideManualCopyColumn(error) {
     const message = String(error && error.message ? error.message : error);
-    return PROGRAM_GUIDE_MANUAL_COPY_COLUMNS.some((column) => message.includes(`program_guides.${column}`));
+    return [...PROGRAM_GUIDE_MARKDOWN_COLUMNS, ...PROGRAM_GUIDE_MANUAL_COPY_COLUMNS].some((column) => message.includes(`program_guides.${column}`));
   }
 
   function sleep(milliseconds) {
@@ -851,6 +853,7 @@
       programId: guide.program_id,
       status: guide.status,
       introText: guide.intro_text || "",
+      bodyMarkdown: guide.body_markdown || "",
       strategy: guide.strategy || "",
       valueEstimateLabel: guide.value_estimate_label || "",
       valueEstimateDetail: guide.value_estimate_detail || "",
@@ -1209,7 +1212,7 @@
           ${renderMetaBadge(program.slug)}
         </div>
         <h3>${escapeHtml(program.name)}</h3>
-        <p>${escapeHtml(guide ? firstTextLine(guide.strategy, "Ingen strategi ennå.") : "Ingen guide opprettet ennå.")}</p>
+        <p>${escapeHtml(guide ? firstTextLine(markdownExcerpt(programGuideEditorMarkdown(guide, program)), "Ingen guideinnhold ennå.") : "Ingen guide opprettet ennå.")}</p>
         <div class="candidate-meta">
           <span>${guide ? `Sist oppdatert ${formatDateTime(guide.updatedAt)}` : "Ikke opprettet"}</span>
           <span>•</span>
@@ -1964,230 +1967,13 @@
               </label>
             </div>
 
-            <div class="detail-grid">
-              <label class="field">
-                <span>Guide-kicker</span>
-                <input
-                  name="guideKicker"
-                  type="text"
-                  placeholder="PROGRAMGUIDE"
-                  value="${escapeAttribute(draft.guideKicker)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Lesetid-label</span>
-                <input
-                  name="readingTimeLabel"
-                  type="text"
-                  placeholder="4 min lesing"
-                  value="${escapeAttribute(draft.readingTimeLabel)}"
-                />
-              </label>
-            </div>
-
             <label class="field">
-              <span>Intro på programsiden</span>
-              <textarea name="introText" rows="4" placeholder="Kort forklaring som vises øverst på programsiden...">${escapeHtml(
-                draft.introText
+              <span>Guideinnhold</span>
+              <textarea name="bodyMarkdown" rows="24" class="markdown-editor" placeholder="# ${escapeAttribute(program.name)}&#10;&#10;Kort intro til programmet.&#10;&#10;## Slik tjener du poeng&#10;- Punkt én&#10;- Punkt to">${escapeHtml(
+                programGuideEditorMarkdown(draft, program)
               )}</textarea>
-              <span class="hint">Vises både i Lær-listen og øverst på programsiden. Skriv 1-2 konkrete setninger uten bastante verdianslag.</span>
+              <span class="hint">Skriv Markdown: # overskrift, ## seksjon, vanlige avsnitt og punktlister med -. Rå HTML lagres som tekst og rendres ikke som HTML i appen.</span>
             </label>
-
-            <label class="field">
-              <span>Strategi: seksjonstittel</span>
-              <input
-                name="strategySectionTitle"
-                type="text"
-                placeholder="Slik bør du bruke det"
-                value="${escapeAttribute(draft.strategySectionTitle)}"
-              />
-            </label>
-
-            <label class="field">
-              <span>Strategi: brødtekst</span>
-              <textarea name="strategy" rows="5" placeholder="Når passer dette programmet, og hva bør brukeren vurdere?">${escapeHtml(
-                draft.strategy
-              )}</textarea>
-              <span class="hint">Hold dette som redaksjonell veiledning. Skill estimat og fakta fra generell vurdering.</span>
-            </label>
-
-            <div class="detail-grid">
-              <label class="field">
-                <span>Verdi-kort: tittel</span>
-                <input
-                  name="valueEstimateLabel"
-                  type="text"
-                  placeholder="For eksempel: Varierer"
-                  value="${escapeAttribute(draft.valueEstimateLabel)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Utløp-kort: tittel</span>
-                <input
-                  name="expirationSummary"
-                  type="text"
-                  placeholder="For eksempel: Sjekk vilkår"
-                  value="${escapeAttribute(draft.expirationSummary)}"
-                />
-              </label>
-            </div>
-
-            <label class="field">
-              <span>Verdi-kort: forklaring</span>
-              <textarea name="valueEstimateDetail" rows="3" placeholder="Hva styrer verdien, og hva bør kontrolleres?">${escapeHtml(draft.valueEstimateDetail)}</textarea>
-            </label>
-
-            <label class="field">
-              <span>Utløp-kort: forklaring</span>
-              <textarea name="expirationDetail" rows="3" placeholder="Forklar utløpsrisiko uten å gjette konkrete regler.">${escapeHtml(draft.expirationDetail)}</textarea>
-            </label>
-
-            <label class="field">
-              <span>Beslutningskort: tittel</span>
-              <input
-                name="decisionSectionTitle"
-                type="text"
-                placeholder="Før du går videre"
-                value="${escapeAttribute(draft.decisionSectionTitle)}"
-              />
-            </label>
-
-            <div class="detail-grid three">
-              <label class="field">
-                <span>Beslutning: opptjening</span>
-                <input
-                  name="earningDecisionLabel"
-                  type="text"
-                  placeholder="Tjen poeng når"
-                  value="${escapeAttribute(draft.earningDecisionLabel)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Beslutning: bruk</span>
-                <input
-                  name="redemptionDecisionLabel"
-                  type="text"
-                  placeholder="Bruk poeng når"
-                  value="${escapeAttribute(draft.redemptionDecisionLabel)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Beslutning: risiko</span>
-                <input
-                  name="riskDecisionLabel"
-                  type="text"
-                  placeholder="Stopp opp hvis"
-                  value="${escapeAttribute(draft.riskDecisionLabel)}"
-                />
-              </label>
-            </div>
-
-            <div class="detail-grid">
-              <label class="field">
-                <span>Opptjening: seksjonstittel</span>
-                <input
-                  name="earningSectionTitle"
-                  type="text"
-                  placeholder="Slik tjener du poeng"
-                  value="${escapeAttribute(draft.earningSectionTitle)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Opptjening: ingress</span>
-                <input
-                  name="earningSectionIntro"
-                  type="text"
-                  placeholder="Start her før du går for en kampanje."
-                  value="${escapeAttribute(draft.earningSectionIntro)}"
-                />
-              </label>
-            </div>
-
-            <label class="field">
-              <span>Opptjening: avsnitt, én linje per avsnitt</span>
-              <textarea name="earningTips" rows="5" placeholder="Registrer medlemsnummer før kjøp&#10;Aktiver kampanjer før betaling">${escapeHtml(draft.earningTips.join("\n"))}</textarea>
-            </label>
-
-            <div class="detail-grid">
-              <label class="field">
-                <span>Bruk: seksjonstittel</span>
-                <input
-                  name="redemptionSectionTitle"
-                  type="text"
-                  placeholder="Slik bruker du poengene smart"
-                  value="${escapeAttribute(draft.redemptionSectionTitle)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Bruk: ingress</span>
-                <input
-                  name="redemptionSectionIntro"
-                  type="text"
-                  placeholder="Bruk poengene der du ser hva du får igjen."
-                  value="${escapeAttribute(draft.redemptionSectionIntro)}"
-                />
-              </label>
-            </div>
-
-            <label class="field">
-              <span>Bruk: avsnitt, én linje per avsnitt</span>
-              <textarea name="redemptionTips" rows="5" placeholder="Sammenlign poengbruk med kontantpris&#10;Unngå bruk der alternativverdien er lav">${escapeHtml(draft.redemptionTips.join("\n"))}</textarea>
-            </label>
-
-            <div class="detail-grid">
-              <label class="field">
-                <span>Feller: seksjonstittel</span>
-                <input
-                  name="riskSectionTitle"
-                  type="text"
-                  placeholder="Vanlige feller"
-                  value="${escapeAttribute(draft.riskSectionTitle)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Feller: ingress</span>
-                <input
-                  name="riskSectionIntro"
-                  type="text"
-                  placeholder="Ting som kan gjøre en god kampanje mindre god."
-                  value="${escapeAttribute(draft.riskSectionIntro)}"
-                />
-              </label>
-            </div>
-
-            <label class="field">
-              <span>Feller: avsnitt, én linje per avsnitt</span>
-              <textarea name="riskNotes" rows="5" placeholder="Kampanjer kan være målrettet&#10;Vilkår kan endres før bruk">${escapeHtml(draft.riskNotes.join("\n"))}</textarea>
-            </label>
-
-            <div class="detail-grid">
-              <label class="field">
-                <span>Kampanjer: seksjonstittel</span>
-                <input
-                  name="campaignsSectionTitle"
-                  type="text"
-                  placeholder="Kampanjer nå"
-                  value="${escapeAttribute(draft.campaignsSectionTitle)}"
-                />
-              </label>
-
-              <label class="field">
-                <span>Kampanjer: ingress</span>
-                <input
-                  name="campaignsSectionIntro"
-                  type="text"
-                  placeholder="Aktive kampanjer knyttet til programmet."
-                  value="${escapeAttribute(draft.campaignsSectionIntro)}"
-                />
-              </label>
-            </div>
 
             <label class="field">
               <span>Sist redaksjonelt kontrollert</span>
@@ -2205,7 +1991,7 @@
                 <button type="button" class="secondary" data-guide-action="reviewed">Marker kontrollert</button>
                 <button type="button" class="secondary" data-guide-action="archive">Arkiver</button>
               </div>
-              <span class="help">Publisering krever intro, strategi og minst ett punkt i hver tipsseksjon. Verdi og utløp bør fylles før publisering.</span>
+              <span class="help">Publisering krever guideinnhold og kontrolltidspunkt. Hold innholdet redaksjonelt og uten kampanjelenker.</span>
             </div>
           </section>
 
@@ -2262,6 +2048,7 @@
       programId,
       status: "draft",
       introText: "",
+      bodyMarkdown: "",
       strategy: "",
       valueEstimateLabel: "",
       valueEstimateDetail: "",
@@ -2275,13 +2062,13 @@
       redemptionDecisionLabel: "Bruk poeng når",
       riskDecisionLabel: "Stopp opp hvis",
       earningSectionTitle: "Slik tjener du poeng",
-      earningSectionIntro: "Start her før du går for en kampanje.",
+      earningSectionIntro: "Start med det du allerede skal kjøpe eller bruke.",
       redemptionSectionTitle: "Slik bruker du poengene smart",
       redemptionSectionIntro: "Bruk poengene der du ser hva du får igjen.",
       riskSectionTitle: "Vanlige feller",
       riskSectionIntro: "Ting som kan gjøre en god kampanje mindre god.",
-      campaignsSectionTitle: "Kampanjer nå",
-      campaignsSectionIntro: "Aktive kampanjer knyttet til programmet.",
+      campaignsSectionTitle: "",
+      campaignsSectionIntro: "",
       earningTips: [],
       redemptionTips: [],
       riskNotes: [],
@@ -2295,70 +2082,25 @@
     return {
       ...emptyProgramGuideDraft(program.id),
       status: String(formData.get("status") || "draft"),
-      introText: String(formData.get("introText") || "").trim(),
-      strategy: String(formData.get("strategy") || "").trim(),
-      valueEstimateLabel: String(formData.get("valueEstimateLabel") || "").trim(),
-      valueEstimateDetail: String(formData.get("valueEstimateDetail") || "").trim(),
-      expirationSummary: String(formData.get("expirationSummary") || "").trim(),
-      expirationDetail: String(formData.get("expirationDetail") || "").trim(),
-      guideKicker: String(formData.get("guideKicker") || "").trim(),
-      readingTimeLabel: String(formData.get("readingTimeLabel") || "").trim(),
-      strategySectionTitle: String(formData.get("strategySectionTitle") || "").trim(),
-      decisionSectionTitle: String(formData.get("decisionSectionTitle") || "").trim(),
-      earningDecisionLabel: String(formData.get("earningDecisionLabel") || "").trim(),
-      redemptionDecisionLabel: String(formData.get("redemptionDecisionLabel") || "").trim(),
-      riskDecisionLabel: String(formData.get("riskDecisionLabel") || "").trim(),
-      earningSectionTitle: String(formData.get("earningSectionTitle") || "").trim(),
-      earningSectionIntro: String(formData.get("earningSectionIntro") || "").trim(),
-      redemptionSectionTitle: String(formData.get("redemptionSectionTitle") || "").trim(),
-      redemptionSectionIntro: String(formData.get("redemptionSectionIntro") || "").trim(),
-      riskSectionTitle: String(formData.get("riskSectionTitle") || "").trim(),
-      riskSectionIntro: String(formData.get("riskSectionIntro") || "").trim(),
-      campaignsSectionTitle: String(formData.get("campaignsSectionTitle") || "").trim(),
-      campaignsSectionIntro: String(formData.get("campaignsSectionIntro") || "").trim(),
-      earningTips: splitTextareaLines(formData.get("earningTips")),
-      redemptionTips: splitTextareaLines(formData.get("redemptionTips")),
-      riskNotes: splitTextareaLines(formData.get("riskNotes")),
+      bodyMarkdown: String(formData.get("bodyMarkdown") || "").trim(),
+      campaignsSectionTitle: "",
+      campaignsSectionIntro: "",
       lastReviewedAt: String(formData.get("lastReviewedAt") || "").trim()
     };
   }
 
   function programGuideReadiness(guide) {
+    const bodyMarkdown = guide.bodyMarkdown || "";
     const checks = [
       {
-        label: "Intro",
-        complete: Boolean(guide.introText),
-        help: "Vises i Lær-listen og på programsiden."
+        label: "Guideinnhold",
+        complete: Boolean(bodyMarkdown),
+        help: "Hele guiden skrives i Markdown-feltet."
       },
       {
-        label: "Strategi",
-        complete: Boolean(guide.strategy),
-        help: "Forklar når programmet er nyttig."
-      },
-      {
-        label: "Verdi-kort",
-        complete: Boolean(guide.valueEstimateLabel && guide.valueEstimateDetail),
-        help: "Bruk forsiktig estimat eller forklar variasjon."
-      },
-      {
-        label: "Utløp-kort",
-        complete: Boolean(guide.expirationSummary && guide.expirationDetail),
-        help: "Forklar risiko uten å gjette vilkår."
-      },
-      {
-        label: "Opptjening",
-        complete: guide.earningTips.length > 0,
-        help: "Minst ett konkret tips."
-      },
-      {
-        label: "Bruk",
-        complete: guide.redemptionTips.length > 0,
-        help: "Minst ett råd for innløsning."
-      },
-      {
-        label: "Feller",
-        complete: guide.riskNotes.length > 0,
-        help: "Minst ett risikopunkt."
+        label: "Overskrift",
+        complete: /^#{1,3}\s+\S/m.test(bodyMarkdown),
+        help: "Bruk minst én # eller ## overskrift."
       }
     ];
 
@@ -2400,28 +2142,115 @@
     `;
   }
 
+  function programGuideEditorMarkdown(guide, program) {
+    if (guide.bodyMarkdown) {
+      return guide.bodyMarkdown;
+    }
+
+    const sections = [];
+    const intro = guide.introText || "";
+    const strategy = guide.strategy || "";
+
+    sections.push(`# ${program.name}`);
+
+    if (intro) {
+      sections.push(intro);
+    }
+
+    if (strategy) {
+      sections.push(`## ${guide.strategySectionTitle || "Slik bør du bruke det"}\n\n${strategy}`);
+    }
+
+    appendMarkdownList(sections, guide.earningSectionTitle || "Slik tjener du poeng", guide.earningTips);
+    appendMarkdownList(sections, guide.redemptionSectionTitle || "Slik bruker du poengene smart", guide.redemptionTips);
+    appendMarkdownList(sections, guide.riskSectionTitle || "Vanlige feller", guide.riskNotes);
+
+    return sections.join("\n\n");
+  }
+
+  function appendMarkdownList(sections, title, items) {
+    if (!Array.isArray(items) || !items.length) {
+      return;
+    }
+
+    sections.push(`## ${title}\n\n${items.map((item) => `- ${item}`).join("\n")}`);
+  }
+
+  function markdownExcerpt(markdown) {
+    const blocks = markdownBlocks(markdown);
+    const firstText = blocks.find((block) => block.type === "paragraph" || block.type === "bullet");
+    return firstText ? firstText.text : "";
+  }
+
+  function renderMarkdownPreview(markdown) {
+    const blocks = markdownBlocks(markdown);
+
+    if (!blocks.length) {
+      return `<p class="program-preview-empty">Guiden vises her når du skriver.</p>`;
+    }
+
+    return blocks
+      .map((block) => {
+        if (block.type === "heading") {
+          const tag = block.level === 1 ? "h4" : "h5";
+          return `<${tag}>${escapeHtml(block.text)}</${tag}>`;
+        }
+
+        if (block.type === "bullet") {
+          return `<p class="program-preview-bullet"><span aria-hidden="true"></span>${escapeHtml(block.text)}</p>`;
+        }
+
+        return `<p>${escapeHtml(block.text)}</p>`;
+      })
+      .join("");
+  }
+
+  function markdownBlocks(markdown) {
+    const blocks = [];
+    let paragraph = [];
+
+    function flushParagraph() {
+      const text = paragraph.join(" ").trim();
+      if (text) {
+        blocks.push({ type: "paragraph", text });
+      }
+      paragraph = [];
+    }
+
+    String(markdown || "")
+      .split(/\r?\n/)
+      .forEach((rawLine) => {
+        const line = rawLine.trim();
+
+        if (!line) {
+          flushParagraph();
+          return;
+        }
+
+        const headingMatch = /^(#{1,3})\s+(.+)$/.exec(line);
+        if (headingMatch) {
+          flushParagraph();
+          blocks.push({ type: "heading", level: headingMatch[1].length, text: headingMatch[2].trim() });
+          return;
+        }
+
+        const bulletMatch = /^[-*]\s+(.+)$/.exec(line);
+        if (bulletMatch) {
+          flushParagraph();
+          blocks.push({ type: "bullet", text: bulletMatch[1].trim() });
+          return;
+        }
+
+        paragraph.push(line);
+      });
+
+    flushParagraph();
+    return blocks;
+  }
+
   function renderProgramGuidePreview(program, guide) {
-    const intro = guide.introText || "Intro vises her når du skriver.";
-    const strategy = guide.strategy || "Strategiteksten vises her.";
-    const valueLabel = guide.valueEstimateLabel || "Verdi";
-    const valueDetail = guide.valueEstimateDetail || "Forklaring av verdi vises her.";
-    const expirationLabel = guide.expirationSummary || "Utløp";
-    const expirationDetail = guide.expirationDetail || "Forklaring av utløpsrisiko vises her.";
-    const guideKicker = guide.guideKicker || "PROGRAMGUIDE";
-    const readingTimeLabel = guide.readingTimeLabel || "4 min lesing";
-    const strategyTitle = guide.strategySectionTitle || "Slik bør du bruke det";
-    const decisionTitle = guide.decisionSectionTitle || "Før du går videre";
-    const earningDecisionLabel = guide.earningDecisionLabel || "Tjen poeng når";
-    const redemptionDecisionLabel = guide.redemptionDecisionLabel || "Bruk poeng når";
-    const riskDecisionLabel = guide.riskDecisionLabel || "Stopp opp hvis";
-    const earningTitle = guide.earningSectionTitle || "Slik tjener du poeng";
-    const earningIntro = guide.earningSectionIntro || "Start her før du går for en kampanje.";
-    const redemptionTitle = guide.redemptionSectionTitle || "Slik bruker du poengene smart";
-    const redemptionIntro = guide.redemptionSectionIntro || "Bruk poengene der du ser hva du får igjen.";
-    const riskTitle = guide.riskSectionTitle || "Vanlige feller";
-    const riskIntro = guide.riskSectionIntro || "Ting som kan gjøre en god kampanje mindre god.";
-    const campaignsTitle = guide.campaignsSectionTitle || "Kampanjer nå";
-    const campaignsIntro = guide.campaignsSectionIntro || `Aktive kampanjer knyttet til ${program.name}.`;
+    const markdown = programGuideEditorMarkdown(guide, program);
+    const intro = markdownExcerpt(markdown) || "Intro vises her når du skriver.";
 
     return `
       <div class="program-preview-device">
@@ -2435,87 +2264,17 @@
           <header class="program-preview-hero">
             <div class="program-preview-mark">${escapeHtml(programInitials(program))}</div>
             <div>
-              <span>${escapeHtml(guideKicker)} · ${escapeHtml(readingTimeLabel)}</span>
+              <span>PROGRAMGUIDE</span>
               <h3>${escapeHtml(program.name)}</h3>
               <p>${escapeHtml(intro)}</p>
             </div>
           </header>
 
-          <div class="program-preview-metrics">
-            <div>
-              <span>Verdi per poeng</span>
-              <strong>${escapeHtml(valueLabel)}</strong>
-              <p>${escapeHtml(valueDetail)}</p>
-            </div>
-            <div>
-              <span>Utløp</span>
-              <strong>${escapeHtml(expirationLabel)}</strong>
-              <p>${escapeHtml(expirationDetail)}</p>
-            </div>
-          </div>
-
-          <section class="program-preview-strategy">
-            <strong>${escapeHtml(strategyTitle)}</strong>
-            <p>${escapeHtml(strategy)}</p>
+          <section class="program-preview-markdown">
+            ${renderMarkdownPreview(markdown)}
           </section>
 
-          <section class="program-preview-decision">
-            <strong>${escapeHtml(decisionTitle)}</strong>
-            <div class="program-preview-decision-grid">
-              ${renderPreviewDecision(earningDecisionLabel, guide.earningTips[0])}
-              ${renderPreviewDecision(redemptionDecisionLabel, guide.redemptionTips[0])}
-              ${renderPreviewDecision(riskDecisionLabel, guide.riskNotes[0])}
-            </div>
-          </section>
-
-          <section class="program-preview-section">
-            <span>${escapeHtml(earningTitle)}</span>
-            <p>${escapeHtml(earningIntro)}</p>
-            ${renderPreviewTips(guide.earningTips)}
-          </section>
-
-          <section class="program-preview-section">
-            <span>${escapeHtml(redemptionTitle)}</span>
-            <p>${escapeHtml(redemptionIntro)}</p>
-            ${renderPreviewTips(guide.redemptionTips)}
-          </section>
-
-          <section class="program-preview-section">
-            <span>${escapeHtml(riskTitle)}</span>
-            <p>${escapeHtml(riskIntro)}</p>
-            ${renderPreviewTips(guide.riskNotes)}
-          </section>
-
-          <section class="program-preview-section">
-            <span>${escapeHtml(campaignsTitle)}</span>
-            <p>${escapeHtml(campaignsIntro)}</p>
-            <p class="program-preview-empty">Aktive kampanjekort vises her i appen.</p>
-          </section>
         </article>
-      </div>
-    `;
-  }
-
-  function renderPreviewDecision(label, value) {
-    return `
-      <div>
-        <span>${escapeHtml(label)}</span>
-        <p>${escapeHtml(value || "Første punkt fra seksjonen vises her.")}</p>
-      </div>
-    `;
-  }
-
-  function renderPreviewTips(items) {
-    if (!items.length) {
-      return `<p class="program-preview-empty">Ingen punkter ennå.</p>`;
-    }
-
-    return `
-      <div class="program-preview-paragraphs">
-        ${items
-          .slice(0, 4)
-          .map((item) => `<p>${escapeHtml(item)}</p>`)
-          .join("")}
       </div>
     `;
   }
@@ -2608,8 +2367,8 @@
 
     return `
       <div class="schema-notice">
-        Databasen mangler de nye guidefeltene. Admin viser eksisterende innhold, men full manuell redigering krever migrasjonen
-        <code>20260826103142_add_program_guide_manual_display_copy.sql</code>.
+        Databasen mangler nye guidefelter. Admin viser eksisterende innhold, men Markdown-redigering krever migrasjonen
+        <code>20260902080000_add_program_guide_markdown_body.sql</code>.
       </div>
     `;
   }
@@ -2901,6 +2660,8 @@
     const now = new Date().toISOString();
     let status = String(formData.get("status") || "draft");
     let lastReviewedAt = String(formData.get("lastReviewedAt") || "").trim();
+    const bodyMarkdown = String(formData.get("bodyMarkdown") || "").trim();
+    const introText = markdownExcerpt(bodyMarkdown);
 
     if (action === "publish") {
       status = "published";
@@ -2915,30 +2676,31 @@
       id: originalGuide ? originalGuide.id : null,
       programId: program.id,
       status,
-      introText: String(formData.get("introText") || "").trim(),
-      strategy: String(formData.get("strategy") || "").trim(),
-      valueEstimateLabel: String(formData.get("valueEstimateLabel") || "").trim(),
-      valueEstimateDetail: String(formData.get("valueEstimateDetail") || "").trim(),
-      expirationSummary: String(formData.get("expirationSummary") || "").trim(),
-      expirationDetail: String(formData.get("expirationDetail") || "").trim(),
-      guideKicker: String(formData.get("guideKicker") || "").trim(),
-      readingTimeLabel: String(formData.get("readingTimeLabel") || "").trim(),
-      strategySectionTitle: String(formData.get("strategySectionTitle") || "").trim(),
-      decisionSectionTitle: String(formData.get("decisionSectionTitle") || "").trim(),
-      earningDecisionLabel: String(formData.get("earningDecisionLabel") || "").trim(),
-      redemptionDecisionLabel: String(formData.get("redemptionDecisionLabel") || "").trim(),
-      riskDecisionLabel: String(formData.get("riskDecisionLabel") || "").trim(),
-      earningSectionTitle: String(formData.get("earningSectionTitle") || "").trim(),
-      earningSectionIntro: String(formData.get("earningSectionIntro") || "").trim(),
-      redemptionSectionTitle: String(formData.get("redemptionSectionTitle") || "").trim(),
-      redemptionSectionIntro: String(formData.get("redemptionSectionIntro") || "").trim(),
-      riskSectionTitle: String(formData.get("riskSectionTitle") || "").trim(),
-      riskSectionIntro: String(formData.get("riskSectionIntro") || "").trim(),
-      campaignsSectionTitle: String(formData.get("campaignsSectionTitle") || "").trim(),
-      campaignsSectionIntro: String(formData.get("campaignsSectionIntro") || "").trim(),
-      earningTips: splitTextareaLines(formData.get("earningTips")),
-      redemptionTips: splitTextareaLines(formData.get("redemptionTips")),
-      riskNotes: splitTextareaLines(formData.get("riskNotes")),
+      introText,
+      bodyMarkdown,
+      strategy: bodyMarkdown,
+      valueEstimateLabel: "",
+      valueEstimateDetail: "",
+      expirationSummary: "",
+      expirationDetail: "",
+      guideKicker: "PROGRAMGUIDE",
+      readingTimeLabel: "",
+      strategySectionTitle: "",
+      decisionSectionTitle: "",
+      earningDecisionLabel: "",
+      redemptionDecisionLabel: "",
+      riskDecisionLabel: "",
+      earningSectionTitle: "",
+      earningSectionIntro: "",
+      redemptionSectionTitle: "",
+      redemptionSectionIntro: "",
+      riskSectionTitle: "",
+      riskSectionIntro: "",
+      campaignsSectionTitle: "",
+      campaignsSectionIntro: "",
+      earningTips: [],
+      redemptionTips: [],
+      riskNotes: [],
       lastReviewedAt: lastReviewedAt ? toISOString(lastReviewedAt) : null
     };
   }
@@ -2947,24 +2709,8 @@
     const errors = [];
 
     if (payload.status === "published") {
-      if (!payload.strategy) {
-        errors.push("Publisering krever strategi.");
-      }
-
-      if (!payload.introText) {
-        errors.push("Publisering krever intro på programsiden.");
-      }
-
-      if (!payload.earningTips.length) {
-        errors.push("Publisering krever minst ett opptjeningstips.");
-      }
-
-      if (!payload.redemptionTips.length) {
-        errors.push("Publisering krever minst ett brukstips.");
-      }
-
-      if (!payload.riskNotes.length) {
-        errors.push("Publisering krever minst ett risikonotat.");
+      if (!payload.bodyMarkdown) {
+        errors.push("Publisering krever guideinnhold.");
       }
 
       if (!payload.lastReviewedAt) {
@@ -3391,6 +3137,7 @@
       program_id: payload.programId,
       status: payload.status,
       intro_text: payload.introText || null,
+      body_markdown: payload.bodyMarkdown || null,
       strategy: payload.strategy || null,
       value_estimate_label: payload.valueEstimateLabel || null,
       value_estimate_detail: payload.valueEstimateDetail || null,

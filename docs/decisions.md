@@ -152,5 +152,11 @@
 ## ADR-016: Programguider legges under en enkel Lær-inngang, ikke som generisk utforskflate
 - Status: Vedtatt
 - Bakgrunn: Læringsinnhold kan gi verdi mellom kampanjer og forklare programstrategier, men en generisk utforsk- eller bloggflate kan stjele fokus fra kjerneløkken med å finne, forstå og lagre relevante kampanjer.
-- Beslutning: Første versjon bygges som en enkel `Lær`-fane med programindeks og programsider per bonusprogram. Programsiden viser intro, redaksjonell strategi, verdi-/utløpskort, opptjening, bruk, vanlige feller og aktive kampanjer for programmet. Innganger kommer også fra kampanjedetalj og programinnstillinger.
-- Konsekvens: Læringsinnholdet støtter feeden i stedet for å bli en blogg- eller nyhetsseksjon. Første versjon bruker forsiktig, redaksjonell veiledning uten harde poengverdianslag med mindre de er eksplisitt kontrollert. Innholdet lagres i `program_guides` med RLS, publiseringsstatus, redigerbare displayfelter og `last_reviewed_at`; senere kan samme innhold brukes av web-landingssider dersom SEO blir prioritert.
+- Beslutning: Første versjon bygges som en enkel `Lær`-fane med programindeks og programsider per bonusprogram. Programsiden viser redaksjonelle programguider uten lenker videre til kampanjer. Innganger kan fortsatt komme fra kampanjedetalj og programinnstillinger.
+- Konsekvens: Læringsinnholdet støtter feeden i stedet for å bli en blogg- eller nyhetsseksjon. Første versjon bruker forsiktig, redaksjonell veiledning uten harde poengverdianslag med mindre de er eksplisitt kontrollert. Innholdet lagres i `program_guides` med RLS, publiseringsstatus og `last_reviewed_at`; senere kan samme innhold brukes av web-landingssider dersom SEO blir prioritert.
+
+## ADR-017: Programguider redigeres som én Markdown-artikkel
+- Status: Vedtatt
+- Bakgrunn: Den strukturerte guideeditoren ble for tung å bruke redaksjonelt, og guideopplevelsen skal ikke lenke videre til kampanjer.
+- Beslutning: `program_guides` får `body_markdown` som primær innholdskilde. Adminflaten viser ett stort Markdown-felt for hele guiden, mens iOS-klienten renderer en begrenset native Markdown-artikkel med overskrifter, avsnitt og punktlister. Eldre strukturerte felter beholdes som fallback for eksisterende innhold.
+- Konsekvens: Redaksjonen kan skrive og endre guider raskere, og guiden blir en ren forklaringsflate. Vi unngår rå HTML-rendering i appen av sikkerhets- og QA-hensyn, men må kjøre migrasjonen før publisering av nye Markdown-baserte guider.

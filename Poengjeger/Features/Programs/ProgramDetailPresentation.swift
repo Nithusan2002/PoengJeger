@@ -44,6 +44,10 @@ extension BonusProgram {
 }
 
 extension Optional where Wrapped == ProgramGuide {
+    var introTextValue: String? {
+        self?.introText?.programGuideNonEmpty ?? self?.bodyMarkdownExcerpt
+    }
+
     var guideKickerText: String {
         self?.guideKicker?.programGuideNonEmpty ?? "PROGRAMGUIDE"
     }
@@ -77,7 +81,7 @@ extension Optional where Wrapped == ProgramGuide {
     }
 
     var earningSectionIntroText: String {
-        self?.earningSectionIntro?.programGuideNonEmpty ?? "Start her før du går for en kampanje."
+        self?.earningSectionIntro?.programGuideNonEmpty ?? "Start med det du allerede skal kjøpe eller bruke."
     }
 
     var redemptionSectionTitleText: String {
@@ -96,12 +100,80 @@ extension Optional where Wrapped == ProgramGuide {
         self?.riskSectionIntro?.programGuideNonEmpty ?? "Ting som kan gjøre en god kampanje mindre god."
     }
 
-    var campaignsSectionTitleText: String {
-        self?.campaignsSectionTitle?.programGuideNonEmpty ?? "Kampanjer nå"
-    }
+}
 
-    func campaignsSectionIntroText(for program: BonusProgram) -> String {
-        self?.campaignsSectionIntro?.programGuideNonEmpty ?? "Aktive kampanjer knyttet til \(program.name)."
+extension ProgramGuide {
+    var bodyMarkdownExcerpt: String? {
+        bodyMarkdown?
+            .programGuideMarkdownBlocks
+            .compactMap { block -> String? in
+                switch block {
+                case let .paragraph(text), let .bullet(text):
+                    return text
+                case .heading:
+                    return nil
+                }
+            }
+            .first?
+            .programGuideNonEmpty
+    }
+}
+
+enum ProgramGuideMarkdownBlock: Hashable, Identifiable {
+    case heading(level: Int, text: String)
+    case paragraph(String)
+    case bullet(String)
+
+    var id: Int {
+        hashValue
+    }
+}
+
+extension String {
+    var programGuideMarkdownBlocks: [ProgramGuideMarkdownBlock] {
+        var blocks: [ProgramGuideMarkdownBlock] = []
+        var paragraphLines: [String] = []
+
+        func flushParagraph() {
+            let text = paragraphLines.joined(separator: " ").programGuideNonEmpty
+            if let text {
+                blocks.append(.paragraph(text))
+            }
+            paragraphLines.removeAll()
+        }
+
+        for rawLine in components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if line.isEmpty {
+                flushParagraph()
+                continue
+            }
+
+            if line.hasPrefix("#") {
+                flushParagraph()
+                let level = min(line.prefix(while: { $0 == "#" }).count, 3)
+                let text = line.dropFirst(level).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    blocks.append(.heading(level: level, text: text))
+                }
+                continue
+            }
+
+            if line.hasPrefix("- ") || line.hasPrefix("* ") {
+                flushParagraph()
+                let text = line.dropFirst(2).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    blocks.append(.bullet(text))
+                }
+                continue
+            }
+
+            paragraphLines.append(line)
+        }
+
+        flushParagraph()
+        return blocks
     }
 }
 

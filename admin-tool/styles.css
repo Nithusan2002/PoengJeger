@@ -462,6 +462,12 @@ button:disabled {
   resize: vertical;
 }
 
+.field textarea.markdown-editor {
+  min-height: 520px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  line-height: 1.55;
+}
+
 .field .hint {
   font-size: 0.82rem;
   color: var(--muted);
@@ -1135,6 +1141,46 @@ button:disabled {
   gap: 9px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+.program-preview-markdown {
+  display: grid;
+  gap: 12px;
+}
+
+.program-preview-markdown h4,
+.program-preview-markdown h5 {
+  margin: 8px 0 0;
+  color: var(--text);
+  line-height: 1.18;
+}
+
+.program-preview-markdown h4 {
+  font-size: 1.08rem;
+}
+
+.program-preview-markdown h5 {
+  font-size: 0.96rem;
+}
+
+.program-preview-markdown p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.program-preview-bullet {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  gap: 9px;
+  align-items: baseline;
+}
+
+.program-preview-bullet span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .program-preview-paragraphs {

@@ -88,7 +88,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
 
     private func fetchProgramGuides() async throws -> [ProgramGuide] {
         let queryItems = [
-            URLQueryItem(name: "select", value: "id,program_id,status,intro_text,strategy,value_estimate_label,value_estimate_detail,expiration_summary,expiration_detail,guide_kicker,reading_time_label,strategy_section_title,decision_section_title,earning_decision_label,redemption_decision_label,risk_decision_label,earning_section_title,earning_section_intro,redemption_section_title,redemption_section_intro,risk_section_title,risk_section_intro,campaigns_section_title,campaigns_section_intro,earning_tips,redemption_tips,risk_notes,last_reviewed_at"),
+            URLQueryItem(name: "select", value: "id,program_id,status,intro_text,body_markdown,strategy,value_estimate_label,value_estimate_detail,expiration_summary,expiration_detail,guide_kicker,reading_time_label,strategy_section_title,decision_section_title,earning_decision_label,redemption_decision_label,risk_decision_label,earning_section_title,earning_section_intro,redemption_section_title,redemption_section_intro,risk_section_title,risk_section_intro,campaigns_section_title,campaigns_section_intro,earning_tips,redemption_tips,risk_notes,last_reviewed_at"),
             URLQueryItem(name: "status", value: "eq.published"),
             URLQueryItem(name: "order", value: "last_reviewed_at.desc.nullslast")
         ]
@@ -356,7 +356,8 @@ private struct ProgramGuideDTO: Decodable {
     let programID: UUID
     let status: String
     let introText: String?
-    let strategy: String
+    let bodyMarkdown: String?
+    let strategy: String?
     let valueEstimateLabel: String?
     let valueEstimateDetail: String?
     let expirationSummary: String?
@@ -386,6 +387,7 @@ private struct ProgramGuideDTO: Decodable {
         case programID = "program_id"
         case status
         case introText = "intro_text"
+        case bodyMarkdown = "body_markdown"
         case strategy
         case valueEstimateLabel = "value_estimate_label"
         case valueEstimateDetail = "value_estimate_detail"
@@ -422,7 +424,8 @@ private struct ProgramGuideDTO: Decodable {
             programID: programID,
             status: guideStatus,
             introText: introText,
-            strategy: strategy,
+            bodyMarkdown: bodyMarkdown,
+            strategy: strategy ?? bodyMarkdown ?? "",
             valueEstimateLabel: valueEstimateLabel,
             valueEstimateDetail: valueEstimateDetail,
             expirationSummary: expirationSummary,
