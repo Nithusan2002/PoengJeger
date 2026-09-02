@@ -3,6 +3,7 @@
 
   const CONFIG = window.ADMIN_TOOL_CONFIG || {};
   const STORAGE_KEY = "poengjeger_admin_session";
+  const SIDEBAR_STORAGE_KEY = "poengjeger_admin_sidebar_collapsed";
   const SESSION_REFRESH_MARGIN_SECONDS = 60;
   const CAMPAIGN_STATUS_LABELS = {
     draft: "Draft",
@@ -96,6 +97,7 @@
     selectedProgramGuideId: null,
     newProgramGuideDraft: null,
     programGuidePreviewExpanded: false,
+    sidebarCollapsed: loadSidebarCollapsed(),
     activePanelId: "queue-panel",
     loading: false,
     programGuideManualCopyAvailable: true,
@@ -157,8 +159,11 @@
     statusFilter: document.querySelector("#status-filter")
   };
   elements.campaignWorkbar = document.querySelector("#campaign-workbar");
+  elements.workspaceFrame = document.querySelector("#workspace-frame");
   elements.workspaceNav = document.querySelector("#workspace-nav");
   elements.workspaceNavButtons = Array.from(document.querySelectorAll("[data-panel-target]"));
+  elements.workspaceNavToggle = document.querySelector("#workspace-nav-toggle");
+  elements.workspaceSidebar = document.querySelector("#workspace-sidebar");
 
   elements.loginForm.addEventListener("submit", onLoginSubmit);
   elements.ingestButton.addEventListener("click", runIngestionFromAdmin);
@@ -176,6 +181,9 @@
     button.addEventListener("click", function () {
       setActivePanel(button.getAttribute("data-panel-target"));
     });
+  });
+  elements.workspaceNavToggle.addEventListener("click", function () {
+    setSidebarCollapsed(!state.sidebarCollapsed);
   });
   Array.from(document.querySelectorAll("[data-personal-target]")).forEach((button) => {
     button.addEventListener("click", function () {
@@ -906,6 +914,7 @@
     elements.personalDashboard.classList.add("hidden");
     elements.opsOverview.classList.add("hidden");
     elements.workspaceNav.classList.add("hidden");
+    elements.workspaceSidebar.classList.add("hidden");
     elements.signOutButton.classList.add("hidden");
     elements.sessionPill.classList.add("hidden");
   }
@@ -915,8 +924,10 @@
     elements.personalDashboard.classList.remove("hidden");
     elements.opsOverview.classList.remove("hidden");
     elements.workspaceNav.classList.remove("hidden");
+    elements.workspaceSidebar.classList.remove("hidden");
     elements.signOutButton.classList.remove("hidden");
     elements.sessionPill.classList.remove("hidden");
+    setSidebarCollapsed(state.sidebarCollapsed);
     setActivePanel(state.activePanelId);
   }
 
@@ -1064,6 +1075,14 @@
       button.setAttribute("aria-current", isActive ? "page" : "false");
     });
     updateActivePanelDensity();
+  }
+
+  function setSidebarCollapsed(isCollapsed) {
+    state.sidebarCollapsed = Boolean(isCollapsed);
+    elements.workspaceFrame.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
+    elements.workspaceNavToggle.textContent = state.sidebarCollapsed ? "Meny" : "Skjul meny";
+    elements.workspaceNavToggle.setAttribute("aria-expanded", state.sidebarCollapsed ? "false" : "true");
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, state.sidebarCollapsed ? "true" : "false");
   }
 
   function updateActivePanelDensity() {
@@ -3687,6 +3706,14 @@
       return session;
     } catch (_error) {
       return null;
+    }
+  }
+
+  function loadSidebarCollapsed() {
+    try {
+      return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    } catch (_error) {
+      return false;
     }
   }
 

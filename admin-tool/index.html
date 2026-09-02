@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Poengjeger Admin</title>
-    <link rel="stylesheet" href="./styles.css?v=2026090212" />
+    <link rel="stylesheet" href="./styles.css?v=2026090213" />
   </head>
   <body>
     <div class="shell">
@@ -23,27 +23,34 @@
         </div>
       </header>
 
-      <nav id="workspace-nav" class="workspace-nav hidden" aria-label="Adminseksjoner">
-        <button class="nav-item active" type="button" data-panel-target="queue-panel">
-          <span>Kø</span>
-          <small>Nye funn</small>
-        </button>
-        <button class="nav-item" type="button" data-panel-target="campaign-panel">
-          <span>Kampanjer</span>
-          <small>Draft</small>
-        </button>
-        <button class="nav-item" type="button" data-panel-target="store-earning-panel">
-          <span>Butikker</span>
-          <small>Draft</small>
-        </button>
-        <button class="nav-item" type="button" data-panel-target="program-guide-panel">
-          <span>Guider</span>
-          <small>Sjeldnere</small>
-        </button>
-      </nav>
+      <div id="workspace-frame" class="workspace-frame">
+        <aside id="workspace-sidebar" class="workspace-sidebar hidden" aria-label="Arbeidsområder">
+          <button id="workspace-nav-toggle" class="sidebar-toggle secondary" type="button" aria-expanded="true">
+            Skjul meny
+          </button>
 
-      <main class="layout">
-        <section id="personal-dashboard" class="personal-dashboard hidden" aria-label="Dagens adminjobb">
+          <nav id="workspace-nav" class="workspace-nav hidden" aria-label="Adminseksjoner">
+            <button class="nav-item active" type="button" data-panel-target="queue-panel">
+              <span>Kø</span>
+              <small>Nye funn</small>
+            </button>
+            <button class="nav-item" type="button" data-panel-target="campaign-panel">
+              <span>Kampanjer</span>
+              <small>Draft</small>
+            </button>
+            <button class="nav-item" type="button" data-panel-target="store-earning-panel">
+              <span>Butikker</span>
+              <small>Draft</small>
+            </button>
+            <button class="nav-item" type="button" data-panel-target="program-guide-panel">
+              <span>Guider</span>
+              <small>Sjeldnere</small>
+            </button>
+          </nav>
+        </aside>
+
+        <main class="layout">
+          <section id="personal-dashboard" class="personal-dashboard hidden" aria-label="Dagens adminjobb">
           <div>
             <p class="eyebrow">Dagens jobb</p>
             <h2>Neste oppgave</h2>
@@ -62,9 +69,9 @@
               Kampanje-drafts <strong id="personal-campaign-count">0</strong>
             </button>
           </div>
-        </section>
+          </section>
 
-        <section id="ops-overview" class="ops-overview hidden" aria-label="Operativ oversikt">
+          <section id="ops-overview" class="ops-overview hidden" aria-label="Operativ oversikt">
           <article class="ops-card">
             <span class="ops-label">Nye funn</span>
             <strong id="ops-queue-count">0</strong>
@@ -85,9 +92,9 @@
             <strong id="ops-focus-label">Kø</strong>
             <small id="ops-focus-note">Lag draft eller avvis.</small>
           </article>
-        </section>
+          </section>
 
-        <section id="auth-panel" class="panel auth-panel">
+          <section id="auth-panel" class="panel auth-panel">
           <div class="panel-header">
             <h2>Intern innlogging</h2>
             <p>Kun admin- eller editor-brukere med Supabase Auth skal ha tilgang.</p>
@@ -116,9 +123,9 @@
           <div id="auth-message" class="message muted">
             Verktøyet krever lokal konfigurasjon i <code>admin-tool/config.local.js</code>.
           </div>
-        </section>
+          </section>
 
-        <section id="queue-panel" class="panel module-panel hidden">
+          <section id="queue-panel" class="panel module-panel hidden">
           <div class="panel-header split">
             <div>
               <h2>Kandidatkø</h2>
@@ -167,9 +174,9 @@
               <p>Velg en kandidat for detaljer.</p>
             </aside>
           </div>
-        </section>
+          </section>
 
-        <section id="campaign-panel" class="panel module-panel hidden">
+          <section id="campaign-panel" class="panel module-panel hidden">
           <div class="panel-header split">
             <div>
               <h2>Kampanjer</h2>
@@ -205,9 +212,9 @@
               <p>Velg en kampanje for å redigere draften.</p>
             </aside>
           </div>
-        </section>
+          </section>
 
-        <section id="store-earning-panel" class="panel module-panel hidden">
+          <section id="store-earning-panel" class="panel module-panel hidden">
           <div class="panel-header split">
             <div>
               <h2>Butikker og opptjening</h2>
@@ -242,9 +249,9 @@
               <p>Velg en sats for å redigere butikkopptjening.</p>
             </aside>
           </div>
-        </section>
+          </section>
 
-        <section id="program-guide-panel" class="panel module-panel hidden">
+          <section id="program-guide-panel" class="panel module-panel hidden">
           <div class="panel-header split">
             <div>
               <h2>Lær og programguider</h2>
@@ -268,11 +275,12 @@
               <p>Velg eller opprett en guide.</p>
             </aside>
           </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </div>
     </div>
 
     <script src="./config.local.js?v=local"></script>
-    <script src="./app.js?v=2026090205"></script>
+    <script src="./app.js?v=2026090213"></script>
   </body>
 </html>
