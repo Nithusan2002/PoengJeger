@@ -140,11 +140,11 @@ private struct LearnFilterBar: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(selection == filter ? .primary : PoengjegerTheme.accent)
-                    .background(selection == filter ? PoengjegerTheme.primaryTint : PoengjegerTheme.elevatedSurface)
+                    .background(PoengjegerTheme.elevatedSurface)
                     .clipShape(Capsule())
                     .overlay {
                         Capsule()
-                            .stroke(selection == filter ? PoengjegerTheme.primaryBorder : PoengjegerTheme.border, lineWidth: 1)
+                            .stroke(selection == filter ? PoengjegerTheme.accent : PoengjegerTheme.border, lineWidth: 1)
                     }
                     .accessibilityAddTraits(selection == filter ? .isSelected : [])
                 }

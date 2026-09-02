@@ -55,51 +55,6 @@ extension Optional where Wrapped == ProgramGuide {
     var readingTimeLabelText: String {
         self?.readingTimeLabel?.programGuideNonEmpty ?? "4 min lesing"
     }
-
-    var strategySectionTitleText: String {
-        self?.strategySectionTitle?.programGuideNonEmpty ?? "Slik bør du bruke det"
-    }
-
-    var decisionSectionTitleText: String {
-        self?.decisionSectionTitle?.programGuideNonEmpty ?? "Før du går videre"
-    }
-
-    var earningDecisionLabelText: String {
-        self?.earningDecisionLabel?.programGuideNonEmpty ?? "Tjen poeng når"
-    }
-
-    var redemptionDecisionLabelText: String {
-        self?.redemptionDecisionLabel?.programGuideNonEmpty ?? "Bruk poeng når"
-    }
-
-    var riskDecisionLabelText: String {
-        self?.riskDecisionLabel?.programGuideNonEmpty ?? "Stopp opp hvis"
-    }
-
-    var earningSectionTitleText: String {
-        self?.earningSectionTitle?.programGuideNonEmpty ?? "Slik tjener du poeng"
-    }
-
-    var earningSectionIntroText: String {
-        self?.earningSectionIntro?.programGuideNonEmpty ?? "Start med det du allerede skal kjøpe eller bruke."
-    }
-
-    var redemptionSectionTitleText: String {
-        self?.redemptionSectionTitle?.programGuideNonEmpty ?? "Slik bruker du poengene smart"
-    }
-
-    var redemptionSectionIntroText: String {
-        self?.redemptionSectionIntro?.programGuideNonEmpty ?? "Bruk poengene der du ser hva du får igjen."
-    }
-
-    var riskSectionTitleText: String {
-        self?.riskSectionTitle?.programGuideNonEmpty ?? "Vanlige feller"
-    }
-
-    var riskSectionIntroText: String {
-        self?.riskSectionIntro?.programGuideNonEmpty ?? "Ting som kan gjøre en god kampanje mindre god."
-    }
-
 }
 
 extension ProgramGuide {
@@ -116,6 +71,69 @@ extension ProgramGuide {
             }
             .first?
             .programGuideNonEmpty
+    }
+
+    func articleMarkdown(for program: BonusProgram) -> String? {
+        if let bodyMarkdown = bodyMarkdown?.programGuideNonEmpty {
+            return bodyMarkdown
+        }
+
+        var sections: [String] = []
+        sections.append("# \(program.name)")
+
+        if let intro = introText?.programGuideNonEmpty {
+            sections.append(intro)
+        }
+
+        if let strategy = strategy.programGuideNonEmpty {
+            sections.append("## \(strategySectionTitle?.programGuideNonEmpty ?? "Slik bør du bruke det")\n\n\(strategy)")
+        }
+
+        appendMarkdownSection(
+            title: earningSectionTitle?.programGuideNonEmpty ?? "Slik tjener du poeng",
+            intro: earningSectionIntro?.programGuideNonEmpty,
+            items: earningTips,
+            to: &sections
+        )
+        appendMarkdownSection(
+            title: redemptionSectionTitle?.programGuideNonEmpty ?? "Slik bruker du poengene smart",
+            intro: redemptionSectionIntro?.programGuideNonEmpty,
+            items: redemptionTips,
+            to: &sections
+        )
+        appendMarkdownSection(
+            title: riskSectionTitle?.programGuideNonEmpty ?? "Vanlige feller",
+            intro: riskSectionIntro?.programGuideNonEmpty,
+            items: riskNotes,
+            to: &sections
+        )
+
+        let markdown = sections.joined(separator: "\n\n")
+        return markdown.programGuideMarkdownBlocks.isEmpty ? nil : markdown
+    }
+
+    private func appendMarkdownSection(
+        title: String,
+        intro: String?,
+        items: [String],
+        to sections: inout [String]
+    ) {
+        var lines = ["## \(title)"]
+
+        if let intro {
+            lines.append("")
+            lines.append(intro)
+        }
+
+        let normalizedItems = items.compactMap(\.programGuideNonEmpty)
+        if !normalizedItems.isEmpty {
+            lines.append("")
+            lines.append(contentsOf: normalizedItems.map { "- \($0)" })
+        }
+
+        if lines.count > 1 {
+            sections.append(lines.joined(separator: "\n"))
+        }
     }
 }
 

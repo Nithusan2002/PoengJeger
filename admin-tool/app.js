@@ -2250,7 +2250,6 @@
 
   function renderProgramGuidePreview(program, guide) {
     const markdown = programGuideEditorMarkdown(guide, program);
-    const intro = markdownExcerpt(markdown) || "Intro vises her når du skriver.";
 
     return `
       <div class="program-preview-device">
@@ -2266,7 +2265,6 @@
             <div>
               <span>PROGRAMGUIDE</span>
               <h3>${escapeHtml(program.name)}</h3>
-              <p>${escapeHtml(intro)}</p>
             </div>
           </header>
 
