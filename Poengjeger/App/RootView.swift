@@ -24,6 +24,7 @@ struct RootView: View {
                 }
             }
         }
+        .preferredColorScheme(environment.userSession.prefersDarkMode ? .dark : .light)
         .task {
             await environment.loadIfNeeded()
         }

@@ -19,6 +19,8 @@ struct SettingsView: View {
                     selectedProgramIDs: $environment.userSession.selectedProgramIDs
                 )
 
+                ProfileAppearanceSection(prefersDarkMode: $environment.userSession.prefersDarkMode)
+
                 notificationCard
 
                 #if DEBUG
@@ -208,6 +210,48 @@ private struct ProfileProgramRow: View {
         .contentShape(Rectangle())
         .tint(PoengjegerTheme.primary)
         .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
+    }
+}
+
+private struct ProfileAppearanceSection: View {
+    @Binding var prefersDarkMode: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Toggle(isOn: $prefersDarkMode) {
+                HStack(spacing: 12) {
+                    Image(systemName: "moon.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PoengjegerTheme.primary)
+                        .frame(width: 34, height: 34)
+                        .background(PoengjegerTheme.primarySoft)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Mørk modus")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+
+                        Text(prefersDarkMode ? "Appen vises med mørk bakgrunn." : "Appen vises med lys bakgrunn.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .padding(14)
+            .tint(PoengjegerTheme.primary)
+            .accessibilityValue(prefersDarkMode ? "På" : "Av")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PoengjegerTheme.elevatedSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(PoengjegerTheme.border, lineWidth: 1)
+        }
     }
 }
 

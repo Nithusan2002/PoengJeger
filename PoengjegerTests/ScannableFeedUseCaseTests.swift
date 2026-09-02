@@ -40,7 +40,8 @@ struct ScannableFeedUseCaseTests {
             selectedProgramIDs: [SampleData.trumf.id],
             favoriteCampaignIDs: [SampleData.campaigns[0].id],
             favoriteStoreIDs: [SampleData.stores[0].id],
-            notificationsEnabled: false
+            notificationsEnabled: false,
+            prefersDarkMode: true
         )
 
         let data = try JSONEncoder().encode(session)
@@ -67,6 +68,7 @@ struct ScannableFeedUseCaseTests {
         #expect(decoded.favoriteCampaignIDs == [SampleData.campaigns[0].id])
         #expect(decoded.favoriteStoreIDs.isEmpty)
         #expect(decoded.notificationsEnabled == false)
+        #expect(decoded.prefersDarkMode == false)
     }
 
     @MainActor
