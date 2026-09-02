@@ -95,6 +95,7 @@
     selectedProgramGuideProgramId: null,
     selectedProgramGuideId: null,
     newProgramGuideDraft: null,
+    programGuidePreviewExpanded: false,
     activePanelId: "queue-panel",
     loading: false,
     programGuideManualCopyAvailable: true,
@@ -2036,7 +2037,7 @@
             </div>
           </section>
 
-          <aside class="program-guide-preview-pane">
+          <aside class="program-guide-preview-pane${state.programGuidePreviewExpanded ? " preview-expanded" : ""}">
             <div class="preview-sticky">
               <section class="program-guide-side-section">
                 <div class="preview-heading">
@@ -2057,9 +2058,14 @@
                     <span>Forhåndsvisning</span>
                     <strong>${escapeHtml(programGuideTitle(draft, program))}</strong>
                   </div>
-                  <div class="preview-mode-tabs" aria-label="Preview mode">
-                    <span class="active">Mobil</span>
-                    <span>Artikkel</span>
+                  <div class="preview-tools">
+                    <div class="preview-mode-tabs" aria-label="Preview mode">
+                      <span class="active">Mobil</span>
+                      <span>Artikkel</span>
+                    </div>
+                    <button type="button" class="secondary compact-button" data-guide-preview-toggle>
+                      ${state.programGuidePreviewExpanded ? "Kort preview" : "Full preview"}
+                    </button>
                   </div>
                 </div>
                 <div id="program-guide-live-preview">
@@ -2083,6 +2089,14 @@
         await saveProgramGuideEditor(form, guide, button.getAttribute("data-guide-action"));
       });
     });
+
+    const previewToggleButton = elements.programGuideDetailPanel.querySelector("[data-guide-preview-toggle]");
+    if (previewToggleButton) {
+      previewToggleButton.addEventListener("click", function () {
+        state.programGuidePreviewExpanded = !state.programGuidePreviewExpanded;
+        renderProgramGuideDetail();
+      });
+    }
 
     form.addEventListener("input", function () {
       updateProgramGuideDraftAssist(form);
