@@ -55,12 +55,16 @@
 }
 
 html {
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--bg);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: clip;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -83,6 +87,7 @@ input,
 select,
 textarea {
   font: inherit;
+  min-width: 0;
 }
 
 button {
@@ -136,6 +141,7 @@ button:disabled {
 
 .shell {
   width: min(1880px, calc(100% - clamp(32px, 4vw, 72px)));
+  max-width: 100%;
   margin: 0 auto;
   padding: 22px 0 42px;
 }
@@ -185,6 +191,7 @@ button:disabled {
 .layout {
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .workspace-nav {
@@ -844,6 +851,7 @@ button:disabled {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.4fr);
   gap: 18px;
   align-items: start;
+  min-width: 0;
 }
 
 @media (min-width: 1500px) {
@@ -860,6 +868,7 @@ button:disabled {
 
 .program-guide-preview-pane {
   min-width: 0;
+  max-width: 100%;
 }
 
 .preview-sticky {
@@ -867,12 +876,15 @@ button:disabled {
   top: 12px;
   display: grid;
   gap: 18px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .program-guide-side-section {
   display: grid;
   gap: 12px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .preview-heading,
@@ -884,15 +896,21 @@ button:disabled {
 }
 
 .preview-heading {
+  flex-wrap: wrap;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-muted);
 }
 
+.preview-heading > div:first-child {
+  min-width: 0;
+}
+
 .preview-heading strong {
   display: block;
   margin-top: 3px;
+  overflow-wrap: anywhere;
 }
 
 .preview-mode-tabs {
@@ -921,7 +939,10 @@ button:disabled {
 .preview-tools {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
+  min-width: 0;
 }
 
 .preview-heading > div:first-child > span,
@@ -1047,6 +1068,7 @@ button:disabled {
 
 .program-preview-device {
   display: grid;
+  max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1075,6 +1097,8 @@ button:disabled {
   display: grid;
   gap: 18px;
   padding: 18px;
+  min-width: 0;
+  max-width: 100%;
   background: linear-gradient(180deg, var(--surface), var(--surface-raised));
 }
 
@@ -1563,6 +1587,8 @@ code {
 .content-grid {
   grid-template-columns: minmax(280px, clamp(320px, 25vw, 440px)) minmax(0, 1fr);
   gap: 0;
+  width: 100%;
+  min-width: 0;
   background: transparent;
 }
 
@@ -1610,6 +1636,7 @@ code {
   padding: 18px 20px 24px;
   border: 0;
   border-radius: 0;
+  min-width: 0;
   background: transparent;
   box-shadow: none;
 }
@@ -1671,6 +1698,7 @@ code {
 .program-guide-editor-layout {
   grid-template-columns: minmax(0, 1fr) minmax(300px, 0.32fr);
   gap: 32px;
+  max-width: 100%;
 }
 
 .program-guide-preview-pane .draft-readiness {
@@ -1699,6 +1727,7 @@ code {
 
 .program-guide-preview-pane:not(.preview-expanded) #program-guide-live-preview {
   max-height: 620px;
+  max-width: 100%;
   overflow: auto;
   overscroll-behavior: contain;
   border-bottom: 1px solid var(--border);
@@ -1706,7 +1735,18 @@ code {
 
 .program-guide-preview-pane.preview-expanded #program-guide-live-preview {
   max-height: none;
+  max-width: 100%;
   overflow: visible;
+}
+
+@media (max-width: 1320px) {
+  .program-guide-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-sticky {
+    position: static;
+  }
 }
 
 @media (max-width: 1100px) {
