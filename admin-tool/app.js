@@ -2071,24 +2071,27 @@
                 ${renderProgramGuideSchemaNotice()}
               </section>
 
-              <section class="program-guide-side-section">
+              <section class="program-guide-side-section preview-section">
                 <div class="preview-heading">
                   <div>
                     <span>Forhåndsvisning</span>
                     <strong>${escapeHtml(programGuideTitle(draft, program))}</strong>
                   </div>
                   <div class="preview-tools">
-                    <div class="preview-mode-tabs" aria-label="Preview mode">
-                      <span class="active">Mobil</span>
-                      <span>Artikkel</span>
-                    </div>
+                    <span class="preview-device-label">Mobil</span>
                     <button type="button" class="secondary compact-button" data-guide-preview-toggle>
-                      ${state.programGuidePreviewExpanded ? "Kort preview" : "Full preview"}
+                      ${state.programGuidePreviewExpanded ? "Skjul full preview" : "Vis full preview"}
                     </button>
                   </div>
                 </div>
-                <div id="program-guide-live-preview">
-                  ${renderProgramGuidePreview(program, draft)}
+                <div id="program-guide-live-preview" class="program-guide-live-preview ${
+                  state.programGuidePreviewExpanded ? "is-expanded" : "is-summary"
+                }">
+                  ${
+                    state.programGuidePreviewExpanded
+                      ? renderProgramGuidePreview(program, draft)
+                      : renderProgramGuidePreviewSummary(program, draft)
+                  }
                 </div>
               </section>
             </div>
@@ -2379,6 +2382,49 @@
     `;
   }
 
+  function renderProgramGuidePreviewSummary(program, guide) {
+    const markdown = programGuideEditorMarkdown(guide, program);
+    const blocks = markdownBlocks(markdown);
+    const excerpt = firstTextLine(markdownExcerpt(markdown), "Guiden vises her når du skriver.");
+    const headingCount = blocks.filter((block) => block.type === "heading").length;
+    const bulletCount = blocks.filter((block) => block.type === "bullet").length;
+    const wordCount = String(markdown || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+
+    return `
+      <article class="program-preview-summary-card">
+        <div class="program-preview-summary-topline">
+          <span class="program-preview-mark">${escapeHtml(programInitials(program))}</span>
+          <div>
+            <span>Mobilpreview</span>
+            <strong>${escapeHtml(programGuideTitle(guide, program))}</strong>
+          </div>
+        </div>
+
+        <p>${escapeHtml(excerpt)}</p>
+
+        <dl class="program-preview-summary-meta">
+          <div>
+            <dt>Ord</dt>
+            <dd>${wordCount}</dd>
+          </div>
+          <div>
+            <dt>Seksjoner</dt>
+            <dd>${headingCount}</dd>
+          </div>
+          <div>
+            <dt>Punkter</dt>
+            <dd>${bulletCount}</dd>
+          </div>
+        </dl>
+
+        <span class="help">Bruk full preview når du vil se hele artikkelen slik den rendres.</span>
+      </article>
+    `;
+  }
+
   function updateProgramGuideDraftAssist(form) {
     const draft = collectProgramGuideDraftFromForm(form);
     const program = programForGuide(draft);
@@ -2390,7 +2436,9 @@
     }
 
     if (previewContainer) {
-      previewContainer.innerHTML = renderProgramGuidePreview(program, draft);
+      previewContainer.innerHTML = state.programGuidePreviewExpanded
+        ? renderProgramGuidePreview(program, draft)
+        : renderProgramGuidePreviewSummary(program, draft);
     }
 
     updateProgramGuidePublishButtonState(form, programGuideReadiness(draft));
