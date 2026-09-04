@@ -36,6 +36,7 @@ Publiserte butikker, opptjeningsmetoder, satser og kombinasjoner kan leses av kl
 - `user_favorite_campaigns`: lagrede kampanjer.
 - `notification_subscriptions`: valgfrie program- eller kategoriabonnementer.
 - `product_events`: pseudonyme produktanalytics-events for å validere MVP-bruk og premium-kandidater. Klienten kan bare skrive events; lesetilgang er begrenset til redaksjonelle medlemmer.
+- `analytics_sanity_7d`: read-only view med syvdagers aggregerte tellinger for kjerneeventene i traktmålingen. Viewet eksponerer ikke rå bruker- eller sesjons-IDer og bruker `security_invoker`, slik at `product_events` sin RLS fortsatt gjelder.
 
 Brukerdata er knyttet til Supabase Auth og omfattes av RLS. Appen lagrer ikke bonuskontoer, private saldi eller transaksjoner.
 
