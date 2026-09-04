@@ -5,6 +5,7 @@ struct HomeView: View {
     @FocusState private var isSearchFocused: Bool
     @State private var searchText = ""
     @State private var hasTrackedCurrentSearch = false
+    @State private var selectedStore: Store?
 
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -53,7 +54,7 @@ struct HomeView: View {
         .navigationTitle("Hjem")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
-        .navigationDestination(for: Store.self) { store in
+        .navigationDestination(item: $selectedStore) { store in
             StoreDetailView(store: store)
         }
         .onChange(of: searchText) {
@@ -160,13 +161,12 @@ struct HomeView: View {
                 EmptyStoreSearchView(isSearching: false)
             } else {
                 ForEach(Array(quickSuggestions.enumerated()), id: \.element.id) { index, store in
-                    NavigationLink(value: store) {
+                    Button {
+                        openStore(store, entryPoint: "suggestion", rank: index + 1)
+                    } label: {
                         StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
-                    .simultaneousGesture(TapGesture().onEnded {
-                        trackStoreOpen(store, entryPoint: "suggestion", rank: index + 1)
-                    })
                 }
             }
         }
@@ -189,13 +189,12 @@ struct HomeView: View {
                 EmptyStoreSearchView(isSearching: true)
             } else {
                 ForEach(Array(matchingStores.enumerated()), id: \.element.id) { index, store in
-                    NavigationLink(value: store) {
+                    Button {
+                        openStore(store, entryPoint: "search", rank: index + 1)
+                    } label: {
                         StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
-                    .simultaneousGesture(TapGesture().onEnded {
-                        trackStoreOpen(store, entryPoint: "search", rank: index + 1)
-                    })
                 }
             }
         }
@@ -215,6 +214,11 @@ struct HomeView: View {
             surface: "store_search",
             properties: ["entry_point": "home"]
         ))
+    }
+
+    private func openStore(_ store: Store, entryPoint: String, rank: Int) {
+        trackStoreOpen(store, entryPoint: entryPoint, rank: rank)
+        selectedStore = store
     }
 
     private func trackStoreOpen(_ store: Store, entryPoint: String, rank: Int) {

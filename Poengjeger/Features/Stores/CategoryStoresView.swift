@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CategoryStoresView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var selectedStore: Store?
     let categoryName: String
 
     private var stores: [Store] {
@@ -31,13 +32,12 @@ struct CategoryStoresView: View {
                     .padding(.vertical, 24)
                 } else {
                     ForEach(Array(stores.enumerated()), id: \.element.id) { index, store in
-                        NavigationLink(value: store) {
+                        Button {
+                            openStore(store, rank: index + 1)
+                        } label: {
                             CategoryStoreRow(store: store, selectedProgramIDs: selectedProgramIDs)
                         }
                         .buttonStyle(.plain)
-                        .simultaneousGesture(TapGesture().onEnded {
-                            trackStoreOpen(store, rank: index + 1)
-                        })
                     }
                 }
             }
@@ -49,6 +49,14 @@ struct CategoryStoresView: View {
         .navigationTitle(categoryName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .navigationDestination(item: $selectedStore) { store in
+            StoreDetailView(store: store)
+        }
+    }
+
+    private func openStore(_ store: Store, rank: Int) {
+        trackStoreOpen(store, rank: rank)
+        selectedStore = store
     }
 
     private func trackStoreOpen(_ store: Store, rank: Int) {
