@@ -66,6 +66,8 @@ Før premium bygges bør minst to av disse signalene være sanne i en pilotperio
 
 Tersklene bør tallfestes etter første interne/pilotbruk, når vi vet omtrent hvor mange brukere og kampanjer som inngår.
 
+Den ukentlige operative sanity-sjekken for pilotmålingene er beskrevet i `docs/analytics-pilot-runbook.md`.
+
 ## Lagring i MVP
 
 Anbefalt første løsning er en enkel Supabase-tabell for produkt-events, ikke en ekstern analytics-SDK.
