@@ -45,7 +45,8 @@ struct LearnView: View {
                                     NavigationLink {
                                         ProgramDetailView(
                                             program: program,
-                                            guide: guide
+                                            guide: guide,
+                                            entryPoint: "learn"
                                         )
                                     } label: {
                                         LearnGuideRow(

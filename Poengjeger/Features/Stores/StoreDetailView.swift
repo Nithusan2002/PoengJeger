@@ -78,6 +78,7 @@ struct StoreDetailView: View {
         }
         .background(LovableStoreStyle.pageBackground)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .navigationDestination(for: EarningCombination.self) { combination in
             HowToEarnView(store: store, combination: combination)
         }
@@ -183,7 +184,11 @@ struct StoreDetailView: View {
                         surface: "store_detail",
                         entityType: "earning_combination",
                         entityID: combination.id,
-                        properties: ["store_id": store.id.uuidString]
+                        properties: [
+                            "store_id": store.id.uuidString,
+                            "destination_type": handoffDestinationNameForDisclosure(combination),
+                            "requires_warning": combination.warningText == nil ? "false" : "true"
+                        ]
                     ))
                 })
 
@@ -357,7 +362,11 @@ struct StoreDetailView: View {
                             surface: "store_detail_action",
                             entityType: "earning_combination",
                             entityID: combination.id,
-                            properties: ["store_id": store.id.uuidString]
+                            properties: [
+                                "store_id": store.id.uuidString,
+                                "destination_type": handoffDestinationNameForDisclosure(combination),
+                                "requires_warning": combination.warningText == nil ? "false" : "true"
+                            ]
                         ))
                     })
 
@@ -474,6 +483,7 @@ struct StoreDetailView: View {
             entityType: "store",
             entityID: store.id,
             properties: [
+                "program_ids": programIDs.map(\.uuidString).sorted().joined(separator: ","),
                 "program_count": "\(programIDs.count)",
                 "has_active_campaign": activePromotions.isEmpty ? "false" : "true",
                 "has_best_combination": preferredCombination == nil ? "false" : "true",
@@ -482,6 +492,7 @@ struct StoreDetailView: View {
         ))
 
         if let bestCombination = preferredCombination {
+            let bestProgramIDs = Set(rates(in: bestCombination).compactMap(\.method.programID))
             environment.track(.init(
                 name: "best_combination_viewed",
                 surface: "store_detail",
@@ -489,6 +500,7 @@ struct StoreDetailView: View {
                 entityID: bestCombination.id,
                 properties: [
                     "store_id": store.id.uuidString,
+                    "program_ids": bestProgramIDs.map(\.uuidString).sorted().joined(separator: ","),
                     "mechanism_count": "\(bestCombination.rateIDs.count)"
                 ]
             ))

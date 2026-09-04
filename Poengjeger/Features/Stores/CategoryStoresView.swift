@@ -30,11 +30,14 @@ struct CategoryStoresView: View {
                     )
                     .padding(.vertical, 24)
                 } else {
-                    ForEach(stores) { store in
+                    ForEach(Array(stores.enumerated()), id: \.element.id) { index, store in
                         NavigationLink(value: store) {
                             CategoryStoreRow(store: store, selectedProgramIDs: selectedProgramIDs)
                         }
                         .buttonStyle(.plain)
+                        .simultaneousGesture(TapGesture().onEnded {
+                            trackStoreOpen(store, rank: index + 1)
+                        })
                     }
                 }
             }
@@ -46,6 +49,28 @@ struct CategoryStoresView: View {
         .navigationTitle(categoryName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+    }
+
+    private func trackStoreOpen(_ store: Store, rank: Int) {
+        let bestCombination = store.bestCombination(for: selectedProgramIDs)
+        var properties = [
+            "entry_point": "category",
+            "rank": "\(rank)",
+            "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
+            "has_best_combination": bestCombination == nil ? "false" : "true"
+        ]
+
+        if let categoryID = store.category?.id {
+            properties["category_id"] = categoryID.uuidString
+        }
+
+        environment.track(.init(
+            name: "store_search_result_opened",
+            surface: "store_search",
+            entityType: "store",
+            entityID: store.id,
+            properties: properties
+        ))
     }
 
     private var header: some View {

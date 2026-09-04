@@ -6,6 +6,12 @@ struct CampaignDetailView: View {
     @State private var isFavorite = false
 
     let campaign: Campaign
+    let entryPoint: String
+
+    init(campaign: Campaign, entryPoint: String = "direct") {
+        self.campaign = campaign
+        self.entryPoint = entryPoint
+    }
 
     var body: some View {
         ScrollView {
@@ -38,7 +44,11 @@ struct CampaignDetailView: View {
                 surface: "campaign_detail",
                 entityType: "campaign",
                 entityID: campaign.id,
-                properties: ["entry_point": "direct"]
+                properties: [
+                    "entry_point": entryPoint,
+                    "program_ids": campaign.linkedProgramIDs.map(\.uuidString).sorted().joined(separator: ","),
+                    "program_count": "\(campaign.linkedProgramIDs.count)"
+                ]
             ))
         }
     }
@@ -49,7 +59,8 @@ struct CampaignDetailView: View {
                 NavigationLink {
                     ProgramDetailView(
                         program: primaryProgram,
-                        guide: primaryProgramGuide
+                        guide: primaryProgramGuide,
+                        entryPoint: "campaign_detail"
                     )
                 } label: {
                     Label(primaryProgram.name.uppercased(), systemImage: "book")

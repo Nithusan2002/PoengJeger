@@ -77,7 +77,7 @@ struct ExploreView: View {
             StoreDetailView(store: store)
         }
         .navigationDestination(for: Campaign.self) { campaign in
-            CampaignDetailView(campaign: campaign)
+            CampaignDetailView(campaign: campaign, entryPoint: "explore")
         }
         .navigationDestination(for: StoreCategoryRoute.self) { route in
             CategoryStoresView(categoryName: route.name)

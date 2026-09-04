@@ -159,13 +159,13 @@ struct HomeView: View {
             } else if quickSuggestions.isEmpty {
                 EmptyStoreSearchView(isSearching: false)
             } else {
-                ForEach(quickSuggestions) { store in
+                ForEach(Array(quickSuggestions.enumerated()), id: \.element.id) { index, store in
                     NavigationLink(value: store) {
                         StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
                     .simultaneousGesture(TapGesture().onEnded {
-                        trackStoreOpen(store, entryPoint: "suggestion")
+                        trackStoreOpen(store, entryPoint: "suggestion", rank: index + 1)
                     })
                 }
             }
@@ -188,13 +188,13 @@ struct HomeView: View {
             if matchingStores.isEmpty {
                 EmptyStoreSearchView(isSearching: true)
             } else {
-                ForEach(matchingStores) { store in
+                ForEach(Array(matchingStores.enumerated()), id: \.element.id) { index, store in
                     NavigationLink(value: store) {
                         StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
                     .buttonStyle(.plain)
                     .simultaneousGesture(TapGesture().onEnded {
-                        trackStoreOpen(store, entryPoint: "search")
+                        trackStoreOpen(store, entryPoint: "search", rank: index + 1)
                     })
                 }
             }
@@ -217,18 +217,25 @@ struct HomeView: View {
         ))
     }
 
-    private func trackStoreOpen(_ store: Store, entryPoint: String) {
+    private func trackStoreOpen(_ store: Store, entryPoint: String, rank: Int) {
         let bestCombination = store.bestCombination(for: environment.selectedFirstPhaseProgramIDs)
+        var properties = [
+            "entry_point": entryPoint,
+            "rank": "\(rank)",
+            "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
+            "has_best_combination": bestCombination == nil ? "false" : "true"
+        ]
+
+        if let categoryID = store.category?.id {
+            properties["category_id"] = categoryID.uuidString
+        }
+
         environment.track(.init(
             name: "store_search_result_opened",
             surface: "store_search",
             entityType: "store",
             entityID: store.id,
-            properties: [
-                "entry_point": entryPoint,
-                "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
-                "has_best_combination": bestCombination == nil ? "false" : "true"
-            ]
+            properties: properties
         ))
     }
 

@@ -75,7 +75,8 @@ struct DetailIntro: View {
                         NavigationLink {
                             ProgramDetailView(
                                 program: primaryProgram,
-                                guide: primaryProgramGuide
+                                guide: primaryProgramGuide,
+                                entryPoint: "campaign_detail_intro"
                             )
                         } label: {
                             Label(primaryProgram.name.uppercased(), systemImage: "book")
@@ -373,7 +374,8 @@ struct ProgramGuideCTA: View {
         NavigationLink {
             ProgramDetailView(
                 program: program,
-                guide: guide
+                guide: guide,
+                entryPoint: "campaign_detail_cta"
             )
         } label: {
             Label(programGuideTitle, systemImage: "graduationcap")

@@ -5,6 +5,13 @@ struct ProgramDetailView: View {
 
     let program: BonusProgram
     let guide: ProgramGuide?
+    let entryPoint: String
+
+    init(program: BonusProgram, guide: ProgramGuide?, entryPoint: String = "guide") {
+        self.program = program
+        self.guide = guide
+        self.entryPoint = entryPoint
+    }
 
     private var articleMarkdown: String? {
         guide?.articleMarkdown(for: program)
@@ -43,7 +50,7 @@ struct ProgramDetailView: View {
                 entityID: guide?.id,
                 properties: [
                     "program_id": program.id.uuidString,
-                    "entry_point": "guide"
+                    "entry_point": entryPoint
                 ]
             ))
         }

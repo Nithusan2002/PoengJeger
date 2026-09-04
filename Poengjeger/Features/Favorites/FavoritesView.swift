@@ -41,7 +41,7 @@ struct FavoritesView: View {
             StoreDetailView(store: store)
         }
         .navigationDestination(for: Campaign.self) { campaign in
-            CampaignDetailView(campaign: campaign)
+            CampaignDetailView(campaign: campaign, entryPoint: "favorites")
         }
         .refreshable {
             await environment.refresh()

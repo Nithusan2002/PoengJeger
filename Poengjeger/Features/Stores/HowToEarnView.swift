@@ -212,15 +212,21 @@ struct HowToEarnView: View {
     private var handoffButton: some View {
         if let url = combination.primaryHandoffURL {
             Button {
+                var properties = [
+                    "store_id": store.id.uuidString,
+                    "destination_type": handoffDestinationName(for: url)
+                ]
+
+                if let programID = primaryHandoffProgramID(for: url) {
+                    properties["program_id"] = programID.uuidString
+                }
+
                 environment.track(.init(
                     name: "external_destination_opened",
                     surface: "how_to_earn",
                     entityType: "earning_combination",
                     entityID: combination.id,
-                    properties: [
-                        "store_id": store.id.uuidString,
-                        "destination_type": handoffDestinationName(for: url)
-                    ]
+                    properties: properties
                 ))
                 openURL(url)
             } label: {
@@ -239,6 +245,13 @@ struct HowToEarnView: View {
                 description: Text("Redaksjonen må legge inn riktig portal før direkte handoff kan brukes.")
             )
         }
+    }
+
+    private func primaryHandoffProgramID(for url: URL) -> UUID? {
+        let combinationRateIDs = Set(combination.rateIDs)
+        return store.earningRates.first { rate in
+            combinationRateIDs.contains(rate.id) && rate.handoffURL == url
+        }?.method.programID
     }
 
     private var handoffDisclosure: some View {

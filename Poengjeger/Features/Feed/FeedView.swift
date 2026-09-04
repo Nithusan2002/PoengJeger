@@ -124,7 +124,7 @@ struct FeedView: View {
             )
         }
         .navigationDestination(for: Campaign.self) { campaign in
-            CampaignDetailView(campaign: campaign)
+            CampaignDetailView(campaign: campaign, entryPoint: "feed")
         }
         .refreshable {
             await environment.refresh()
