@@ -16,6 +16,8 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 - Supabase-datamodell utvides med butikker, opptjeningsmetoder, satser og redaksjonelle kombinasjoner.
 - Kandidatkø som kan promotere funn til utkast, aldri direkte til publisert kampanje.
 - Enkel Guide-fane med læringsstier som forklarer EuroBonus- og Trumf-økosystemene, strategi, vanlige feller og aktive kampanjer uten å innføre en blogg- eller nyhetsflate.
+- Poengnytt-fane som redaksjonell, handlingsrettet aktualitetsflate for nye kampanjer, frister og poengmuligheter. Første versjon gjenbruker publiserte kampanjer før egen nyhetsmodell vurderes.
+- Lagret er flyttet ut av hovedfanene og åpnes fra Hjem, slik at hovednavigasjonen prioriterer returverdi og "sjekk før du handler".
 - Design- og brukerflytretningen er dokumentert i `docs/design-and-user-flow.md`.
 - Premiumabonnement er foretrukket kommersiell retning, men betalingslogikk og hard betalingsmur bygges først etter validering av gjentatt bruk. Lanseringsappen skal fortsatt ha et reelt gratisprodukt. Analytics-planen er dokumentert i `docs/analytics-plan.md`.
 
@@ -36,6 +38,6 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 - Avanserte AI-assistenter.
 - Bred støtte for alle bonusprogrammer ved lansering.
 - Nye poengsystemer før EuroBonus og Trumf er validert.
-- Generisk innholds-, nyhets- eller bloggseksjon.
+- Generisk innholds-, nyhets- eller bloggseksjon uten direkte kobling til kampanjer, frister eller poengopptjening.
 - Hard betalingsmur rundt butikk-/kategorisøk, beste kombinasjon eller nødvendig handoff-informasjon.
 - Automatisk publisering av butikkopptjening eller kombinasjoner uten redaksjonell kontroll.

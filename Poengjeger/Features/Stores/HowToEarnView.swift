@@ -37,7 +37,7 @@ struct HowToEarnView: View {
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
         .task(id: combination.id) {
             environment.track(.init(
-                name: "handoff_opened",
+                name: "how_to_earn_opened",
                 surface: "how_to_earn",
                 entityType: "earning_combination",
                 entityID: combination.id,
@@ -242,7 +242,7 @@ struct HowToEarnView: View {
             ContentUnavailableView(
                 "Ingen handoff-lenke ennå",
                 systemImage: "link.badge.plus",
-                description: Text("Redaksjonen må legge inn riktig portal før direkte handoff kan brukes.")
+                description: Text("Riktig portal må bekreftes før direkte handoff kan brukes.")
             )
         }
     }
@@ -254,26 +254,32 @@ struct HowToEarnView: View {
         }?.method.programID
     }
 
+    @ViewBuilder
     private var handoffDisclosure: some View {
-        VStack(alignment: .center, spacing: 6) {
-            Text("Du sendes videre til \(handoffDestinationNameForDisclosure).")
+        if combination.primaryHandoffURL != nil {
+            VStack(alignment: .center, spacing: 6) {
+                Text("Du sendes videre til \(handoffDestinationNameForDisclosure).")
 
-            Text("Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
-        }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 10)
-    }
-
-    private var compactHandoffDisclosure: some View {
-        Text("Lenken kan gi Poengjeger provisjon.")
+                Text("Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
+            }
             .font(.caption)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 10)
+        }
+    }
+
+    @ViewBuilder
+    private var compactHandoffDisclosure: some View {
+        if combination.primaryHandoffURL != nil {
+            Text("Lenken kan gi Poengjeger provisjon.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 10)
+        }
     }
 
     private var noticeBuckets: HowToEarnNoticeBuckets? {

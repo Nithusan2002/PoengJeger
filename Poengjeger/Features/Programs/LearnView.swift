@@ -110,12 +110,12 @@ private struct LearnHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Guider")
-                .font(.largeTitle.weight(.bold))
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Korte forklaringer for EuroBonus og Trumf, skrevet for valgene du tar før du handler.")
-                .font(.body)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -171,7 +171,7 @@ private struct LearnGuideRow: View {
         guide.introText?.nonEmpty
             ?? guide.bodyMarkdownExcerpt
             ?? guide.strategy.nonEmpty
-            ?? "Guide kommer når innholdet er redaksjonelt kontrollert."
+            ?? "Guide kommer når innholdet er bekreftet."
     }
 
     var body: some View {
@@ -246,7 +246,7 @@ private struct LearnEmptyState: View {
             Text("Ingen programmer ennå")
                 .font(.headline.weight(.semibold))
 
-            Text("Når EuroBonus og Trumf er klare, vises de her med redaksjonelt kontrollerte guider.")
+            Text("Når EuroBonus og Trumf er klare, vises de her med bekreftede guider.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

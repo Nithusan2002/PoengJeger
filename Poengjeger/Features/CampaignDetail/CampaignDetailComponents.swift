@@ -355,7 +355,7 @@ struct CampaignSourceCTA: View {
             ))
             openURL(source.url)
         } label: {
-            Label("Åpne kampanjen hos \(source.sourceName)", systemImage: "arrow.up.right.square")
+            Label("Åpne kampanjen", systemImage: "arrow.up.right.square")
                 .font(.headline.weight(.semibold))
                 .frame(maxWidth: .infinity)
         }

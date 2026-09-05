@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-027: Poengnytt erstatter Lagret som hovedfane
+- Status: Vedtatt
+- Bakgrunn: Lagret er en personlig returflate brukeren åpner ved behov, mens Poengnytt kan gi hyppigere returverdi gjennom nye kampanjer, frister og metoder for poengopptjening. Samtidig skal appen ikke dreies til en generisk nyhets- eller bloggopplevelse.
+- Beslutning: Lagret fjernes fra hovedtabbaren og åpnes fra Hjem via en toppbar-knapp. Hovednavigasjonen får en ny Poengnytt-fane. Første tekniske versjon av Poengnytt avledes fra publiserte, redaksjonelt kontrollerte kampanjer og lenker videre til kampanjedetalj. En egen `news_items`-modell vurderes først når redaksjonelt behov og bruksmønster er tydeligere.
+- Konsekvens: Hovedfanene prioriterer daglig aktualitet og "sjekk før du handler", mens favoritter fortsatt er raskt tilgjengelig. Poengnytt må holdes handlingsrettet og kildeforankret for ikke å øke innholdsarbeidet eller svekke tidligere beslutning om å unngå generisk blogg/nyhetsflate.
+
 ## ADR-026: Publisert butikkopptjening får minimumsvakter
 - Status: Vedtatt
 - Bakgrunn: Butikkflyten er nå en sentral del av "sjekk før du handler". Kampanjepublisering hadde allerede databasevakter for kilde, kontrolltidspunkt og redaksjonell vurdering, mens butikkopptjening kunne publiseres med svakere minimumsgrunnlag.

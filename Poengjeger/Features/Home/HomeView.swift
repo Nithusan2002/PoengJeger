@@ -54,6 +54,18 @@ struct HomeView: View {
         .navigationTitle("Hjem")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    FavoritesView()
+                } label: {
+                    Label("Mine favoritter", systemImage: "star")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PoengjegerTheme.primary)
+                }
+                .accessibilityLabel("Åpne mine favoritter")
+            }
+        }
         .navigationDestination(item: $selectedStore) { store in
             StoreDetailView(store: store)
         }
@@ -303,13 +315,61 @@ struct StoreResultRow: View {
 struct StoreInitialMark: View {
     let name: String
 
+    private var initials: String {
+        let words = name
+            .split { !$0.isLetter && !$0.isNumber }
+            .prefix(2)
+            .compactMap(\.first)
+
+        let resolvedInitials = String(words).uppercased()
+        return resolvedInitials.isEmpty ? "?" : resolvedInitials
+    }
+
+    private var palette: (foreground: Color, background: Color, border: Color) {
+        let palettes: [(Color, Color, Color)] = [
+            (
+                PoengjegerTheme.primary,
+                PoengjegerTheme.primarySoft,
+                PoengjegerTheme.primaryBorder
+            ),
+            (
+                PoengjegerTheme.euroBonus,
+                PoengjegerTheme.euroBonusSoft,
+                PoengjegerTheme.euroBonus.opacity(0.28)
+            ),
+            (
+                PoengjegerTheme.trumf,
+                PoengjegerTheme.trumfSoft,
+                PoengjegerTheme.trumf.opacity(0.24)
+            ),
+            (
+                PoengjegerTheme.campaign,
+                PoengjegerTheme.campaignSoft,
+                PoengjegerTheme.campaign.opacity(0.26)
+            )
+        ]
+
+        let stableHash = name.unicodeScalars.reduce(0) { partialResult, scalar in
+            (partialResult &* 31 &+ Int(scalar.value)) & Int.max
+        }
+        let index = stableHash % palettes.count
+        let selected = palettes[index]
+        return (selected.0, selected.1, selected.2)
+    }
+
     var body: some View {
-        Text(String(name.prefix(1)))
-            .font(.headline.weight(.bold))
-            .foregroundStyle(PoengjegerTheme.primary)
+        Text(initials)
+            .font(.system(.callout, design: .rounded).weight(.heavy))
+            .foregroundStyle(palette.foreground)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
             .frame(width: 42, height: 42)
-            .background(PoengjegerTheme.primarySoft)
+            .background(palette.background)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(palette.border, lineWidth: 1)
+            }
             .accessibilityHidden(true)
     }
 }
@@ -340,7 +400,7 @@ private struct EmptyStoreSearchView: View {
         ContentUnavailableView(
             isSearching ? "Ingen butikker matcher søket" : "Ingen butikker klare ennå",
             systemImage: "magnifyingglass",
-            description: Text(isSearching ? "Prøv en annen butikk eller kategori." : "Butikksøk vises her når redaksjonen har publisert opptjeningsdata.")
+            description: Text(isSearching ? "Prøv en annen butikk eller kategori." : "Butikksøk vises her når opptjeningsdata er bekreftet.")
         )
         .padding(.vertical, 24)
     }

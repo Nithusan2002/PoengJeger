@@ -18,17 +18,17 @@ struct MainTabView: View {
             }
 
             NavigationStack {
+                NewsView()
+            }
+            .tabItem {
+                Label("Poengnytt", systemImage: "newspaper")
+            }
+
+            NavigationStack {
                 LearnView()
             }
             .tabItem {
                 Label("Guider", systemImage: "graduationcap")
-            }
-
-            NavigationStack {
-                FavoritesView()
-            }
-            .tabItem {
-                Label("Lagret", systemImage: "star")
             }
 
             NavigationStack {

@@ -3,6 +3,7 @@ import SwiftUI
 struct StoreDetailView: View {
     @Environment(AppEnvironment.self) private var environment
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @State private var isRecommendationExpanded = false
     @State private var isFavorite = false
 
@@ -62,26 +63,23 @@ struct StoreDetailView: View {
             topBar
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 30) {
+                LazyVStack(alignment: .leading, spacing: 22) {
                     header
                     bestOpportunitySection
                     referenceRateSection
                     currentCampaignSection
                     allMethodsSection
                     otherMethodsSection
-                    actionSection
+                    sourceSection
                 }
                 .padding(.horizontal, 18)
-                .padding(.top, 12)
-                .padding(.bottom, 40)
+                .padding(.top, 10)
+                .padding(.bottom, 32)
             }
         }
         .background(LovableStoreStyle.pageBackground)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .navigationDestination(for: EarningCombination.self) { combination in
-            HowToEarnView(store: store, combination: combination)
-        }
         .task(id: store.id) {
             isFavorite = environment.userSession.favoriteStoreIDs.contains(store.id)
             trackStoreDetailOpened()
@@ -125,7 +123,7 @@ struct StoreDetailView: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
             StoreInitialMark(name: store.name)
-                .frame(width: 58, height: 58)
+                .frame(width: 52, height: 52)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(store.name)
@@ -136,13 +134,6 @@ struct StoreDetailView: View {
                 Text(categoryLine)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-
-                if let lastVerifiedAt = store.lastVerifiedAt {
-                    Label("Sist kontrollert \(shortDate(lastVerifiedAt))", systemImage: "checkmark")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 1)
-                }
             }
 
             Spacer(minLength: 0)
@@ -158,12 +149,13 @@ struct StoreDetailView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text(bestCombinationEyebrow(for: combination))
                     .font(.caption.weight(.bold))
-                    .tracking(2.6)
+                    .tracking(2.2)
                     .foregroundStyle(PoengjegerTheme.primary)
 
                 Text(combination.totalValueLabel)
-                    .font(.system(size: 40, weight: .bold, design: .serif))
+                    .font(.system(size: 34, weight: .bold, design: .serif))
                     .foregroundStyle(.primary)
+                    .lineSpacing(1)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(TextListNormalizer.firstSentence(from: combination.summary))
@@ -174,13 +166,15 @@ struct StoreDetailView: View {
 
                 bestOpportunityMeta(rates: includedRates, verifiedAt: combination.lastVerifiedAt ?? store.lastVerifiedAt)
 
-                NavigationLink(value: combination) {
+                NavigationLink {
+                    HowToEarnView(store: store, combination: combination)
+                } label: {
                     LovablePrimaryButtonLabel(title: "Slik gjør du det")
                 }
                 .buttonStyle(.plain)
                 .simultaneousGesture(TapGesture().onEnded {
                     environment.track(.init(
-                        name: "handoff_opened",
+                        name: "how_to_earn_opened",
                         surface: "store_detail",
                         entityType: "earning_combination",
                         entityID: combination.id,
@@ -193,27 +187,28 @@ struct StoreDetailView: View {
                 })
 
                 Button {
-                    withAnimation(.snappy) {
+                    withAnimation(recommendationDisclosureAnimation) {
                         isRecommendationExpanded.toggle()
                     }
                 } label: {
                     HStack {
                         Text("Hvorfor er dette best?")
-                        Image(systemName: isRecommendationExpanded ? "chevron.up" : "chevron.down")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Image(systemName: "chevron.down")
                             .font(.caption.weight(.bold))
+                            .foregroundStyle(PoengjegerTheme.primary)
+                            .rotationEffect(.degrees(isRecommendationExpanded ? 180 : 0))
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
-                    .padding(.vertical, 13)
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 4)
                     .frame(maxWidth: .infinity)
-                    .background(isRecommendationExpanded ? LovableStoreStyle.warningBackground : LovableStoreStyle.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(LovableStoreStyle.border, lineWidth: 1)
-                    }
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(DisclosureToggleButtonStyle())
+                .animation(recommendationDisclosureAnimation, value: isRecommendationExpanded)
 
                 if isRecommendationExpanded {
                     RecommendationExplanation(
@@ -222,15 +217,15 @@ struct StoreDetailView: View {
                         lastVerifiedAt: combination.lastVerifiedAt ?? store.lastVerifiedAt,
                         sourceFormatter: sourceDestinationName
                     )
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(recommendationExplanationTransition)
                 }
             }
-            .padding(20)
+            .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(LovableStoreStyle.recommendationBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(LovableStoreStyle.primaryBorder, lineWidth: 1.2)
             }
             .accessibilityElement(children: .contain)
@@ -326,70 +321,6 @@ struct StoreDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private var actionSection: some View {
-        if let combination = preferredCombination {
-            VStack(alignment: .leading, spacing: 14) {
-                LovableSectionHeading(eyebrow: "HANDLING", title: "Slik gjør du det")
-
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(combination.steps.sorted { $0.sortOrder < $1.sortOrder }.enumerated()), id: \.element.id) { index, step in
-                        StoreActionStepRow(index: index + 1, text: step.text)
-                    }
-
-                    if let warningText = combination.warningText {
-                        StoreNoticeCard(
-                            title: "Viktig før kjøp",
-                            text: warningText,
-                            systemImage: "exclamationmark.triangle",
-                            tint: LovableStoreStyle.noticeTint,
-                            background: LovableStoreStyle.noticeBackground,
-                            border: LovableStoreStyle.noticeBorder
-                        )
-                        .padding(.horizontal, 14)
-                        .padding(.top, 6)
-                    }
-
-                    NavigationLink(value: combination) {
-                        LovablePrimaryButtonLabel(title: "Start handelen")
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 14)
-                    .padding(.top, 14)
-                    .simultaneousGesture(TapGesture().onEnded {
-                        environment.track(.init(
-                            name: "handoff_opened",
-                            surface: "store_detail_action",
-                            entityType: "earning_combination",
-                            entityID: combination.id,
-                            properties: [
-                                "store_id": store.id.uuidString,
-                                "destination_type": handoffDestinationNameForDisclosure(combination),
-                                "requires_warning": combination.warningText == nil ? "false" : "true"
-                            ]
-                        ))
-                    })
-
-                    Text("Du sendes videre til \(handoffDestinationNameForDisclosure(combination)). Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 18)
-                        .padding(.top, 10)
-                        .padding(.bottom, 16)
-                }
-                .background(LovableStoreStyle.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(LovableStoreStyle.border, lineWidth: 1)
-                }
-            }
-        }
-    }
-
     private var sourceSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("KILDE OG KONTROLL")
@@ -397,7 +328,7 @@ struct StoreDetailView: View {
                 .tracking(2.2)
                 .foregroundStyle(.secondary)
 
-            Text("Opptjening og beste valg er redaksjonelt kvalitetssikret. Kontroller alltid satsen i portalen før kjøp.")
+            Text("Opptjening og beste valg er bekreftet og vurdert. Kontroller alltid satsen i portalen før kjøp.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -463,6 +394,26 @@ struct StoreDetailView: View {
         }
 
         return sourceDestinationName(for: url)
+    }
+
+    private var recommendationDisclosureAnimation: Animation {
+        accessibilityReduceMotion
+            ? .easeOut(duration: 0.12)
+            : .spring(response: 0.34, dampingFraction: 0.86)
+    }
+
+    private var recommendationExplanationTransition: AnyTransition {
+        if accessibilityReduceMotion {
+            return .opacity
+        }
+
+        return .asymmetric(
+            insertion: .opacity
+                .combined(with: .move(edge: .top))
+                .combined(with: .scale(scale: 0.98, anchor: .top)),
+            removal: .opacity
+                .combined(with: .scale(scale: 0.98, anchor: .top))
+        )
     }
 
     private func shortDate(_ date: Date) -> String {
@@ -544,7 +495,7 @@ private struct EmptyBestOpportunityCard: View {
                 .font(.system(.title2, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Redaksjonen har ikke publisert en anbefalt kombinasjon for denne butikken. Bruk vanlig opptjening og aktive kampanjer som separate valg.")
+            Text("Ingen anbefalt kombinasjon er bekreftet for denne butikken ennå. Bruk vanlig opptjening og aktive kampanjer som separate valg.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -575,6 +526,15 @@ private struct LovablePrimaryButtonLabel: View {
         .frame(maxWidth: .infinity)
         .background(PoengjegerTheme.primaryButtonBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+private struct DisclosureToggleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .opacity(configuration.isPressed ? 0.86 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
@@ -1086,34 +1046,6 @@ private enum TextListNormalizer {
             .replacingOccurrences(of: "-", with: " ")
             .split(separator: " ")
             .joined(separator: " ")
-    }
-}
-
-private struct StoreActionStepRow: View {
-    let index: Int
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text("\(index)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.primary)
-                .frame(width: 28, height: 28)
-                .background(PoengjegerTheme.primarySoft)
-                .clipShape(Circle())
-                .accessibilityHidden(true)
-
-            Text(text)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Steg \(index). \(text)")
     }
 }
 

@@ -90,7 +90,7 @@ enum AdminSampleData {
             sourceURL: URL(string: "https://www.norwegian.com/no/reward/partnere/hotell/")!,
             title: "Hotellpartner med begrenset CashPoints-boost",
             summary: "Ser relevant ut for Norwegian Reward, klar for draft-promotering.",
-            reviewNote: "Kildegrunnlaget ser greit ut, men redaksjonell vurdering mangler.",
+            reviewNote: "Kildegrunnlaget ser greit ut, men vurdering mangler.",
             promotedCampaignID: nil,
             sourceName: "Norwegian Reward",
             ingestKind: "html_page",

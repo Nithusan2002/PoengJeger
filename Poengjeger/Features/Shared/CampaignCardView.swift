@@ -151,7 +151,7 @@ struct EditorialTierBadge: View {
         .foregroundStyle(tint)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Redaksjonell vurdering: \(label)")
+        .accessibilityLabel("Vurdering: \(label)")
     }
 }
 

@@ -31,7 +31,7 @@ struct FeedSectionModel: Identifiable {
             FeedSectionModel(
                 id: "high-value",
                 title: "Høy verdi",
-                detail: "Redaksjonelt vurdert som mest interessant",
+                detail: "Vurdert som mest interessant",
                 campaigns: highValue
             ),
             FeedSectionModel(

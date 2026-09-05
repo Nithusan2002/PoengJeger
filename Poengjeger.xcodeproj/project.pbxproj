@@ -50,6 +50,7 @@
 		046 /* ProgramDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146 /* ProgramDetailComponents.swift */; };
 		047 /* ProgramDetailPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147 /* ProgramDetailPresentation.swift */; };
 		048 /* SaveToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148 /* SaveToggleButton.swift */; };
+		049 /* NewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 149 /* NewsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,6 +112,7 @@
 		146 /* ProgramDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailComponents.swift; sourceTree = "<group>"; };
 		147 /* ProgramDetailPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailPresentation.swift; sourceTree = "<group>"; };
 		148 /* SaveToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveToggleButton.swift; sourceTree = "<group>"; };
+		149 /* NewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -199,6 +201,7 @@
 				625 /* Home */,
 				611 /* Onboarding */,
 				612 /* Feed */,
+				628 /* News */,
 				627 /* Explore */,
 				626 /* Stores */,
 				613,
@@ -389,6 +392,14 @@
 			path = Explore;
 			sourceTree = "<group>";
 		};
+		628 /* News */ = {
+			isa = PBXGroup;
+			children = (
+				149 /* NewsView.swift */,
+			);
+			path = News;
+			sourceTree = "<group>";
+		};
 		700 /* PoengjegerTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -520,6 +531,7 @@
 				021 /* MockAdminRepository.swift in Sources */,
 				011 /* MainTabView.swift in Sources */,
 				048 /* SaveToggleButton.swift in Sources */,
+				049 /* NewsView.swift in Sources */,
 				012 /* OnboardingView.swift in Sources */,
 				013 /* FeedView.swift in Sources */,
 				042 /* FeedControls.swift in Sources */,

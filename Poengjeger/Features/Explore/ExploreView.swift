@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ExploreView: View {
     @Environment(AppEnvironment.self) private var environment
+    @State private var selectedScope: ExploreScope = .campaigns
 
     private var activeCampaigns: [Campaign] {
         ScannableFeedUseCase().makeFeed(
@@ -26,6 +27,14 @@ struct ExploreView: View {
 
     private var featuredStores: [Store] {
         rankedStores.prefix(4).map { $0 }
+    }
+
+    private var spotlightCampaigns: [Campaign] {
+        featuredCampaigns.prefix(2).map { $0 }
+    }
+
+    private var spotlightStore: Store? {
+        featuredStores.first
     }
 
     private var programsByID: [UUID: BonusProgram] {
@@ -54,16 +63,16 @@ struct ExploreView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 28) {
+            LazyVStack(alignment: .leading, spacing: 22) {
                 header
 
                 statusSection
 
-                campaignSection
+                spotlightSection
 
-                categoryBrowseSection
+                scopePicker
 
-                featuredStoresSection
+                selectedScopeSection
             }
             .padding(.horizontal, 16)
             .padding(.top, 18)
@@ -93,7 +102,7 @@ struct ExploreView: View {
                 .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
 
-            Text("Oppdag kampanjer, kategorier og butikker med dokumentert opptjening.")
+            Text("Finn aktuelle muligheter før du handler.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -116,29 +125,75 @@ struct ExploreView: View {
         }
     }
 
+    @ViewBuilder
+    private var spotlightSection: some View {
+        if environment.loadState == .loading && spotlightCampaigns.isEmpty && spotlightStore == nil {
+            ProgressView("Laster muligheter...")
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.vertical, 30)
+        } else if !spotlightCampaigns.isEmpty || spotlightStore != nil {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(
+                    eyebrow: "AKKURAT NÅ",
+                    title: "Verdt å sjekke først",
+                    subtitle: nil
+                )
+
+                ForEach(spotlightCampaigns) { campaign in
+                    NavigationLink(value: campaign) {
+                        ExploreCampaignTeaserRow(
+                            campaign: campaign,
+                            primaryProgramName: primaryProgramName(for: campaign)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if let spotlightStore {
+                    NavigationLink(value: spotlightStore) {
+                        ExploreStoreMiniRow(store: spotlightStore, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var scopePicker: some View {
+        Picker("Utforsk innhold", selection: $selectedScope) {
+            ForEach(ExploreScope.allCases) { scope in
+                Text(scope.title).tag(scope)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel("Velg innhold i Utforsk")
+    }
+
+    @ViewBuilder
+    private var selectedScopeSection: some View {
+        switch selectedScope {
+        case .campaigns:
+            campaignSection
+        case .categories:
+            categoryBrowseSection
+        case .stores:
+            featuredStoresSection
+        }
+    }
+
     private var campaignSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("AKTIVE KAMPANJER")
-                    .font(.caption.weight(.bold))
-                    .tracking(2.2)
-                    .foregroundStyle(.secondary)
+            SectionHeader(
+                eyebrow: "KAMPANJER",
+                title: "Aktive muligheter",
+                subtitle: nil
+            )
 
-                Text("Verdt å se nå")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text("Et lite redaksjonelt utvalg av kampanjer der frist, krav eller verdi gjør dem verdt å sjekke.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if environment.loadState == .loading && featuredCampaigns.isEmpty {
+            if environment.loadState == .loading && activeCampaigns.isEmpty {
                 ProgressView("Laster kampanjer...")
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 30)
-            } else if featuredCampaigns.isEmpty {
+            } else if activeCampaigns.isEmpty {
                 Text("Ingen aktive kampanjer er publisert ennå.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -151,7 +206,7 @@ struct ExploreView: View {
                             .stroke(PoengjegerTheme.border, lineWidth: 1)
                     }
             } else {
-                ForEach(featuredCampaigns) { campaign in
+                ForEach(activeCampaigns) { campaign in
                     NavigationLink(value: campaign) {
                         ExploreCampaignTeaserRow(
                             campaign: campaign,
@@ -166,21 +221,11 @@ struct ExploreView: View {
 
     private var categoryBrowseSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("KATEGORIER")
-                    .font(.caption.weight(.bold))
-                    .tracking(2.2)
-                    .foregroundStyle(.secondary)
-
-                Text("Bla etter handlebehov")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text("Velg kategori først, så får du full butikkoversikt på neste skjerm.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            SectionHeader(
+                eyebrow: "KATEGORIER",
+                title: "Bla etter handlebehov",
+                subtitle: nil
+            )
 
             if categories.isEmpty {
                 Text("Ingen kategorier er publisert ennå.")
@@ -215,27 +260,17 @@ struct ExploreView: View {
 
     private var featuredStoresSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("BUTIKKER")
-                    .font(.caption.weight(.bold))
-                    .tracking(2.2)
-                    .foregroundStyle(.secondary)
+            SectionHeader(
+                eyebrow: "BUTIKKER",
+                title: "Høyest dokumentert opptjening",
+                subtitle: nil
+            )
 
-                Text("Høyest dokumentert opptjening")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text("Fire eksempler på sterk dokumentert opptjening. Bruk kategoriene over for full oversikt.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if environment.loadState == .loading && featuredStores.isEmpty {
+            if environment.loadState == .loading && rankedStores.isEmpty {
                 ProgressView("Laster butikker...")
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 30)
-            } else if featuredStores.isEmpty {
+            } else if rankedStores.isEmpty {
                 Text("Ingen butikker med dokumentert opptjening er publisert ennå.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -248,7 +283,7 @@ struct ExploreView: View {
                             .stroke(PoengjegerTheme.border, lineWidth: 1)
                     }
             } else {
-                ForEach(featuredStores) { store in
+                ForEach(rankedStores) { store in
                     NavigationLink(value: store) {
                         ExploreStoreMiniRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }
@@ -264,6 +299,51 @@ struct ExploreView: View {
         }
 
         return programsByID[primaryProgramID]?.name
+    }
+}
+
+private struct SectionHeader: View {
+    let eyebrow: String
+    let title: String
+    let subtitle: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(eyebrow)
+                .font(.caption.weight(.bold))
+                .tracking(2.2)
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.system(.title2, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+private enum ExploreScope: String, CaseIterable, Identifiable {
+    case campaigns
+    case categories
+    case stores
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .campaigns:
+            return "Kampanjer"
+        case .categories:
+            return "Kategorier"
+        case .stores:
+            return "Butikker"
+        }
     }
 }
 

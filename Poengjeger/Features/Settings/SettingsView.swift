@@ -40,8 +40,9 @@ struct SettingsView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Profil")
-                .font(.system(.title, design: .rounded).weight(.bold))
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
                 .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text("Tilpass Poengjeger til programmene du faktisk bruker.")
                 .font(.subheadline)
@@ -55,14 +56,14 @@ struct SettingsView: View {
         ProfileInfoCard(
             iconName: "bell.slash",
             title: "Varsler",
-            subtitle: "Kommer senere når redaksjonell kontroll og tydelige preferanser er klare."
+            subtitle: "Kommer senere når bekreftet innhold og tydelige preferanser er klare."
         )
     }
 
     #if DEBUG
     private func debugSection(dataSourceLabel: String?) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            ProfileSectionHeading(eyebrow: "INTERN", title: "Redaksjon")
+            ProfileSectionHeading(eyebrow: "INTERN", title: "Kontroll")
 
             if let dataSourceLabel {
                 ProfileInfoCard(

@@ -22,6 +22,8 @@ struct FavoritesView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 18) {
+                header
+
                 scopePicker
 
                 switch selectedScope {
@@ -36,6 +38,7 @@ struct FavoritesView: View {
         }
         .background(PoengjegerTheme.background)
         .navigationTitle("Lagret")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
         .navigationDestination(for: Store.self) { store in
             StoreDetailView(store: store)
@@ -46,6 +49,21 @@ struct FavoritesView: View {
         .refreshable {
             await environment.refresh()
         }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Lagret")
+                .font(.system(.largeTitle, design: .serif).weight(.bold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Butikker og kampanjer du vil sjekke igjen.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var scopePicker: some View {

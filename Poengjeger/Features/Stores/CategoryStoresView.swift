@@ -27,7 +27,7 @@ struct CategoryStoresView: View {
                     ContentUnavailableView(
                         "Ingen butikker ennå",
                         systemImage: iconName(for: categoryName),
-                        description: Text("Butikker vises her når redaksjonen har publisert opptjeningsdata i kategorien.")
+                        description: Text("Butikker vises her når opptjeningsdata i kategorien er bekreftet.")
                     )
                     .padding(.vertical, 24)
                 } else {

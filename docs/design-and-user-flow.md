@@ -388,7 +388,7 @@ Denne koblingen er viktigere enn en stor Lær-startside. Læring skal dukke opp 
 
 ## Lagret
 
-Lagret skal i MVP primært inneholde kampanjer.
+Lagret skal i MVP primært inneholde butikker og kampanjer brukeren vil sjekke igjen. Det skal ikke være egen hovedfane i første navigasjon, men åpnes fra Hjem via en tydelig lagret-knapp i toppbaren.
 
 Senere kan det utvides til:
 
@@ -399,6 +399,9 @@ Senere kan det utvides til:
 MVP-wireframe:
 
 ```text
+Hjem
+[Lagret-knapp]
+
 Lagret
 
 3x Trumf-bonus
@@ -451,7 +454,7 @@ Kan vente:
 Ikke bygg i MVP:
 
 - sosial feed
-- blogg/nyhetsflate
+- generisk blogg/nyhetsflate uten direkte poenghandling
 - automatisk booking
 - automatisk saldoinnhenting
 - bred programkatalog
@@ -461,6 +464,7 @@ Ikke bygg i MVP:
 Tidlige indikatorer:
 
 - brukere åpner kampanjedetaljer fra Nå-feed
+- brukere åpner kampanjedetaljer fra Poengnytt
 - brukere lagrer kampanjer
 - brukere åpner EuroBonus- og Trumf-guidene
 - brukere går fra kampanjedetalj til relevant guide
@@ -471,7 +475,7 @@ Tidlige indikatorer:
 
 Neste UI-oppgave bør være å justere eksisterende SwiftUI-struktur mot denne retningen:
 
-1. Vurdere om fanen "Kampanjer" skal endres til "Nå".
+1. Videreutvikle Poengnytt fra kampanjeavledet feed til egen redaksjonell modell dersom bruken tilsier det.
 2. Stramme onboarding til EuroBonus og Trumf.
 3. Sikre at Lær-starten bare viser EuroBonus og Trumf i første fase.
 4. Gjøre kampanjedetaljens første skjerm enda mer beslutningsorientert.
