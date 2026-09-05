@@ -236,7 +236,7 @@ struct HowToEarnView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .tint(PoengjegerTheme.primary)
+            .tint(PoengjegerTheme.primaryButtonBackground)
             .accessibilityHint("Åpner \(handoffDestinationName(for: url)) eksternt.")
         } else {
             ContentUnavailableView(
@@ -384,7 +384,7 @@ private enum HowToEarnTextNormalizer {
 }
 
 private enum HowToEarnNoticeStyle {
-    static let tint = Color(red: 0.55, green: 0.34, blue: 0.08)
+    static let tint = PoengjegerTheme.adaptive(light: (0.55, 0.34, 0.08), dark: (1.0, 0.76, 0.38))
     static let border = Color(red: 0.86, green: 0.75, blue: 0.53)
     static let background = Color(uiColor: UIColor { traits in
         if traits.userInterfaceStyle == .dark {

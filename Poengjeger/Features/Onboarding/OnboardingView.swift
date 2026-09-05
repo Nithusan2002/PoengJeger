@@ -179,7 +179,7 @@ private struct OnboardingContinueButton: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .tint(PoengjegerTheme.accent)
+        .tint(PoengjegerTheme.primaryButtonBackground)
         .disabled(!isEnabled)
         .accessibilityHint(isEnabled ? "Åpner den personlige kampanjefeeden." : "Velg minst ett bonusprogram først.")
     }

@@ -206,6 +206,7 @@ private struct AdminCandidateActions: View {
                     onPromote()
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(PoengjegerTheme.primaryButtonBackground)
             }
         }
     }

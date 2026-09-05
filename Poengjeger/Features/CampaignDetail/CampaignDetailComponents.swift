@@ -361,7 +361,7 @@ struct CampaignSourceCTA: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .tint(PoengjegerTheme.accent)
+        .tint(PoengjegerTheme.primaryButtonBackground)
         .accessibilityLabel("Åpne kampanjesiden hos \(source.sourceName)")
     }
 }

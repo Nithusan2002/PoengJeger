@@ -26,17 +26,17 @@ extension BonusProgram {
     var programColor: Color {
         switch slug {
         case "sas-eurobonus":
-            return Color(red: 0.08, green: 0.28, blue: 0.62)
+            return PoengjegerTheme.adaptive(light: (0.08, 0.28, 0.62), dark: (0.48, 0.72, 1.0))
         case "trumf":
-            return Color(red: 0.78, green: 0.23, blue: 0.14)
+            return PoengjegerTheme.adaptive(light: (0.78, 0.23, 0.14), dark: (1.0, 0.55, 0.59))
         case "spenn":
-            return Color(red: 0.09, green: 0.50, blue: 0.44)
+            return PoengjegerTheme.adaptive(light: (0.09, 0.5, 0.44), dark: (0.4, 0.82, 0.65))
         case "norwegian-cashpoints", "norwegian-reward":
-            return Color(red: 0.79, green: 0.10, blue: 0.12)
+            return PoengjegerTheme.adaptive(light: (0.79, 0.1, 0.12), dark: (1.0, 0.55, 0.59))
         case "flying-blue":
-            return Color(red: 0.20, green: 0.39, blue: 0.86)
+            return PoengjegerTheme.adaptive(light: (0.2, 0.39, 0.86), dark: (0.48, 0.72, 1.0))
         case "avios":
-            return Color(red: 0.05, green: 0.44, blue: 0.68)
+            return PoengjegerTheme.adaptive(light: (0.05, 0.44, 0.68), dark: (0.48, 0.72, 1.0))
         default:
             return PoengjegerTheme.accent
         }

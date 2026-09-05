@@ -221,11 +221,11 @@ extension BonusProgram {
     var feedColor: Color {
         switch slug {
         case "sas-eurobonus":
-            return Color(red: 0.08, green: 0.28, blue: 0.62)
+            return PoengjegerTheme.adaptive(light: (0.08, 0.28, 0.62), dark: (0.48, 0.72, 1.0))
         case "trumf":
-            return Color(red: 0.10, green: 0.48, blue: 0.28)
+            return PoengjegerTheme.adaptive(light: (0.1, 0.48, 0.28), dark: (0.4, 0.82, 0.65))
         case "spenn":
-            return Color(red: 0.62, green: 0.30, blue: 0.76)
+            return PoengjegerTheme.adaptive(light: (0.62, 0.3, 0.76), dark: (0.7, 0.65, 1.0))
         default:
             return PoengjegerTheme.accent
         }

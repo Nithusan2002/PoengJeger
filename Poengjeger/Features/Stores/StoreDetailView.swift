@@ -573,7 +573,7 @@ private struct LovablePrimaryButtonLabel: View {
         .foregroundStyle(.white)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
-        .background(LovableStoreStyle.primary)
+        .background(PoengjegerTheme.primaryButtonBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
@@ -1139,7 +1139,7 @@ private enum LovableStoreStyle {
     static let primary = PoengjegerTheme.primary
     static let primaryBorder = PoengjegerTheme.primaryBorder
     static let border = PoengjegerTheme.border
-    static let expiryText = Color(red: 0.62, green: 0.31, blue: 0.09)
+    static let expiryText = PoengjegerTheme.adaptive(light: (0.62, 0.31, 0.09), dark: (1.0, 0.76, 0.38))
     static let campaignBorder = Color(red: 0.89, green: 0.72, blue: 0.58)
 
     static let pageBackground = Color(uiColor: UIColor { traits in
@@ -1181,7 +1181,7 @@ private enum LovableStoreStyle {
 
         return UIColor(red: 0.96, green: 0.90, blue: 0.78, alpha: 1)
     })
-    static let noticeTint = Color(red: 0.55, green: 0.34, blue: 0.08)
+    static let noticeTint = PoengjegerTheme.adaptive(light: (0.55, 0.34, 0.08), dark: (1.0, 0.76, 0.38))
     static let noticeBorder = Color(red: 0.86, green: 0.75, blue: 0.53)
     static let noticeBackground = Color(uiColor: UIColor { traits in
         if traits.userInterfaceStyle == .dark {

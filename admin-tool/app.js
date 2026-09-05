@@ -96,6 +96,7 @@
     selectedProgramGuideProgramId: null,
     selectedProgramGuideId: null,
     newProgramGuideDraft: null,
+    guideFolderOpen: {},
     programGuidePreviewExpanded: false,
     sidebarCollapsed: loadSidebarCollapsed(),
     activePanelId: "queue-panel",
@@ -726,7 +727,7 @@
 
   async function fetchProgramGuidesWithColumns(columns) {
     const params = new URLSearchParams();
-    params.set("select", columns.join(","));
+    params.set("select", [...columns, "bonus_programs(id,name,slug,is_active)"].join(","));
     params.set("order", "updated_at.desc");
 
     return apiRequest(`/rest/v1/program_guides?${params.toString()}`);
@@ -871,6 +872,7 @@
 
   function normalizeProgramGuide(guide) {
     return {
+      program: guide.bonus_programs || null,
       id: guide.id,
       programId: guide.program_id,
       status: guide.status,
@@ -1248,7 +1250,34 @@
       return;
     }
 
+    const folders = new Map();
     guides.forEach((guide) => {
+      if (!folders.has(guide.programId)) folders.set(guide.programId, []);
+      folders.get(guide.programId).push(guide);
+    });
+
+    [...folders.entries()].sort((a, b) =>
+      (programForGuide(a[1][0])?.name || "").localeCompare(programForGuide(b[1][0])?.name || "", "nb")
+    ).forEach(([programId, entries]) => {
+      const folder = document.createElement("li");
+      folder.className = "guide-folder";
+      const details = document.createElement("details");
+      const program = programForGuide(entries[0]);
+      details.open = state.guideFolderOpen[programId] ?? entries.some((guide) =>
+        guide.id === state.selectedProgramGuideId || (guide.isNewDraft && state.selectedProgramGuideId === "new")
+      );
+      details.innerHTML = `<summary><strong>${escapeHtml(program?.name || "Ukjent program")}</strong><span>${entries.length}</span></summary>`;
+      details.addEventListener("toggle", () => {
+        state.guideFolderOpen[programId] = details.open;
+        if (details.open) state.selectedProgramGuideProgramId = programId;
+      });
+      const list = document.createElement("ul");
+      list.className = "queue-list";
+      details.appendChild(list);
+      folder.appendChild(details);
+      elements.programGuideList.appendChild(folder);
+
+    entries.forEach((guide) => {
       const program = programForGuide(guide);
       const item = document.createElement("li");
       item.className = "queue-item";
@@ -1281,7 +1310,8 @@
         renderProgramGuideDetail();
       });
 
-      elements.programGuideList.appendChild(item);
+      list.appendChild(item);
+    });
     });
   }
 
@@ -2006,7 +2036,7 @@
               <label class="field">
                 <span>Program</span>
                 <select name="programId">
-                  ${renderSelectOptions(state.programs, draft.programId)}
+                  ${renderSelectOptions(state.programs.some((entry) => entry.id === program.id) ? state.programs : [...state.programs, program], draft.programId)}
                 </select>
               </label>
 
@@ -4009,7 +4039,10 @@
   }
 
   function programForGuide(guide) {
-    return state.programs.find((program) => program.id === guide?.programId) || null;
+    return state.programs.find((program) => program.id === guide?.programId)
+      || guide?.program
+      || state.programGuides.find((entry) => entry.programId === guide?.programId && entry.program)?.program
+      || null;
   }
 
   function programGuideTitle(guide, program) {
@@ -4017,13 +4050,14 @@
   }
 
   function startNewProgramGuide() {
-    const program = state.programs[0];
+    const program = programForGuide({ programId: state.selectedProgramGuideProgramId }) || state.programs[0];
     if (!program) {
       setMessage(elements.programGuideMessage, "Opprett et bonusprogram før du lager en guide.", "error");
       return;
     }
 
     state.selectedProgramGuideId = "new";
+    state.guideFolderOpen[program.id] = true;
     state.selectedProgramGuideProgramId = program.id;
     state.newProgramGuideDraft = emptyProgramGuideDraft(program.id, `Slik fungerer ${program.name}`);
     renderProgramGuideList();

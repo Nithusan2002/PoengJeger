@@ -1826,6 +1826,37 @@ code {
   padding: 12px 14px;
 }
 
+.guide-folder {
+  list-style: none;
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-folder summary {
+  cursor: pointer;
+  padding: 14px;
+  overflow-wrap: anywhere;
+}
+
+.guide-folder summary strong {
+  margin-left: 6px;
+}
+
+.guide-folder summary span {
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-folder summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+
+.guide-folder .queue-list {
+  margin: 0;
+  padding: 0 0 0 12px;
+}
+
 .program-guide-list-shell .queue-item h3 {
   font-size: 0.94rem;
 }
