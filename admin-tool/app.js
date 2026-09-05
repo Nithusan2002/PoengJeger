@@ -2081,6 +2081,11 @@
                 <button type="button" class="success" data-guide-action="publish">Lagre og publiser</button>
                 <button type="button" class="secondary" data-guide-action="reviewed">Marker kontrollert</button>
                 <button type="button" class="secondary" data-guide-action="archive">Arkiver</button>
+                ${
+                  draft.isNewDraft
+                    ? ""
+                    : '<button type="button" class="danger" data-guide-action="delete">Slett</button>'
+                }
               </div>
               <span class="help">Publisering krever guideinnhold og kontrolltidspunkt. Hold innholdet redaksjonelt og uten kampanjelenker.</span>
             </div>
@@ -2138,7 +2143,13 @@
 
     elements.programGuideDetailPanel.querySelectorAll("[data-guide-action]").forEach((button) => {
       button.addEventListener("click", async function () {
-        await saveProgramGuideEditor(form, guide, button.getAttribute("data-guide-action"));
+        const action = button.getAttribute("data-guide-action");
+        if (action === "delete") {
+          await deleteProgramGuideEditor(form, guide);
+          return;
+        }
+
+        await saveProgramGuideEditor(form, guide, action);
       });
     });
 
@@ -2532,6 +2543,41 @@
       state.selectedProgramGuideId = savedGuideId || payload.id;
       state.selectedProgramGuideProgramId = payload.programId;
       setMessage(elements.programGuideMessage, "Programguiden ble lagret.", "success");
+      await refreshProgramGuides();
+    } catch (error) {
+      setMessage(elements.programGuideMessage, error.message, "error");
+    } finally {
+      submitButtons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
+  }
+
+  async function deleteProgramGuideEditor(form, guide) {
+    if (!guide || guide.isNewDraft || !guide.id) {
+      setMessage(elements.programGuideMessage, "Guiden er ikke lagret ennå.", "error");
+      return;
+    }
+
+    const program = programForGuide(guide);
+    const title = programGuideTitle(guide, program);
+    const confirmed = window.confirm(`Slette guiden "${title}" permanent? Dette kan ikke angres.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    const submitButtons = form.querySelectorAll("button");
+    submitButtons.forEach((button) => {
+      button.disabled = true;
+    });
+
+    try {
+      await deleteProgramGuide(guide.id);
+      state.newProgramGuideDraft = null;
+      state.selectedProgramGuideId = null;
+      state.selectedProgramGuideProgramId = guide.programId;
+      setMessage(elements.programGuideMessage, "Programguiden ble slettet.", "success");
       await refreshProgramGuides();
     } catch (error) {
       setMessage(elements.programGuideMessage, error.message, "error");
@@ -3378,6 +3424,15 @@
       }
     });
     return created[0]?.id || null;
+  }
+
+  async function deleteProgramGuide(guideId) {
+    await apiRequest(`/rest/v1/program_guides?id=eq.${encodeURIComponent(guideId)}`, {
+      method: "DELETE",
+      extraHeaders: {
+        Prefer: "return=minimal"
+      }
+    });
   }
 
   async function saveStoreEarningRate(payload) {
