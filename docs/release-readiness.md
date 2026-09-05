@@ -67,6 +67,60 @@ Rapporter bare kontroller som faktisk er utført. Merk resten som ikke kjørt me
 - Migrasjoner er kjørt i riktig rekkefølge og kan valideres i et rent miljø.
 - Rollback eller manuell nødprosedyre er kjent for siste endring.
 
+## QA-logg
+
+### 2026-09-05 – avgrenset intern pilot
+
+Omfanget er iOS-appen og dens publiserte Supabase-data. Vurderingen gjelder en
+avgrenset intern pilot uten pushvarsler, App Store-utrulling eller endringer i
+produksjonsdata.
+
+Utført:
+
+- `xcodebuild test` besto på iPhone 17 Pro med iOS 26.5.
+- `scripts/smoke-ios-supabase.mjs` fikk `200 OK` for programmer,
+  programguider, kampanjer og butikker.
+- Hjem, søk og butikkdetalj ble kontrollert manuelt i mørk modus med
+  Accessibility Large. Tekst brytes lesbart, og tabbaren er skjult på
+  butikkdetaljen slik at den ikke overlapper handlingene.
+- Accessibility-treet ble kontrollert for navn og verdier på sentrale
+  kontroller. En full auditiv VoiceOver-gjennomgang ble ikke kjørt.
+- RLS er aktivert på de sentrale innholds-, admin-, ingestion- og
+  analysetabellene. Anonym lesing av `product_events` og
+  `analytics_sanity_7d` ble avvist med `401`; publisert innhold kunne leses.
+- Hemmelighetsskann fant bare navn på miljøvariabler og dokumenterte
+  plassholdere, ingen faktiske nøkler i repositoryet.
+- Alle 7 publiserte kampanjer hadde kontrolltidspunkt, programkobling,
+  kildehenvisning, krav og redaksjonell vurdering. Ingen var utløpt med
+  publisert status, og kvalitetsvisningen for butikkopptjening hadde ingen
+  åpne avvik.
+- Analysevisningen hadde data gjennom hele hovedtrakten fra `app_opened` til
+  detaljvisning og ekstern destinasjon.
+
+Ikke kjørt:
+
+- Produksjonsadminens fulle opprett-, promoterings- og publiseringsflyt, fordi
+  den ville endret produksjonsdata og det ikke finnes et avklart stagingmiljø.
+- Ny ingestion-kjøring, fordi den ville skrevet kandidater og kjørehistorikk i
+  produksjon og avhenger av driftshemmeligheter.
+- Pushvarslingsflyt; varslingstabell finnes ikke i gjeldende skjema og varsler
+  er derfor utenfor pilotomfanget.
+- TestFlight/App Store-arkiv, signering og distribusjon.
+
+Åpne forbehold:
+
+- Aktive kilder ble sist kontrollert 27. august 2026. Innholdet bør verifiseres
+  på nytt før pilotbrukere inviteres.
+- 2 av 3 publiserte programguider mangler `body_markdown`. Appen har strukturert
+  reserveinnhold, men guidene bør kompletteres eller reservevisningen må
+  godkjennes eksplisitt som pilotstandard.
+- Adminflyten bør kjøres ende til ende mot lokal Supabase eller staging før
+  redaksjonell bruk utvides.
+
+Anbefaling: **klar med forbehold** for en avgrenset intern pilot når
+kildeaktualitet er kontrollert og guideavviket er lukket eller eksplisitt
+akseptert. Varsler og bred produksjonsutrulling er ikke klare.
+
 ## Minimumsrapport
 
 Før release skal svaret inneholde:
