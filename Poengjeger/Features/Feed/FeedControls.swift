@@ -16,37 +16,39 @@ struct FeedControlHeader: View {
     let isSearchFocused: FocusState<Bool>.Binding
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.standard) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                     Text("Kampanjer")
-                        .font(.system(.largeTitle, design: .rounded).weight(.heavy))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.heroTitle)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                     Text(summaryText)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
 
                 Button(action: onToggleSearch) {
                     Image(systemName: isSearchVisible ? "xmark" : "magnifyingglass")
-                        .font(.headline.weight(.semibold))
+                        .font(DesignTokens.Typography.headlineSemibold)
                         .frame(width: 34, height: 34)
                 }
                 .buttonStyle(.bordered)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+                .minimumTouchTarget()
                 .accessibilityLabel(isSearchVisible ? "Lukk søk" : "Søk")
 
                 Button(action: onOpenProgramFilter) {
                     Image(systemName: "slider.horizontal.3")
-                        .font(.headline.weight(.semibold))
+                        .font(DesignTokens.Typography.headlineSemibold)
                         .frame(width: 34, height: 34)
                 }
                 .buttonStyle(.bordered)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
+                .minimumTouchTarget()
                 .accessibilityLabel("Velg programmer")
             }
 
@@ -56,6 +58,7 @@ struct FeedControlHeader: View {
                     .autocorrectionDisabled()
                     .submitLabel(.search)
                     .textFieldStyle(.roundedBorder)
+                    .minimumTouchTarget()
                     .focused(isSearchFocused)
                     .toolbar {
                         ToolbarItemGroup(placement: .keyboard) {
@@ -69,15 +72,15 @@ struct FeedControlHeader: View {
                     .accessibilityLabel("Søk i kampanjer")
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 sortFilterControl
                 categoryFilterControl
                 programScopeControl
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
+        .padding(.horizontal, DesignTokens.Spacing.screen)
+        .padding(.top, DesignTokens.Spacing.controlGap)
+        .padding(.bottom, DesignTokens.Spacing.standard)
         .background(.ultraThinMaterial)
         .overlay(alignment: .bottom) {
             Divider()
@@ -120,6 +123,7 @@ struct FeedControlHeader: View {
                 isSelected: true
             )
         }
+        .minimumTouchTarget()
         .accessibilityLabel("Sorter kampanjer")
     }
 
@@ -153,6 +157,7 @@ struct FeedControlHeader: View {
                 isSelected: selectedCategoryID != nil
             )
         }
+        .minimumTouchTarget()
         .accessibilityLabel("Velg kategori")
     }
 
@@ -169,6 +174,7 @@ struct FeedControlHeader: View {
                 )
             }
             .buttonStyle(.plain)
+            .minimumTouchTarget()
             .accessibilityLabel(showsAllPrograms ? "Viser alle programmer" : "Viser dine programmer")
         }
     }

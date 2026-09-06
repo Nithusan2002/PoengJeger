@@ -190,6 +190,58 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeSearchUsesShoppingIntentForProductQueries() {
+        let electronicsStore = makeStore(
+            name: "Elektronikkbutikken",
+            category: SampleData.shoppingCategory,
+            searchKeywords: ["elektronikk", "pc"]
+        )
+        let groceryStore = makeStore(
+            name: "Matbutikken",
+            category: SampleData.groceryCategory,
+            searchKeywords: ["dagligvare"]
+        )
+        let draftElectronicsStore = makeStore(
+            name: "Skjult elektronikk",
+            status: .draft,
+            category: SampleData.shoppingCategory,
+            searchKeywords: ["elektronikk", "mobil"]
+        )
+
+        let results = StoreSearchUseCase().searchResults(
+            stores: [groceryStore, draftElectronicsStore, electronicsStore],
+            query: "ny iPhone",
+            selectedProgramIDs: []
+        )
+
+        #expect(results.map(\.store.name) == ["Elektronikkbutikken"])
+        #expect(results.first?.intentExplanation == "Matcher elektronikk og mobil")
+    }
+
+    @Test
+    func storeSearchUsesShoppingIntentForEverydayMealQueries() {
+        let groceryStore = makeStore(
+            name: "Matbutikken",
+            category: SampleData.groceryCategory,
+            searchKeywords: ["dagligvare", "mat"]
+        )
+        let electronicsStore = makeStore(
+            name: "Elektronikkbutikken",
+            category: SampleData.shoppingCategory,
+            searchKeywords: ["elektronikk"]
+        )
+
+        let results = StoreSearchUseCase().searchResults(
+            stores: [electronicsStore, groceryStore],
+            query: "middag",
+            selectedProgramIDs: []
+        )
+
+        #expect(results.map(\.store.name) == ["Matbutikken"])
+        #expect(results.first?.intentExplanation == "Matcher dagligvarer")
+    }
+
+    @Test
     func storeDiscoveryParsesNorwegianDecimalValuesWhenRankingStores() {
         let lowerValue = makeStore(
             name: "Lavere verdi",

@@ -7,23 +7,24 @@ struct DetailDisclosure<Content: View>: View {
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.screen) {
                 content
             }
-            .padding(.top, 14)
+            .padding(.top, DesignTokens.Spacing.card)
         } label: {
             Label(title, systemImage: "doc.text.magnifyingglass")
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.headlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
+        .minimumTouchTarget()
         .accessibilityHint(isExpanded ? "Skjuler detaljer og kilder." : "Viser detaljer og kilder.")
     }
 }
@@ -34,17 +35,18 @@ struct DetailTopBar: View {
     let onToggleFavorite: () -> Void
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignTokens.Spacing.controlGap) {
             Button(action: onBack) {
                 Image(systemName: "chevron.left")
-                    .font(.title3.weight(.semibold))
+                    .font(DesignTokens.Typography.title3Semibold)
                     .frame(width: 38, height: 38)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .minimumTouchTarget()
             .accessibilityLabel("Tilbake")
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             SaveToggleButton(
                 isSaved: isFavorite,
@@ -53,8 +55,8 @@ struct DetailTopBar: View {
                 action: onToggleFavorite
             )
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DesignTokens.Spacing.screen)
+        .padding(.vertical, DesignTokens.Spacing.medium)
         .background(.regularMaterial)
         .overlay(alignment: .bottom) {
             Divider()
@@ -68,9 +70,9 @@ struct DetailIntro: View {
     let primaryProgramGuide: ProgramGuide?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.comfortable) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                     if let primaryProgram {
                         NavigationLink {
                             ProgramDetailView(
@@ -80,25 +82,26 @@ struct DetailIntro: View {
                             )
                         } label: {
                             Label(primaryProgram.name.uppercased(), systemImage: "book")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(PoengjegerTheme.accent)
+                                .font(DesignTokens.Typography.captionSemibold)
+                                .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         }
+                        .minimumTouchTarget()
                         .accessibilityLabel("Åpne programguide for \(primaryProgram.name)")
                     }
 
                     Text(campaign.title)
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.title2)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
             }
 
             Text(campaign.summary)
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             DetailDecisionSummary(conclusion: campaign.decisionConclusion)
@@ -108,14 +111,14 @@ struct DetailIntro: View {
                 caveatText: campaign.suitabilityCaveatText
             )
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
                 DetailQuickFactCard(
                     title: "Mulig verdi",
                     value: campaign.detailValueLabel,
                     systemImage: "chart.line.uptrend.xyaxis"
                 )
 
-                HStack(spacing: 10) {
+                HStack(spacing: DesignTokens.Spacing.controlGap) {
                     DetailQuickFactCard(
                         title: "Frist",
                         value: FeedDateHelper.expiryLabel(campaign.endDate).text,
@@ -142,20 +145,20 @@ struct DetailDecisionSummary: View {
     let conclusion: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             Label("Kort sagt", systemImage: "checkmark.seal")
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.accent)
+                .font(DesignTokens.Typography.subheadlineBold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
             Text(conclusion)
-                .font(.headline)
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.headline)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.accentSoft)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.brandPrimarySoft)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
@@ -164,33 +167,33 @@ struct DetailSourceSummary: View {
     let campaign: Campaign
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             Label("Fakta og kilde", systemImage: "checkmark.seal")
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.subheadlineBold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
                     sourceItems
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                     sourceItems
                 }
             }
 
             Text("Kampanjer kvalitetssikres fra offentlige kilder. Sjekk alltid vilkårene hos tilbyder før bruk.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.footnote)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -220,21 +223,21 @@ struct SourceSummaryItem: View {
 
     var body: some View {
         Label {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.micro) {
                 Text(title.uppercased())
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption2Bold)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 Text(value)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } icon: {
             Image(systemName: systemImage)
-                .foregroundStyle(PoengjegerTheme.accent)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
         }
         .labelStyle(.titleAndIcon)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -246,12 +249,12 @@ struct CampaignFitSummary: View {
     let caveatText: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             FitLine(
                 systemImage: "person.crop.circle.badge.checkmark",
                 title: "Passer for",
                 text: fitText,
-                tint: PoengjegerTheme.accent
+                tint: DesignTokens.Colors.brandPrimary
             )
 
             if let caveatText {
@@ -261,17 +264,17 @@ struct CampaignFitSummary: View {
                     systemImage: "exclamationmark.triangle",
                     title: "Passer ikke for",
                     text: caveatText,
-                    tint: PoengjegerTheme.warning
+                    tint: DesignTokens.Colors.warning
                 )
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -285,14 +288,14 @@ struct FitLine: View {
 
     var body: some View {
         Label {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                 Text(title)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.captionBold)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 Text(text)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } icon: {
@@ -309,26 +312,26 @@ struct DetailQuickFactCard: View {
     let systemImage: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.smallPlus) {
             Label(title.uppercased(), systemImage: systemImage)
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.caption2Bold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .lineLimit(1)
 
             Text(value)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .lineLimit(3)
                 .minimumScaleFactor(0.85)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(DesignTokens.Spacing.standard)
         .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -356,12 +359,12 @@ struct CampaignSourceCTA: View {
             openURL(source.url)
         } label: {
             Label("Åpne kampanjen", systemImage: "arrow.up.right.square")
-                .font(.headline.weight(.semibold))
+                .font(DesignTokens.Typography.headlineSemibold)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .tint(PoengjegerTheme.primaryButtonBackground)
+        .tint(DesignTokens.Colors.brandPrimaryButton)
         .accessibilityLabel("Åpne kampanjesiden hos \(source.sourceName)")
     }
 }
@@ -379,12 +382,12 @@ struct ProgramGuideCTA: View {
             )
         } label: {
             Label(programGuideTitle, systemImage: "graduationcap")
-                .font(.headline.weight(.semibold))
+                .font(DesignTokens.Typography.headlineSemibold)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
         .controlSize(.large)
-        .tint(PoengjegerTheme.accent)
+        .tint(DesignTokens.Colors.brandPrimary)
         .accessibilityLabel("Åpne programguide for \(program.name)")
     }
 
@@ -406,20 +409,20 @@ struct DetailSection<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
             Label(title, systemImage: systemImage)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.headlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             content
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
     }
 }
@@ -429,15 +432,15 @@ struct DetailFactLine: View {
     let value: String
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.standard) {
             Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .frame(width: 104, alignment: .leading)
 
             Text(value)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -451,11 +454,11 @@ struct DetailRequirementRow: View {
     var body: some View {
         Label {
             Text(text)
-                .font(.body)
+                .font(DesignTokens.Typography.body)
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(PoengjegerTheme.accent)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
         }
         .labelStyle(.titleAndIcon)
     }
@@ -465,7 +468,7 @@ struct CampaignFactList: View {
     let campaign: Campaign
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
             facts
         }
     }
@@ -502,19 +505,19 @@ struct SourceLinkRow: View {
 
     var body: some View {
         Link(destination: source.url) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 Label("Åpne kilde", systemImage: "arrow.up.right.square")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.accent)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
                 Text(source.title)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text("Sjekket hos \(source.sourceName) \(source.checkedAt.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.footnote)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -529,18 +532,18 @@ struct FactRow: View {
 
     var body: some View {
         Label {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxSmall) {
                 Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                 Text(value)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineMedium)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         } icon: {
             Image(systemName: systemImage)
-                .foregroundStyle(PoengjegerTheme.accent)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
         }
         .labelStyle(.titleAndIcon)
         .accessibilityElement(children: .combine)
@@ -558,8 +561,12 @@ struct DetailTextBlock: View {
 
     var body: some View {
         Text(text)
-            .font(prominence == .lead ? .headline : .body)
-            .foregroundStyle(prominence == .lead ? .primary : .secondary)
+            .font(prominence == .lead ? DesignTokens.Typography.headline : DesignTokens.Typography.body)
+            .foregroundStyle(
+                prominence == .lead
+                    ? DesignTokens.Colors.textPrimary
+                    : DesignTokens.Colors.textSecondary
+            )
             .fixedSize(horizontal: false, vertical: true)
     }
 }

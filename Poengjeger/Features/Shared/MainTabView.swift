@@ -38,6 +38,6 @@ struct MainTabView: View {
                 Label("Profil", systemImage: "person.crop.circle")
             }
         }
-        .tint(PoengjegerTheme.primary)
+        .tint(DesignTokens.Colors.brandPrimary)
     }
 }

@@ -11,8 +11,8 @@ struct HomeView: View {
         !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private var matchingStores: [Store] {
-        StoreSearchUseCase().search(
+    private var matchingStoreResults: [StoreSearchResult] {
+        StoreSearchUseCase().searchResults(
             stores: environment.publishedStores,
             query: searchText,
             selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
@@ -25,18 +25,18 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 28) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.sectionLarge) {
                 header
 
                 searchSection
 
                 if environment.dataSource?.isFallback == true {
                     Text(environment.dataSource?.label ?? "Mock-data")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.primary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(PoengjegerTheme.primarySoft)
+                        .font(DesignTokens.Typography.captionSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                        .padding(.horizontal, DesignTokens.Spacing.controlGap)
+                        .padding(.vertical, DesignTokens.Spacing.small)
+                        .background(DesignTokens.Colors.brandPrimarySoft)
                         .clipShape(Capsule())
                 }
 
@@ -46,22 +46,22 @@ struct HomeView: View {
                     quickSuggestionsSection
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.standard)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Hjem")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     FavoritesView()
                 } label: {
-                    Label("Mine favoritter", systemImage: "star")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                    Text("Mine favoritter")
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                 }
                 .accessibilityLabel("Åpne mine favoritter")
             }
@@ -78,42 +78,44 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
             Text("Poengjeger")
-                .font(.system(.headline, design: .serif).weight(.bold))
-                .foregroundStyle(PoengjegerTheme.primary)
+                .font(DesignTokens.Typography.editorialHeadline)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
             Text("Sjekk før du handler")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Søk butikk, kategori eller produkt.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, -4)
+        .padding(.bottom, DesignTokens.Spacing.negativeTight)
     }
 
     private var searchSection: some View {
         searchField
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, 10)
-            .padding(.bottom, 12)
+            .padding(.top, DesignTokens.Spacing.controlGap)
+            .padding(.bottom, DesignTokens.Spacing.standard)
     }
 
     private var searchField: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: DesignTokens.Spacing.controlGap) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .accessibilityHidden(true)
 
             TextField("Søk butikk, kategori eller produkt", text: $searchText)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
                 .submitLabel(.search)
+                .minimumTouchTarget()
+                .accessibilityLabel("Søk etter butikk, kategori eller produkt")
                 .focused($isSearchFocused)
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
@@ -130,45 +132,45 @@ struct HomeView: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
+                .minimumTouchTarget()
                 .accessibilityLabel("Tøm søk")
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 17)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 12, y: 5)
+        .padding(.horizontal, DesignTokens.Spacing.screen)
+        .padding(.vertical, DesignTokens.Spacing.compact)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 12, y: 5)
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
-        .accessibilityLabel("Søk etter butikk, kategori eller produkt")
     }
 
     private var quickSuggestionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 Text("SNARVEIER")
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(2.2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 Text("Butikker med opptjening")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.editorialTitle2)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                 Text("Start med en verifisert butikk, eller søk etter det du skal kjøpe.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if environment.loadState == .loading && environment.publishedStores.isEmpty {
                 ProgressView("Laster butikker...")
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 30)
+                    .padding(.vertical, DesignTokens.Spacing.emptyState)
             } else if quickSuggestions.isEmpty {
                 EmptyStoreSearchView(isSearching: false)
             } else {
@@ -185,26 +187,30 @@ struct HomeView: View {
     }
 
     private var searchResultsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 Text("SØKERESULTAT")
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(2.2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
-                Text("\(matchingStores.count) treff")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
+                Text("\(matchingStoreResults.count) treff")
+                    .font(DesignTokens.Typography.editorialTitle2)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
             }
 
-            if matchingStores.isEmpty {
+            if matchingStoreResults.isEmpty {
                 EmptyStoreSearchView(isSearching: true)
             } else {
-                ForEach(Array(matchingStores.enumerated()), id: \.element.id) { index, store in
+                ForEach(Array(matchingStoreResults.enumerated()), id: \.element.id) { index, result in
                     Button {
-                        openStore(store, entryPoint: "search", rank: index + 1)
+                        openStore(result.store, entryPoint: "search", rank: index + 1)
                     } label: {
-                        StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
+                        StoreResultRow(
+                            store: result.store,
+                            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
+                            intentExplanation: result.intentExplanation
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -264,49 +270,58 @@ struct StoreCategoryRoute: Hashable {
 struct StoreResultRow: View {
     let store: Store
     var selectedProgramIDs: Set<UUID> = []
+    var intentExplanation: String?
 
     private var bestCombination: EarningCombination? {
         store.bestCombination(for: selectedProgramIDs)
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.standard) {
             StoreInitialMark(name: store.name)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
                 Text(store.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(1)
 
                 Text(store.category?.name ?? "Butikk")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 if let bestCombination {
                     Text(bestCombination.totalValueLabel)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
                 }
+
+                if let intentExplanation {
+                    Text(intentExplanation)
+                        .font(DesignTokens.Typography.captionSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             Image(systemName: "chevron.right")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .accessibilityHidden(true)
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -328,24 +343,24 @@ struct StoreInitialMark: View {
     private var palette: (foreground: Color, background: Color, border: Color) {
         let palettes: [(Color, Color, Color)] = [
             (
-                PoengjegerTheme.primary,
-                PoengjegerTheme.primarySoft,
-                PoengjegerTheme.primaryBorder
+                DesignTokens.Colors.brandPrimary,
+                DesignTokens.Colors.brandPrimarySoft,
+                DesignTokens.Colors.brandPrimaryBorder
             ),
             (
-                PoengjegerTheme.euroBonus,
-                PoengjegerTheme.euroBonusSoft,
-                PoengjegerTheme.euroBonus.opacity(0.28)
+                DesignTokens.Colors.euroBonus,
+                DesignTokens.Colors.euroBonusSoft,
+                DesignTokens.Colors.euroBonus.opacity(DesignTokens.Opacity.medium)
             ),
             (
-                PoengjegerTheme.trumf,
-                PoengjegerTheme.trumfSoft,
-                PoengjegerTheme.trumf.opacity(0.24)
+                DesignTokens.Colors.trumf,
+                DesignTokens.Colors.trumfSoft,
+                DesignTokens.Colors.trumf.opacity(DesignTokens.Opacity.muted)
             ),
             (
-                PoengjegerTheme.campaign,
-                PoengjegerTheme.campaignSoft,
-                PoengjegerTheme.campaign.opacity(0.26)
+                DesignTokens.Colors.opportunity,
+                DesignTokens.Colors.opportunitySoft,
+                DesignTokens.Colors.opportunity.opacity(DesignTokens.Opacity.mutedStrong)
             )
         ]
 
@@ -359,16 +374,16 @@ struct StoreInitialMark: View {
 
     var body: some View {
         Text(initials)
-            .font(.system(.callout, design: .rounded).weight(.heavy))
+            .font(DesignTokens.Typography.heroMetric)
             .foregroundStyle(palette.foreground)
             .lineLimit(1)
             .minimumScaleFactor(0.72)
             .frame(width: 42, height: 42)
             .background(palette.background)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(palette.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                    .stroke(palette.border, lineWidth: DesignTokens.Stroke.standard)
             }
             .accessibilityHidden(true)
     }
@@ -379,14 +394,14 @@ struct SectionHeading: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.micro) {
             Text(title)
-                .font(.system(.title3, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialTitle3)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -402,7 +417,7 @@ private struct EmptyStoreSearchView: View {
             systemImage: "magnifyingglass",
             description: Text(isSearching ? "Prøv en annen butikk eller kategori." : "Butikksøk vises her når opptjeningsdata er bekreftet.")
         )
-        .padding(.vertical, 24)
+        .padding(.vertical, DesignTokens.Spacing.section)
     }
 }
 

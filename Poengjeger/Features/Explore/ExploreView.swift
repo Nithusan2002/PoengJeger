@@ -63,7 +63,7 @@ struct ExploreView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 22) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.largePlus) {
                 header
 
                 statusSection
@@ -74,14 +74,14 @@ struct ExploreView: View {
 
                 selectedScopeSection
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.comfortable)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Utforsk")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .navigationDestination(for: Store.self) { store in
             StoreDetailView(store: store)
         }
@@ -97,14 +97,14 @@ struct ExploreView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
             Text("Utforsk")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             Text("Finn aktuelle muligheter før du handler.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -116,11 +116,11 @@ struct ExploreView: View {
             FeedStatusBanner(text: message)
         } else if environment.dataSource?.isFallback == true {
             Text(environment.dataSource?.label ?? "Mock-data")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.primary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(PoengjegerTheme.primarySoft)
+                .font(DesignTokens.Typography.captionSemibold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                .padding(.horizontal, DesignTokens.Spacing.controlGap)
+                .padding(.vertical, DesignTokens.Spacing.small)
+                .background(DesignTokens.Colors.brandPrimarySoft)
                 .clipShape(Capsule())
         }
     }
@@ -130,9 +130,9 @@ struct ExploreView: View {
         if environment.loadState == .loading && spotlightCampaigns.isEmpty && spotlightStore == nil {
             ProgressView("Laster muligheter...")
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.vertical, 30)
+                .padding(.vertical, DesignTokens.Spacing.emptyState)
         } else if !spotlightCampaigns.isEmpty || spotlightStore != nil {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 SectionHeader(
                     eyebrow: "AKKURAT NÅ",
                     title: "Verdt å sjekke først",
@@ -166,6 +166,7 @@ struct ExploreView: View {
             }
         }
         .pickerStyle(.segmented)
+        .minimumTouchTarget()
         .accessibilityLabel("Velg innhold i Utforsk")
     }
 
@@ -182,7 +183,7 @@ struct ExploreView: View {
     }
 
     private var campaignSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             SectionHeader(
                 eyebrow: "KAMPANJER",
                 title: "Aktive muligheter",
@@ -192,18 +193,18 @@ struct ExploreView: View {
             if environment.loadState == .loading && activeCampaigns.isEmpty {
                 ProgressView("Laster kampanjer...")
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 30)
+                    .padding(.vertical, DesignTokens.Spacing.emptyState)
             } else if activeCampaigns.isEmpty {
                 Text("Ingen aktive kampanjer er publisert ennå.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(14)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .padding(DesignTokens.Spacing.card)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PoengjegerTheme.elevatedSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(DesignTokens.Colors.surfaceElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(PoengjegerTheme.border, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                            .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                     }
             } else {
                 ForEach(activeCampaigns) { campaign in
@@ -220,7 +221,7 @@ struct ExploreView: View {
     }
 
     private var categoryBrowseSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
             SectionHeader(
                 eyebrow: "KATEGORIER",
                 title: "Bla etter handlebehov",
@@ -229,23 +230,23 @@ struct ExploreView: View {
 
             if categories.isEmpty {
                 Text("Ingen kategorier er publisert ennå.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(14)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .padding(DesignTokens.Spacing.card)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PoengjegerTheme.elevatedSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(DesignTokens.Colors.surfaceElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(PoengjegerTheme.border, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                            .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                     }
             } else {
                 LazyVGrid(
                     columns: [
-                        GridItem(.flexible(), spacing: 12),
-                        GridItem(.flexible(), spacing: 12)
+                        GridItem(.flexible(), spacing: DesignTokens.Spacing.standard),
+                        GridItem(.flexible(), spacing: DesignTokens.Spacing.standard)
                     ],
-                    spacing: 12
+                    spacing: DesignTokens.Spacing.standard
                 ) {
                     ForEach(categories) { category in
                         NavigationLink(value: StoreCategoryRoute(name: category.name)) {
@@ -259,7 +260,7 @@ struct ExploreView: View {
     }
 
     private var featuredStoresSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             SectionHeader(
                 eyebrow: "BUTIKKER",
                 title: "Høyest dokumentert opptjening",
@@ -269,18 +270,18 @@ struct ExploreView: View {
             if environment.loadState == .loading && rankedStores.isEmpty {
                 ProgressView("Laster butikker...")
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 30)
+                    .padding(.vertical, DesignTokens.Spacing.emptyState)
             } else if rankedStores.isEmpty {
                 Text("Ingen butikker med dokumentert opptjening er publisert ennå.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(14)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .padding(DesignTokens.Spacing.card)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PoengjegerTheme.elevatedSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(DesignTokens.Colors.surfaceElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(PoengjegerTheme.border, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                            .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                     }
             } else {
                 ForEach(rankedStores) { store in
@@ -308,20 +309,20 @@ private struct SectionHeader: View {
     let subtitle: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
             Text(eyebrow)
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(2.2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             Text(title)
-                .font(.system(.title2, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialTitle2)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             if let subtitle {
                 Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -352,16 +353,16 @@ private struct ExploreCampaignTeaserRow: View {
     let primaryProgramName: String?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
             Image(systemName: iconName)
-                .font(.headline.weight(.semibold))
+                .font(DesignTokens.Typography.headlineSemibold)
                 .foregroundStyle(campaign.cardAccent)
                 .frame(width: 38, height: 38)
-                .background(campaign.cardAccent.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(campaign.cardAccent.opacity(DesignTokens.Opacity.soft))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 TagRow(
                     primaryProgramName: primaryProgramName,
                     categoryName: campaign.category?.name,
@@ -369,35 +370,35 @@ private struct ExploreCampaignTeaserRow: View {
                 )
 
                 Text(campaign.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(campaign.opportunitySignal)
-                    .font(.subheadline.weight(.bold))
+                    .font(DesignTokens.Typography.subheadlineBold)
                     .foregroundStyle(campaign.cardAccent)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text("Kontrollert \(campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
 
-            Spacer(minLength: 6)
+            Spacer(minLength: DesignTokens.Spacing.small)
 
             Image(systemName: "chevron.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-                .padding(.top, 8)
+                .font(DesignTokens.Typography.captionBold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+                .padding(.top, DesignTokens.Spacing.medium)
                 .accessibilityHidden(true)
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -446,52 +447,52 @@ private struct ExploreCategoryTile: View {
     let category: ExploreCategorySummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
             HStack(alignment: .top) {
                 Image(systemName: iconName)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.primary)
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
                     .frame(width: 36, height: 36)
-                    .background(PoengjegerTheme.primarySoft)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .background(DesignTokens.Colors.brandPrimarySoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                     .accessibilityHidden(true)
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
 
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.captionBold)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .accessibilityHidden(true)
             }
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
                 Text(category.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.9)
 
                 Text("\(category.storeCount) butikker")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 if let topValueLabel = category.topValueLabel {
                     Text(shortValueLabel(topValueLabel))
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                        .font(DesignTokens.Typography.captionBold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.78)
                 }
             }
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, minHeight: 146, alignment: .topLeading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -539,41 +540,45 @@ private struct ExploreStoreMiniRow: View {
     var selectedProgramIDs: Set<UUID> = []
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.standard) {
             StoreInitialMark(name: store.name)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                 Text(store.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(1)
 
                 if let categoryName = store.category?.name {
                     Text(categoryName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                         .lineLimit(1)
                 }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             Text(valueLabel)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(hasVerifiedEarning ? PoengjegerTheme.primary : .secondary)
+                .font(DesignTokens.Typography.subheadlineBold)
+                .foregroundStyle(
+                    hasVerifiedEarning
+                        ? DesignTokens.Colors.brandPrimary
+                        : DesignTokens.Colors.textSecondary
+                )
                 .lineLimit(2)
                 .multilineTextAlignment(.trailing)
                 .minimumScaleFactor(0.8)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.horizontal, DesignTokens.Spacing.card)
+        .padding(.vertical, DesignTokens.Spacing.standard)
         .frame(minHeight: 68)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }

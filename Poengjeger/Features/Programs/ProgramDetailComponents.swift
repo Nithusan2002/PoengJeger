@@ -8,34 +8,34 @@ struct ProgramHero: View {
     let lastReviewedAt: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .center, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.comfortable) {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.card) {
                 ProgramMark(program: program, size: 56)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                     Text(kicker)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.accent)
+                        .font(DesignTokens.Typography.captionBold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
                     Text(title)
-                        .font(.title.weight(.bold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.title)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: DesignTokens.Spacing.medium) {
                         ProgramHeroMetaPill(text: readingTimeLabel, systemImage: "book")
                     }
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
             }
 
             Text(reviewText)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.footnote)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, DesignTokens.Spacing.xSmall)
         .accessibilityElement(children: .combine)
     }
 
@@ -54,12 +54,12 @@ struct ProgramHeroMetaPill: View {
 
     var body: some View {
         Label(text, systemImage: systemImage)
-            .font(.caption.weight(.bold))
-            .foregroundStyle(PoengjegerTheme.accent)
+            .font(DesignTokens.Typography.captionBold)
+            .foregroundStyle(DesignTokens.Colors.brandPrimary)
             .lineLimit(1)
             .minimumScaleFactor(0.78)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 6)
+            .padding(.horizontal, DesignTokens.Spacing.mediumPlus)
+            .padding(.vertical, DesignTokens.Spacing.small)
     }
 }
 
@@ -70,10 +70,10 @@ struct ProgramMark: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(program.programColor.opacity(0.14))
+                .fill(program.programColor.opacity(DesignTokens.Opacity.selected))
 
             Text(program.initials)
-                .font(.system(size: size * 0.28, weight: .bold))
+                .font(DesignTokens.Typography.programMark(containerSize: size))
                 .foregroundStyle(program.programColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.62)
@@ -91,23 +91,28 @@ struct ProgramMarkdownArticle: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.screen) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
                 switch block {
                 case let .heading(level, text):
                     Text(text)
                         .font(font(for: level))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, level == 1 ? 4 : 10)
+                        .padding(
+                            .top,
+                            level == 1
+                                ? DesignTokens.Spacing.xSmall
+                                : DesignTokens.Spacing.controlGap
+                        )
 
                 case let .paragraph(text):
                     ProgramGuideParagraph(text: text)
 
                 case let .bullet(text):
-                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.controlGap) {
                         Circle()
-                            .fill(PoengjegerTheme.accent)
+                            .fill(DesignTokens.Colors.brandPrimary)
                             .frame(width: 6, height: 6)
                             .accessibilityHidden(true)
 
@@ -123,11 +128,11 @@ struct ProgramMarkdownArticle: View {
     private func font(for level: Int) -> Font {
         switch level {
         case 1:
-            return .title2.weight(.bold)
+            return DesignTokens.Typography.title2Bold
         case 2:
-            return .title3.weight(.bold)
+            return DesignTokens.Typography.title3Bold
         default:
-            return .headline.weight(.bold)
+            return DesignTokens.Typography.headlineBold
         }
     }
 }
@@ -137,8 +142,8 @@ struct ProgramGuideParagraph: View {
 
     var body: some View {
         Text(text)
-            .font(.body)
-            .foregroundStyle(.primary)
+            .font(DesignTokens.Typography.body)
+            .foregroundStyle(DesignTokens.Colors.textPrimary)
             .lineSpacing(6)
             .fixedSize(horizontal: false, vertical: true)
             .textSelection(.enabled)
@@ -151,10 +156,10 @@ struct ProgramReviewNote: View {
 
     var body: some View {
         Text(reviewText)
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+            .font(DesignTokens.Typography.footnote)
+            .foregroundStyle(DesignTokens.Colors.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 2)
+            .padding(.top, DesignTokens.Spacing.xxSmall)
     }
 
     private var reviewText: String {

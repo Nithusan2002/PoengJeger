@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-028: Visuelle grunnverdier samles i navngitte design tokens
+- Status: Vedtatt
+- Bakgrunn: Farger, avstander, hjørneradier og typografi var definert både i et felles tema og som lokale SwiftUI-verdier. Det gjør visuell konsistens, mørk modus og tilgjengelighetskontroll vanskeligere over tid.
+- Beslutning: `DesignTokens.swift` er sannhetskilden for visuelle grunnverdier i iOS-appen. Feature-koden bruker formålsnavngitte tokens direkte, og det tidligere kompatibilitetslaget `PoengjegerTheme` er fjernet. Regler og bruksprinsipper dokumenteres i `docs/design-system.md`, og en automatisert sjekk avviser nye hardkodede designverdier.
+- Konsekvens: UI-endringer får et felles visuelt språk og færre engangsverdier. Nye farger, avstander, hjørneradier, fonter, strekbredder og opasiteter må innføres som navngitte tokens og dokumenteres når designregelen endres.
+
 ## ADR-027: Poengnytt erstatter Lagret som hovedfane
 - Status: Vedtatt
 - Bakgrunn: Lagret er en personlig returflate brukeren åpner ved behov, mens Poengnytt kan gi hyppigere returverdi gjennom nye kampanjer, frister og metoder for poengopptjening. Samtidig skal appen ikke dreies til en generisk nyhets- eller bloggopplevelse.

@@ -14,7 +14,7 @@ struct HowToEarnView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 22) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.largePlus) {
                 header
 
                 stepsSection
@@ -27,14 +27,14 @@ struct HowToEarnView: View {
 
                 detailDisclosure
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.standard)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Slik gjør du det")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .task(id: combination.id) {
             environment.track(.init(
                 name: "how_to_earn_opened",
@@ -50,81 +50,81 @@ struct HowToEarnView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
                 StoreInitialMark(name: store.name)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                     Text(store.name)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.headlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                     Text(store.category?.name ?? "Butikk")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 Text(combination.rateIDs.count > 1 ? "BESTE KOMBINASJON" : "BESTE DOKUMENTERTE MULIGHET")
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(2.2)
-                    .foregroundStyle(PoengjegerTheme.primary)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
                 Text(combination.totalValueLabel)
-                    .font(.system(size: 34, weight: .bold, design: .serif))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.valueDisplay)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(combination.summary)
                     .lineLimit(2)
-                    .font(.callout)
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.callout)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.brandPrimaryBorder, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
 
     private var stepsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 Text("HANDLING")
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(2.2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 Text("Følg stegene i rekkefølge")
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.editorialTitle2)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
             }
 
-            VStack(spacing: 0) {
+            VStack(spacing: DesignTokens.Spacing.none) {
                 ForEach(Array(sortedSteps.enumerated()), id: \.element.id) { index, step in
                     StepInstructionRow(index: index + 1, text: step.text)
 
                     if step.id != sortedSteps.last?.id {
                         Divider()
-                            .padding(.leading, 44)
+                            .padding(.leading, DesignTokens.Spacing.searchLeadingInset)
                     }
                 }
             }
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+            .background(DesignTokens.Colors.surfaceElevated)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+            .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(PoengjegerTheme.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                    .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
             }
         }
     }
@@ -132,25 +132,25 @@ struct HowToEarnView: View {
     @ViewBuilder
     private var compactNotice: some View {
         if let importantNotice = noticeBuckets?.importantItems.first {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.controlGap) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.subheadline.weight(.semibold))
+                    .font(DesignTokens.Typography.subheadlineSemibold)
                     .foregroundStyle(HowToEarnNoticeStyle.tint)
                     .frame(width: 20)
                     .accessibilityHidden(true)
 
                 Text(importantNotice)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(14)
+            .padding(DesignTokens.Spacing.card)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(HowToEarnNoticeStyle.background)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(HowToEarnNoticeStyle.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                    .stroke(HowToEarnNoticeStyle.border, lineWidth: DesignTokens.Stroke.standard)
             }
             .accessibilityElement(children: .combine)
         }
@@ -159,7 +159,7 @@ struct HowToEarnView: View {
     @ViewBuilder
     private var detailDisclosure: some View {
         DisclosureGroup(isExpanded: $isDetailDisclosureExpanded) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 if let buckets = noticeBuckets {
                     if !buckets.importantItems.isEmpty {
                         detailList(title: "Vilkår", items: buckets.importantItems)
@@ -172,37 +172,38 @@ struct HowToEarnView: View {
 
                 handoffDisclosure
             }
-            .padding(.top, 10)
+            .padding(.top, DesignTokens.Spacing.controlGap)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 Image(systemName: "info.circle")
                     .accessibilityHidden(true)
 
                 Text("Se beregning og vilkår")
-                    .font(.subheadline.weight(.semibold))
+                    .font(DesignTokens.Typography.subheadlineSemibold)
             }
-            .foregroundStyle(PoengjegerTheme.primary)
+            .foregroundStyle(DesignTokens.Colors.brandPrimary)
         }
-        .padding(14)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .padding(DesignTokens.Spacing.card)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
+        .minimumTouchTarget()
     }
 
     private func detailList(title: String, items: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             Text(title.uppercased())
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(1.4)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             ForEach(items, id: \.self) { item in
                 Text(item)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -231,12 +232,12 @@ struct HowToEarnView: View {
                 openURL(url)
             } label: {
                 Label("Start handelen", systemImage: "arrow.up.forward.app.fill")
-                    .font(.headline.weight(.semibold))
+                    .font(DesignTokens.Typography.headlineSemibold)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .tint(PoengjegerTheme.primaryButtonBackground)
+            .tint(DesignTokens.Colors.brandPrimaryButton)
             .accessibilityHint("Åpner \(handoffDestinationName(for: url)) eksternt.")
         } else {
             ContentUnavailableView(
@@ -257,16 +258,16 @@ struct HowToEarnView: View {
     @ViewBuilder
     private var handoffDisclosure: some View {
         if combination.primaryHandoffURL != nil {
-            VStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .center, spacing: DesignTokens.Spacing.small) {
                 Text("Du sendes videre til \(handoffDestinationNameForDisclosure).")
 
                 Text("Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(DesignTokens.Typography.caption)
+            .foregroundStyle(DesignTokens.Colors.textSecondary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, DesignTokens.Spacing.controlGap)
         }
     }
 
@@ -274,11 +275,11 @@ struct HowToEarnView: View {
     private var compactHandoffDisclosure: some View {
         if combination.primaryHandoffURL != nil {
             Text("Lenken kan gi Poengjeger provisjon.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 10)
+                .padding(.horizontal, DesignTokens.Spacing.controlGap)
         }
     }
 
@@ -317,24 +318,24 @@ private struct StepInstructionRow: View {
     let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
             Text("\(index)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(PoengjegerTheme.primary)
+                .font(DesignTokens.Typography.captionBold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
                 .frame(width: 26, height: 26)
-                .background(PoengjegerTheme.primarySoft)
+                .background(DesignTokens.Colors.brandPrimarySoft)
                 .clipShape(Circle())
                 .accessibilityHidden(true)
 
             Text(text)
-                .font(.callout)
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.callout)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Spacer(minLength: 0)
+            Spacer(minLength: DesignTokens.Spacing.none)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 13)
+        .padding(.horizontal, DesignTokens.Spacing.card)
+        .padding(.vertical, DesignTokens.Spacing.standardPlus)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Steg \(index). \(text)")
     }
@@ -390,15 +391,9 @@ private enum HowToEarnTextNormalizer {
 }
 
 private enum HowToEarnNoticeStyle {
-    static let tint = PoengjegerTheme.adaptive(light: (0.55, 0.34, 0.08), dark: (1.0, 0.76, 0.38))
-    static let border = Color(red: 0.86, green: 0.75, blue: 0.53)
-    static let background = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.20, green: 0.16, blue: 0.09, alpha: 1)
-        }
-
-        return UIColor(red: 0.98, green: 0.93, blue: 0.80, alpha: 1)
-    })
+    static let tint = DesignTokens.Colors.noticeText
+    static let border = DesignTokens.Colors.noticeBorder
+    static let background = DesignTokens.Colors.noticeBackground
 }
 
 #Preview {

@@ -24,13 +24,13 @@ struct LearnView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.comfortable) {
                 LearnHeader()
 
                 if environment.loadState == .loading && programs.isEmpty {
                     ProgressView("Laster programmer...")
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 40)
+                        .padding(.vertical, DesignTokens.Spacing.spacious)
                 } else if programs.isEmpty {
                     LearnEmptyState()
                 } else {
@@ -39,7 +39,7 @@ struct LearnView: View {
                     if visibleGuides.isEmpty {
                         LearnFilteredEmptyState(filterTitle: selectedFilter.title)
                     } else {
-                        LazyVStack(alignment: .leading, spacing: 0) {
+                        LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.none) {
                             ForEach(visibleGuides) { guide in
                                 if let program = programs.first(where: { $0.id == guide.programID }) {
                                     NavigationLink {
@@ -58,28 +58,28 @@ struct LearnView: View {
 
                                     if guide.id != visibleGuides.last?.id {
                                         Divider()
-                                            .padding(.leading, 78)
+                                            .padding(.leading, DesignTokens.Spacing.largeIconLeadingInset)
                                     }
                                 }
                             }
                         }
-                        .background(PoengjegerTheme.elevatedSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(DesignTokens.Colors.surfaceElevated)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .stroke(PoengjegerTheme.border, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                         }
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 28)
-            .padding(.bottom, 24)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.sectionLarge)
+            .padding(.bottom, DesignTokens.Spacing.section)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Guider")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
     }
 }
 
@@ -108,18 +108,18 @@ private enum LearnGuideFilter: Hashable, Identifiable {
 
 private struct LearnHeader: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Guider")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Korte forklaringer for EuroBonus og Trumf, skrevet for valgene du tar før du handler.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, 2)
+        .padding(.bottom, DesignTokens.Spacing.xxSmall)
     }
 }
 
@@ -129,31 +129,35 @@ private struct LearnFilterBar: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 ForEach(filters) { filter in
                     Button {
                         selection = filter
                     } label: {
                         Text(filter.title)
-                            .font(.subheadline.weight(.bold))
+                            .font(DesignTokens.Typography.subheadlineBold)
                             .lineLimit(1)
                             .minimumScaleFactor(0.78)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
+                            .padding(.horizontal, DesignTokens.Spacing.screen)
+                            .padding(.vertical, DesignTokens.Spacing.controlGap)
                             .frame(minHeight: 44)
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(selection == filter ? .primary : PoengjegerTheme.accent)
-                    .background(PoengjegerTheme.elevatedSurface)
+                    .foregroundStyle(
+                        selection == filter
+                            ? DesignTokens.Colors.textPrimary
+                            : DesignTokens.Colors.brandPrimary
+                    )
+                    .background(DesignTokens.Colors.surfaceElevated)
                     .clipShape(Capsule())
                     .overlay {
                         Capsule()
-                            .stroke(selection == filter ? PoengjegerTheme.accent : PoengjegerTheme.border, lineWidth: 1)
+                            .stroke(selection == filter ? DesignTokens.Colors.brandPrimary : DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                     }
                     .accessibilityAddTraits(selection == filter ? .isSelected : [])
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, DesignTokens.Spacing.xxSmall)
         }
         .scrollClipDisabled()
     }
@@ -175,47 +179,47 @@ private struct LearnGuideRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.card) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(program.programColor.opacity(0.12))
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                    .fill(program.programColor.opacity(DesignTokens.Opacity.soft))
 
                 ProgramMark(program: program, size: 42)
             }
             .frame(width: 56, height: 56)
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.smallPlus) {
                 Text(guide.titleText(for: program))
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(previewText)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 8) {
+                HStack(spacing: DesignTokens.Spacing.medium) {
                     LearnCardPill(
                         title: isReviewed ? "Kontrollert" : "Utkast",
                         systemImage: isReviewed ? "checkmark.seal" : "exclamationmark.triangle",
-                        tint: isReviewed ? PoengjegerTheme.success : PoengjegerTheme.warning
+                        tint: isReviewed ? DesignTokens.Colors.success : DesignTokens.Colors.warning
                     )
                 }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             Image(systemName: "chevron.right")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.top, 18)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+                .padding(.top, DesignTokens.Spacing.comfortable)
                 .accessibilityHidden(true)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
+        .padding(.horizontal, DesignTokens.Spacing.card)
+        .padding(.vertical, DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -229,35 +233,35 @@ private struct LearnCardPill: View {
 
     var body: some View {
         Label(title, systemImage: systemImage)
-            .font(.caption.weight(.bold))
+            .font(DesignTokens.Typography.captionBold)
             .foregroundStyle(tint)
             .lineLimit(1)
             .minimumScaleFactor(0.78)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(tint.opacity(0.12))
+            .padding(.horizontal, DesignTokens.Spacing.controlGap)
+            .padding(.vertical, DesignTokens.Spacing.smallPlus)
+            .background(tint.opacity(DesignTokens.Opacity.soft))
             .clipShape(Capsule())
     }
 }
 
 private struct LearnEmptyState: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Ingen programmer ennå")
-                .font(.headline.weight(.semibold))
+                .font(DesignTokens.Typography.headlineSemibold)
 
             Text("Når EuroBonus og Trumf er klare, vises de her med bekreftede guider.")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
     }
 }
@@ -266,22 +270,22 @@ private struct LearnFilteredEmptyState: View {
     let filterTitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Ingen guider i \(filterTitle)")
-                .font(.headline.weight(.semibold))
+                .font(DesignTokens.Typography.headlineSemibold)
 
             Text("Prøv et annet filter, eller kom tilbake når nye programguider er publisert.")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
     }
 }

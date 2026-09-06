@@ -50,19 +50,19 @@ struct FeedSectionHeader: View {
     let detail: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxSmall) {
             Text(title)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.footnoteBold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             Text(detail)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .textCase(nil)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.top, DesignTokens.Spacing.medium)
+        .padding(.bottom, DesignTokens.Spacing.xSmall)
     }
 }
 
@@ -73,14 +73,14 @@ struct FilterChip: View {
 
     var body: some View {
         Label(title, systemImage: systemImage)
-            .font(.callout.weight(.semibold))
+            .font(DesignTokens.Typography.calloutSemibold)
             .lineLimit(1)
             .minimumScaleFactor(0.86)
-            .padding(.horizontal, 9)
+            .padding(.horizontal, DesignTokens.Spacing.mediumPlus)
             .frame(minHeight: 36)
-            .background(isSelected ? PoengjegerTheme.accentSoft : PoengjegerTheme.surface)
-            .foregroundStyle(isSelected ? PoengjegerTheme.accent : Color.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(isSelected ? DesignTokens.Colors.brandPrimarySoft : DesignTokens.Colors.surface)
+            .foregroundStyle(isSelected ? DesignTokens.Colors.brandPrimary : DesignTokens.Colors.textPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.control, style: .continuous))
     }
 }
 
@@ -106,19 +106,23 @@ struct FeedCampaignRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.smallPlus) {
+            HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.standard) {
                 Text(campaign.feedHeadline)
-                    .font(.system(size: 20, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.feedValue)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.75)
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
 
                 Text(expiry.text.uppercased())
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(expiry.urgent ? PoengjegerTheme.warning : .secondary)
+                    .font(DesignTokens.Typography.caption2Bold)
+                    .foregroundStyle(
+                        expiry.urgent
+                            ? DesignTokens.Colors.warning
+                            : DesignTokens.Colors.textSecondary
+                    )
                     .multilineTextAlignment(.trailing)
                     .lineLimit(2)
                     .accessibilityLabel(expiry.text)
@@ -126,32 +130,32 @@ struct FeedCampaignRow: View {
 
             if campaign.feedHeadline != campaign.title {
                 Text(campaign.title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineMedium)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Text(campaign.feedReason)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.footnote)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             if campaign.feedDecisionLabel != nil || !programs.isEmpty {
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 10) {
+                    HStack(spacing: DesignTokens.Spacing.controlGap) {
                         metadata
                     }
 
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                         metadata
                     }
                 }
             }
         }
         .contentShape(Rectangle())
-        .padding(.vertical, 2)
+        .padding(.vertical, DesignTokens.Spacing.xxSmall)
     }
 
     @ViewBuilder
@@ -171,13 +175,13 @@ struct FeedEditorialTierPill: View {
 
     var body: some View {
         Text(label.uppercased())
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(PoengjegerTheme.accent)
+            .font(DesignTokens.Typography.caption2Bold)
+            .foregroundStyle(DesignTokens.Colors.brandPrimary)
             .lineLimit(1)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(PoengjegerTheme.accentSoft)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .padding(.horizontal, DesignTokens.Spacing.medium)
+            .padding(.vertical, DesignTokens.Spacing.xSmall)
+            .background(DesignTokens.Colors.brandPrimarySoft)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
             .accessibilityLabel("Vurdering \(label)")
     }
 }
@@ -186,14 +190,14 @@ struct ProgramTag: View {
     let program: BonusProgram
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: DesignTokens.Spacing.compact) {
             Circle()
                 .fill(program.feedColor)
                 .frame(width: 7, height: 7)
                 .accessibilityHidden(true)
 
             Text(program.shortDisplayName.uppercased())
-                .font(.caption2.weight(.bold))
+                .font(DesignTokens.Typography.caption2Bold)
                 .foregroundStyle(program.feedColor)
                 .lineLimit(1)
         }
@@ -203,26 +207,26 @@ struct ProgramTag: View {
 
 struct FeedPlaceholderRow: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             HStack {
                 Text("15 % bonus")
-                    .font(.system(size: 20, weight: .heavy, design: .rounded))
+                    .font(DesignTokens.Typography.feedValue)
                 Spacer()
                 Text("3 DAGER IGJEN")
-                    .font(.caption2.weight(.bold))
+                    .font(DesignTokens.Typography.caption2Bold)
             }
 
             Text("Kampanjetittel med kort forklaring")
-                .font(.subheadline)
+                .font(DesignTokens.Typography.subheadline)
 
             HStack {
                 ProgramTag(program: SampleData.trumf)
                 ProgramTag(program: SampleData.euroBonus)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, DesignTokens.Spacing.xxSmall)
         .listRowInsets(EdgeInsets(top: 11, leading: 16, bottom: 11, trailing: 16))
-        .listRowBackground(PoengjegerTheme.background)
+        .listRowBackground(DesignTokens.Colors.background)
     }
 }
 
@@ -250,17 +254,21 @@ struct ProgramFilterSheet: View {
                         Button {
                             toggle(program.id)
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack(spacing: DesignTokens.Spacing.standard) {
                                 Image(systemName: selectedProgramIDs.contains(program.id) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(selectedProgramIDs.contains(program.id) ? PoengjegerTheme.accent : .secondary)
+                                    .foregroundStyle(
+                                        selectedProgramIDs.contains(program.id)
+                                            ? DesignTokens.Colors.brandPrimary
+                                            : DesignTokens.Colors.textSecondary
+                                    )
                                     .accessibilityHidden(true)
 
-                                VStack(alignment: .leading, spacing: 3) {
+                                VStack(alignment: .leading, spacing: DesignTokens.Spacing.micro) {
                                     Text(program.name)
-                                        .foregroundStyle(.primary)
+                                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                                     Text(program.issuerName)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
+                                        .font(DesignTokens.Typography.footnote)
+                                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                                 }
 
                                 Spacer()

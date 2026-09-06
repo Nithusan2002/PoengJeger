@@ -1,0 +1,23 @@
+name: iOS design system
+
+on:
+  pull_request:
+    paths:
+      - "Poengjeger/**/*.swift"
+      - "scripts/check-design-token-usage.sh"
+      - ".github/workflows/ios-design-system.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "Poengjeger/**/*.swift"
+      - "scripts/check-design-token-usage.sh"
+      - ".github/workflows/ios-design-system.yml"
+
+jobs:
+  design-token-usage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check design-token usage
+        run: bash scripts/check-design-token-usage.sh

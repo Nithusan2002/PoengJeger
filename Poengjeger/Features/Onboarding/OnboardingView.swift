@@ -13,7 +13,7 @@ struct OnboardingView: View {
 
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.largePlus) {
                     OnboardingHeader()
 
                     OnboardingProgramGrid(
@@ -32,18 +32,18 @@ struct OnboardingView: View {
                     }
 
                     Text("Du kan endre dette senere i Profil.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.callout)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 76)
-                .padding(.bottom, 28)
+                .padding(.horizontal, DesignTokens.Spacing.screen)
+                .padding(.top, DesignTokens.Spacing.onboardingTop)
+                .padding(.bottom, DesignTokens.Spacing.sectionLarge)
             }
-            .background(PoengjegerTheme.background)
+            .background(DesignTokens.Colors.background)
             .navigationTitle("")
-            .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+            .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
             .overlay {
                 if case .loading = environment.loadState, environment.programs.isEmpty {
                     ProgressView()
@@ -63,19 +63,19 @@ struct OnboardingView: View {
 
 private struct OnboardingHeader: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.screen) {
             Text("Hva samler du i?")
-                .font(.system(.largeTitle, design: .rounded).weight(.heavy))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.heroTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Velg programmene dine. Vi bruker valget til å tilpasse kampanjer, guider og varsler.")
-                .font(.title3.weight(.medium))
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.title3)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, DesignTokens.Spacing.xSmall)
         .accessibilityElement(children: .combine)
     }
 }
@@ -85,11 +85,11 @@ private struct OnboardingProgramGrid: View {
     @Binding var selectedProgramIDs: Set<UUID>
 
     private let columns = [
-        GridItem(.adaptive(minimum: 150), spacing: 14)
+        GridItem(.adaptive(minimum: 150), spacing: DesignTokens.Spacing.card)
     ]
 
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 14) {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: DesignTokens.Spacing.card) {
             ForEach(programs) { program in
                 OnboardingProgramCard(
                     program: program,
@@ -118,7 +118,7 @@ private struct OnboardingProgramCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.screen) {
                 HStack(alignment: .top) {
                     Circle()
                         .fill(program.programColor)
@@ -128,36 +128,36 @@ private struct OnboardingProgramCard: View {
                     Spacer()
 
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(isSelected ? program.programColor : Color(uiColor: .tertiaryLabel))
+                        .font(DesignTokens.Typography.title3Semibold)
+                        .foregroundStyle(isSelected ? program.programColor : DesignTokens.Colors.textTertiary)
                         .accessibilityHidden(true)
                 }
 
-                Spacer(minLength: 18)
+                Spacer(minLength: DesignTokens.Spacing.comfortable)
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                     Text(program.name)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.headlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                         .lineLimit(2)
                         .minimumScaleFactor(0.86)
 
                     Text(program.onboardingDescription)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.footnote)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                         .lineLimit(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(18)
+            .padding(DesignTokens.Spacing.comfortable)
             .frame(maxWidth: .infinity, minHeight: 168, alignment: .leading)
-            .background(PoengjegerTheme.elevatedSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(DesignTokens.Colors.surfaceElevated)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(isSelected ? program.programColor.opacity(0.72) : PoengjegerTheme.border, lineWidth: isSelected ? 1.5 : 1)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                    .stroke(isSelected ? program.programColor.opacity(DesignTokens.Opacity.selectedBorder) : DesignTokens.Colors.border, lineWidth: isSelected ? 1.5 : 1)
             }
-            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
@@ -179,7 +179,7 @@ private struct OnboardingContinueButton: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .tint(PoengjegerTheme.primaryButtonBackground)
+        .tint(DesignTokens.Colors.brandPrimaryButton)
         .disabled(!isEnabled)
         .accessibilityHint(isEnabled ? "Åpner den personlige kampanjefeeden." : "Velg minst ett bonusprogram først.")
     }
@@ -195,7 +195,7 @@ struct ProgramSelectionControlsSection: View {
                 Text("Valgt nå")
                 Spacer()
                 Text("\(selectedProgramCount) av \(programs.count)")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
 
             Button("Velg alle") {
@@ -249,27 +249,27 @@ private struct ProgramSelectionRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: DesignTokens.Spacing.standard) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(
                         isSelected
-                        ? AnyShapeStyle(PoengjegerTheme.accent)
+                        ? AnyShapeStyle(DesignTokens.Colors.brandPrimary)
                         : AnyShapeStyle(.tertiary)
                     )
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                     Text(program.name)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                     Text(program.issuerName)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.footnote)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
 
                 Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.vertical, DesignTokens.Spacing.standard)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

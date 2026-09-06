@@ -88,7 +88,7 @@ struct FeedView: View {
                             }
                             .buttonStyle(.plain)
                             .listRowInsets(EdgeInsets(top: 11, leading: 16, bottom: 11, trailing: 16))
-                            .listRowBackground(PoengjegerTheme.background)
+                            .listRowBackground(DesignTokens.Colors.background)
                             .accessibilityLabel(accessibilityLabel(for: campaign))
                         }
                     } header: {
@@ -99,14 +99,14 @@ struct FeedView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(PoengjegerTheme.background)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear
+        .background(DesignTokens.Colors.background)
+        .safeAreaInset(edge: .bottom, spacing: DesignTokens.Spacing.none) {
+            DesignTokens.Colors.clear
                 .frame(height: 76)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .safeAreaInset(edge: .top, spacing: DesignTokens.Spacing.none) {
             FeedControlHeader(
                 campaignCount: activeCampaignCount,
                 priorityStats: priorityStats,

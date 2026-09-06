@@ -19,7 +19,7 @@ struct ProgramDetailView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.comfortable) {
                 ProgramHero(
                     program: program,
                     title: guide?.titleText(for: program) ?? program.name,
@@ -34,14 +34,14 @@ struct ProgramDetailView: View {
 
                 ProgramReviewNote(lastReviewedAt: guide?.lastReviewedAt)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 24)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.section)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle(guide?.titleText(for: program) ?? program.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .task(id: program.id) {
             environment.track(.init(
                 name: "guide_opened",

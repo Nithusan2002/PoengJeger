@@ -18,7 +18,7 @@ struct CategoryStoresView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.screen) {
                 header
 
                 rankingNote
@@ -29,7 +29,7 @@ struct CategoryStoresView: View {
                         systemImage: iconName(for: categoryName),
                         description: Text("Butikker vises her når opptjeningsdata i kategorien er bekreftet.")
                     )
-                    .padding(.vertical, 24)
+                    .padding(.vertical, DesignTokens.Spacing.section)
                 } else {
                     ForEach(Array(stores.enumerated()), id: \.element.id) { index, store in
                         Button {
@@ -41,14 +41,14 @@ struct CategoryStoresView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.comfortable)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle(categoryName)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .navigationDestination(item: $selectedStore) { store in
             StoreDetailView(store: store)
         }
@@ -82,32 +82,32 @@ struct CategoryStoresView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text(categoryName)
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(categorySubtitle(for: categoryName))
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.body)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var rankingNote: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
             Rectangle()
-                .fill(PoengjegerTheme.primaryBorder)
+                .fill(DesignTokens.Colors.brandPrimaryBorder)
                 .frame(width: 3)
                 .clipShape(Capsule())
 
             Text("Butikkene er rangert etter dokumentert bonusopptjening, ikke pris. Poengjeger er ikke en prisjaktjeneste.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, DesignTokens.Spacing.xSmall)
     }
 }
 
@@ -120,23 +120,23 @@ private struct CategoryStoreRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
             StoreInitialMark(name: store.name)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
                 Text(store.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(1)
 
                 Text(store.category?.name ?? "Butikk")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                 if let bestCombination {
                     Text(bestCombination.totalValueLabel)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                        .font(DesignTokens.Typography.subheadlineBold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
                 }
@@ -146,28 +146,28 @@ private struct CategoryStoreRow: View {
                         "Sist kontrollert \(DateFormatter.localizedString(from: lastVerifiedAt, dateStyle: .medium, timeStyle: .none))",
                         systemImage: "checkmark"
                     )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 6)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .padding(.top, DesignTokens.Spacing.small)
                 }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             Image(systemName: "chevron.right")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.top, 15)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+                .padding(.top, DesignTokens.Spacing.cardPlus)
                 .accessibilityHidden(true)
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }

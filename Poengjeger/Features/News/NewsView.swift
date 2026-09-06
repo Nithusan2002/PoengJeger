@@ -41,7 +41,7 @@ struct NewsView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 22) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.largePlus) {
                 header
 
                 statusSection
@@ -49,21 +49,21 @@ struct NewsView: View {
                 if environment.loadState == .loading && newsItems.isEmpty {
                     ProgressView("Laster Poengnytt...")
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 40)
+                        .padding(.vertical, DesignTokens.Spacing.spacious)
                 } else if newsItems.isEmpty {
                     emptyState
                 } else {
                     digestContent
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.comfortable)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Poengnytt")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign, entryPoint: "news")
         }
@@ -73,15 +73,15 @@ struct NewsView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Poengnytt")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Korte, vurderte oppdateringer om det som er nytt, haster eller er verdt å vite akkurat nå.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -93,11 +93,11 @@ struct NewsView: View {
             FeedStatusBanner(text: message)
         } else if environment.dataSource?.isFallback == true {
             Text(environment.dataSource?.label ?? "Mock-data")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.primary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(PoengjegerTheme.primarySoft)
+                .font(DesignTokens.Typography.captionSemibold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                .padding(.horizontal, DesignTokens.Spacing.controlGap)
+                .padding(.vertical, DesignTokens.Spacing.small)
+                .background(DesignTokens.Colors.brandPrimarySoft)
                 .clipShape(Capsule())
         }
     }
@@ -139,7 +139,7 @@ struct NewsView: View {
             systemImage: "newspaper",
             description: Text("Når aktuelle kampanjer eller frister er bekreftet, vises de her.")
         )
-        .padding(.vertical, 40)
+        .padding(.vertical, DesignTokens.Spacing.spacious)
     }
 
     private func sectionItems(matching predicate: (NewsItem) -> Bool, limit: Int) -> [NewsItem] {
@@ -281,61 +281,61 @@ private struct NewsLeadStory: View {
     let item: NewsItem
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 Image(systemName: item.type.iconName)
-                    .font(.subheadline.weight(.bold))
+                    .font(DesignTokens.Typography.subheadlineBold)
                     .accessibilityHidden(true)
 
                 Text(item.editorialAngle.uppercased())
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(1.8)
                     .lineLimit(1)
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
 
                 Text(item.dateLabel)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .lineLimit(1)
             }
             .foregroundStyle(item.campaign.cardAccent)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 Text(item.title)
-                    .font(.system(.title2, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.editorialTitle2)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(item.summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .lineLimit(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
+                HStack(spacing: DesignTokens.Spacing.controlGap) {
                     NewsPill(text: item.expiryLabel, tint: item.campaign.cardAccent)
 
                     if let primaryProgramName = item.primaryProgramName {
-                        NewsPill(text: primaryProgramName, tint: PoengjegerTheme.primary)
+                        NewsPill(text: primaryProgramName, tint: DesignTokens.Colors.brandPrimary)
                     }
                 }
 
                 Label("Se detaljene", systemImage: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.primary)
+                    .font(DesignTokens.Typography.captionBold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
                     .labelStyle(.titleAndIcon)
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(item.campaign.cardAccent.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(item.campaign.cardAccent.opacity(DesignTokens.Opacity.subtle))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(item.campaign.cardAccent.opacity(0.28), lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(item.campaign.cardAccent.opacity(DesignTokens.Opacity.medium), lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -348,16 +348,16 @@ private struct NewsSection: View {
     let items: [NewsItem]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
             NewsSectionHeader(eyebrow: eyebrow, title: title)
 
             if items.isEmpty {
                 Text(emptyText)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 8)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .padding(.vertical, DesignTokens.Spacing.medium)
             } else {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.none) {
                     ForEach(items) { item in
                         NavigationLink(value: item.campaign) {
                             NewsBriefRow(item: item)
@@ -366,15 +366,15 @@ private struct NewsSection: View {
 
                         if item.id != items.last?.id {
                             Divider()
-                                .padding(.leading, 52)
+                                .padding(.leading, DesignTokens.Spacing.iconLeadingInset)
                         }
                     }
                 }
-                .background(PoengjegerTheme.elevatedSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(DesignTokens.Colors.surfaceElevated)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(PoengjegerTheme.border, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                        .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                 }
             }
         }
@@ -386,15 +386,15 @@ private struct NewsSectionHeader: View {
     let title: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
             Text(eyebrow)
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(2.0)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             Text(title)
-                .font(.system(.title3, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialTitle3)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -404,50 +404,50 @@ private struct NewsBriefRow: View {
     let item: NewsItem
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
             Image(systemName: item.type.iconName)
-                .font(.subheadline.weight(.semibold))
+                .font(DesignTokens.Typography.subheadlineSemibold)
                 .foregroundStyle(item.campaign.cardAccent)
                 .frame(width: 36, height: 36)
-                .background(item.campaign.cardAccent.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(item.campaign.cardAccent.opacity(DesignTokens.Opacity.soft))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                HStack(spacing: DesignTokens.Spacing.medium) {
                     Text(item.type.title)
-                        .font(.caption.weight(.bold))
+                        .font(DesignTokens.Typography.captionBold)
                         .foregroundStyle(item.campaign.cardAccent)
                         .lineLimit(1)
 
                     Text(item.expiryLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                         .lineLimit(1)
 
-                    Spacer(minLength: 8)
+                    Spacer(minLength: DesignTokens.Spacing.medium)
                 }
 
                 Text(item.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(item.summary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Image(systemName: "chevron.right")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-                .padding(.top, 10)
+                .font(DesignTokens.Typography.captionBold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+                .padding(.top, DesignTokens.Spacing.controlGap)
                 .accessibilityHidden(true)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 13)
+        .padding(.horizontal, DesignTokens.Spacing.card)
+        .padding(.vertical, DesignTokens.Spacing.standardPlus)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -460,13 +460,13 @@ private struct NewsPill: View {
 
     var body: some View {
         Text(text)
-            .font(.caption.weight(.bold))
+            .font(DesignTokens.Typography.captionBold)
             .foregroundStyle(tint)
             .lineLimit(1)
             .minimumScaleFactor(0.78)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background(tint.opacity(0.12))
+            .padding(.horizontal, DesignTokens.Spacing.mediumPlus)
+            .padding(.vertical, DesignTokens.Spacing.compact)
+            .background(tint.opacity(DesignTokens.Opacity.soft))
             .clipShape(Capsule())
     }
 }

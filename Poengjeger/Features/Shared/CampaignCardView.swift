@@ -10,12 +10,12 @@ struct FeedStatusBanner: View {
         } icon: {
             Image(systemName: "exclamationmark.triangle")
         }
-        .font(.footnote)
-        .foregroundStyle(PoengjegerTheme.warning)
-        .padding(12)
+        .font(DesignTokens.Typography.footnote)
+        .foregroundStyle(DesignTokens.Colors.warning)
+        .padding(DesignTokens.Spacing.standard)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.warning.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(DesignTokens.Colors.warning.opacity(DesignTokens.Opacity.subtle))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
@@ -26,15 +26,15 @@ struct CampaignCardView: View {
     let isFavorite: Bool
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: DesignTokens.Spacing.none) {
             Rectangle()
                 .fill(campaign.cardAccent)
                 .frame(width: 5)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
+                HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                         TagRow(
                             primaryProgramName: primaryProgramName,
                             categoryName: campaign.category?.name,
@@ -42,23 +42,23 @@ struct CampaignCardView: View {
                         )
 
                         Text(campaign.title)
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(.primary)
+                            .font(DesignTokens.Typography.headlineSemibold)
+                            .foregroundStyle(DesignTokens.Colors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Text(campaign.opportunitySignal)
-                            .font(.subheadline.weight(.semibold))
+                            .font(DesignTokens.Typography.subheadlineSemibold)
                             .foregroundStyle(campaign.cardAccent)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Text(campaign.displaySummary)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(DesignTokens.Typography.subheadline)
+                            .foregroundStyle(DesignTokens.Colors.textSecondary)
                             .lineLimit(3)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    Spacer(minLength: 8)
+                    Spacer(minLength: DesignTokens.Spacing.medium)
 
                     if campaign.editorialScore != nil {
                         EditorialTierBadge(label: campaign.editorialTierLabel, tint: campaign.cardAccent)
@@ -67,31 +67,31 @@ struct CampaignCardView: View {
 
                 Divider()
 
-                HStack(alignment: .center, spacing: 10) {
+                HStack(alignment: .center, spacing: DesignTokens.Spacing.controlGap) {
                     CampaignMetadataStrip(campaign: campaign)
 
-                    Spacer(minLength: 8)
+                    Spacer(minLength: DesignTokens.Spacing.medium)
 
                     if isFavorite {
                         Image(systemName: "star.fill")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(PoengjegerTheme.highlight)
+                            .font(DesignTokens.Typography.bodySemibold)
+                            .foregroundStyle(DesignTokens.Colors.opportunity)
                             .accessibilityLabel("Lagret som favoritt")
                     }
                 }
-                .padding(.top, 1)
+                .padding(.top, DesignTokens.Spacing.hairline)
             }
-            .padding(16)
+            .padding(DesignTokens.Spacing.screen)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .background(campaign.cardSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
-        .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 5)
+        .shadow(color: DesignTokens.Colors.shadow, radius: 10, x: 0, y: 5)
         .accessibilityElement(children: .combine)
     }
 }
@@ -103,11 +103,11 @@ struct TagRow: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 tags
             }
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 tags
             }
         }
@@ -116,15 +116,15 @@ struct TagRow: View {
     @ViewBuilder
     private var tags: some View {
         if let primaryProgramName {
-            TagView(title: primaryProgramName, tint: PoengjegerTheme.accent)
+            TagView(title: primaryProgramName, tint: DesignTokens.Colors.brandPrimary)
         }
 
         if let categoryName {
-            TagView(title: categoryName, tint: .secondary)
+            TagView(title: categoryName, tint: DesignTokens.Colors.textSecondary)
         }
 
         if isFeatured {
-            TagView(title: "Fremhevet", tint: PoengjegerTheme.highlight)
+            TagView(title: "Fremhevet", tint: DesignTokens.Colors.opportunity)
         }
     }
 }
@@ -134,22 +134,22 @@ struct EditorialTierBadge: View {
     let tint: Color
 
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: DesignTokens.Spacing.compact) {
             Image(systemName: "sparkles")
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .accessibilityHidden(true)
             Text(label)
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.horizontal, DesignTokens.Spacing.medium)
+        .padding(.vertical, DesignTokens.Spacing.medium)
         .frame(width: 84)
-        .background(tint.opacity(0.13))
+        .background(tint.opacity(DesignTokens.Opacity.softStrong))
         .foregroundStyle(tint)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Vurdering: \(label)")
     }
@@ -157,16 +157,16 @@ struct EditorialTierBadge: View {
 
 struct TagView: View {
     let title: String
-    var tint: Color = PoengjegerTheme.accent
+    var tint: Color = DesignTokens.Colors.brandPrimary
 
     var body: some View {
         Text(title)
-            .font(.caption)
+            .font(DesignTokens.Typography.caption)
             .foregroundStyle(tint)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(tint.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .padding(.horizontal, DesignTokens.Spacing.medium)
+            .padding(.vertical, DesignTokens.Spacing.xSmall)
+            .background(tint.opacity(DesignTokens.Opacity.soft))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.badge, style: .continuous))
     }
 }
 
@@ -183,18 +183,18 @@ extension Campaign {
 
     var cardAccent: Color {
         if isExpiringSoon {
-            return PoengjegerTheme.highlight
+            return DesignTokens.Colors.opportunity
         }
 
         if isHighScore {
-            return PoengjegerTheme.editorialBlue
+            return DesignTokens.Colors.euroBonus
         }
 
-        return PoengjegerTheme.accent
+        return DesignTokens.Colors.brandPrimary
     }
 
     var cardSurface: Color {
-        isExpiringSoon ? PoengjegerTheme.highlightSoft : PoengjegerTheme.elevatedSurface
+        isExpiringSoon ? DesignTokens.Colors.opportunitySoft : DesignTokens.Colors.surfaceElevated
     }
 
     var opportunitySignal: String {
@@ -243,11 +243,11 @@ struct CampaignMetadataStrip: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.standard) {
                 labels
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 labels
             }
         }
@@ -286,19 +286,18 @@ struct MetadataLabel: View {
 
     var body: some View {
         Label {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.hairline) {
                 Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption2)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                 Text(value)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.captionMedium)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(1)
             }
         } icon: {
             Image(systemName: systemImage)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
         .labelStyle(.titleAndIcon)
     }

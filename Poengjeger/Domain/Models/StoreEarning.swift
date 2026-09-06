@@ -189,10 +189,24 @@ struct StoreSearchUseCase {
     }
 
     func search(stores: [Store], query: String, selectedProgramIDs: Set<UUID>) -> [Store] {
-        stores
+        searchResults(stores: stores, query: query, selectedProgramIDs: selectedProgramIDs)
+            .map(\.store)
+    }
+
+    func searchResults(stores: [Store], query: String, selectedProgramIDs: Set<UUID>) -> [StoreSearchResult] {
+        let analysis = ShoppingIntentSearchUseCase().analyze(query: query)
+
+        return stores
             .filter(\.isPublished)
             .map { store in
-                (store: store, match: StoreSearchMatch(store: store, query: query))
+                (
+                    store: store,
+                    match: StoreSearchMatch(
+                        store: store,
+                        query: query,
+                        additionalTerms: analysis.searchTerms
+                    )
+                )
             }
             .filter { $0.match.score > 0 }
             .sorted { first, second in
@@ -216,7 +230,152 @@ struct StoreSearchUseCase {
 
                 return first.store.name.localizedCompare(second.store.name) == .orderedAscending
             }
-            .map(\.store)
+            .map { match in
+                StoreSearchResult(
+                    store: match.store,
+                    intentExplanation: analysis.explanation(for: match.store)
+                )
+            }
+    }
+}
+
+struct StoreSearchResult: Identifiable, Hashable {
+    let store: Store
+    let intentExplanation: String?
+
+    var id: UUID {
+        store.id
+    }
+}
+
+struct ShoppingIntentSearchUseCase {
+    func analyze(query: String) -> ShoppingIntentAnalysis {
+        let normalizedQuery = StoreSearchNormalizer.normalize(query)
+        guard !normalizedQuery.isEmpty else {
+            return ShoppingIntentAnalysis(searchTerms: [], matchedIntents: [])
+        }
+
+        let queryTerms = StoreSearchNormalizer.normalizedTokens(from: [normalizedQuery])
+        let hasBuyingContext = queryTerms.contains { Self.buyingContextTerms.contains($0) }
+
+        let matchedIntents = Self.intentRules.filter { rule in
+            rule.triggers.contains { trigger in
+                let normalizedTrigger = StoreSearchNormalizer.normalize(trigger)
+                guard normalizedQuery.contains(normalizedTrigger) else { return false }
+                return hasBuyingContext || Self.standaloneProductTriggers.contains(normalizedTrigger)
+            }
+        }
+
+        let searchTerms = matchedIntents.flatMap { $0.searchTerms }
+        return ShoppingIntentAnalysis(
+            searchTerms: Array(Set(searchTerms)),
+            matchedIntents: matchedIntents
+        )
+    }
+
+    private static let buyingContextTerms: Set<String> = [
+        "bestille",
+        "billig",
+        "handle",
+        "kjøp",
+        "kjøpe",
+        "kjope",
+        "ny",
+        "nye",
+        "skal",
+        "til",
+        "trenger",
+        "uka",
+        "uken"
+    ]
+
+    private static let standaloneProductTriggers: Set<String> = [
+        "android",
+        "dagligvare",
+        "dagligvarer",
+        "iphone",
+        "kolonial",
+        "macbook",
+        "mat",
+        "middag"
+    ]
+
+    private static let intentRules: [ShoppingIntentRule] = [
+        ShoppingIntentRule(
+            label: "Matcher elektronikk og mobil",
+            triggers: ["iphone", "android", "mobil", "telefon", "smarttelefon"],
+            searchTerms: ["elektronikk", "mobil", "telefon"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher elektronikk og data",
+            triggers: ["laptop", "pc", "mac", "macbook", "datamaskin", "gaming", "skjerm"],
+            searchTerms: ["elektronikk", "data", "pc", "laptop", "datamaskin", "gaming"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher reise og overnatting",
+            triggers: ["hotell", "overnatting", "weekend", "storbyferie"],
+            searchTerms: ["reise", "hotell", "overnatting"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher reise og fly",
+            triggers: ["fly", "flybilletter", "reise", "ferie"],
+            searchTerms: ["reise", "fly", "flybilletter"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher dagligvarer",
+            triggers: ["mat", "middag", "dagligvare", "dagligvarer", "kolonial"],
+            searchTerms: ["dagligvare", "dagligvarer", "mat", "kolonial"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher klær og sko",
+            triggers: ["klær", "klaer", "sko", "jakke", "bukse", "mote"],
+            searchTerms: ["klær", "klaer", "sko", "mote"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher gaver og opplevelser",
+            triggers: ["gave", "gaver", "julegave", "julegaver", "opplevelse", "opplevelser"],
+            searchTerms: ["gaver", "gave", "opplevelser", "shopping"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher hus, hjem og hvitevarer",
+            triggers: ["hvitevarer", "kjøleskap", "vaskemaskin", "møbler", "interiør", "hjem"],
+            searchTerms: ["hjem", "hvitevarer", "møbler", "interiør", "elektronikk"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher bil og drivstoff",
+            triggers: ["drivstoff", "bensin", "diesel", "lading", "bil"],
+            searchTerms: ["bil", "drivstoff", "bensin", "lading"]
+        )
+    ]
+}
+
+struct ShoppingIntentAnalysis: Hashable {
+    let searchTerms: [String]
+    let matchedIntents: [ShoppingIntentRule]
+
+    var summary: String? {
+        matchedIntents.first?.label
+    }
+
+    func explanation(for store: Store) -> String? {
+        guard let matchedIntent = matchedIntents.first(where: { $0.matches(store: store) }) else {
+            return nil
+        }
+
+        return matchedIntent.label
+    }
+}
+
+struct ShoppingIntentRule: Hashable {
+    let label: String
+    let triggers: [String]
+    let searchTerms: [String]
+
+    func matches(store: Store) -> Bool {
+        let fields = StoreSearchFields(store: store)
+        let storeTerms = Set(fields.allValues)
+        let normalizedTerms = StoreSearchNormalizer.normalizedTokens(from: searchTerms)
+        return normalizedTerms.contains { storeTerms.contains($0) }
     }
 }
 
@@ -380,6 +539,10 @@ private struct StoreSearchMatch {
     let score: Int
 
     init(store: Store, query: String) {
+        self.init(store: store, query: query, additionalTerms: [])
+    }
+
+    init(store: Store, query: String, additionalTerms: [String]) {
         let normalizedQuery = StoreSearchNormalizer.normalize(query)
         guard !normalizedQuery.isEmpty else {
             score = 1
@@ -387,7 +550,10 @@ private struct StoreSearchMatch {
         }
 
         let fields = StoreSearchFields(store: store)
-        let expandedQueryTerms = StoreSearchNormalizer.expandedTerms(from: normalizedQuery)
+        let expandedQueryTerms = Array(Set(
+            StoreSearchNormalizer.expandedTerms(from: normalizedQuery)
+                + additionalTerms.flatMap { StoreSearchNormalizer.expandedTerms(from: $0) }
+        ))
 
         score = max(
             StoreSearchMatch.score(query: normalizedQuery, terms: expandedQueryTerms, in: fields.names, weight: 100),
@@ -431,6 +597,10 @@ private struct StoreSearchFields {
     let names: [String]
     let categories: [String]
     let keywords: [String]
+
+    var allValues: [String] {
+        names + categories + keywords
+    }
 
     init(store: Store) {
         names = StoreSearchNormalizer.normalizedTokens(from: [store.name, store.slug])

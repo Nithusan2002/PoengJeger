@@ -10,7 +10,6 @@
 		001 /* PoengjegerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101 /* PoengjegerApp.swift */; };
 		002 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102 /* AppEnvironment.swift */; };
 		003 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103 /* RootView.swift */; };
-		004 /* PoengjegerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104 /* PoengjegerTheme.swift */; };
 		005 /* BonusProgram.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105 /* BonusProgram.swift */; };
 		006 /* Campaign.swift in Sources */ = {isa = PBXBuildFile; fileRef = 106 /* Campaign.swift */; };
 		007 /* UserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107 /* UserSession.swift */; };
@@ -51,6 +50,7 @@
 		047 /* ProgramDetailPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 147 /* ProgramDetailPresentation.swift */; };
 		048 /* SaveToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148 /* SaveToggleButton.swift */; };
 		049 /* NewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 149 /* NewsView.swift */; };
+		050 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150 /* DesignTokens.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,7 +68,6 @@
 		101 /* PoengjegerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoengjegerApp.swift; sourceTree = "<group>"; };
 		102 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		103 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		104 /* PoengjegerTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoengjegerTheme.swift; sourceTree = "<group>"; };
 		105 /* BonusProgram.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BonusProgram.swift; sourceTree = "<group>"; };
 		106 /* Campaign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Campaign.swift; sourceTree = "<group>"; };
 		107 /* UserSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSession.swift; sourceTree = "<group>"; };
@@ -113,6 +112,7 @@
 		147 /* ProgramDetailPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramDetailPresentation.swift; sourceTree = "<group>"; };
 		148 /* SaveToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveToggleButton.swift; sourceTree = "<group>"; };
 		149 /* NewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsView.swift; sourceTree = "<group>"; };
+		150 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -213,7 +213,7 @@
 		607 /* DesignSystem */ = {
 			isa = PBXGroup;
 			children = (
-				104 /* PoengjegerTheme.swift */,
+				150 /* DesignTokens.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -520,7 +520,7 @@
 				001 /* PoengjegerApp.swift in Sources */,
 				002 /* AppEnvironment.swift in Sources */,
 				003 /* RootView.swift in Sources */,
-				004 /* PoengjegerTheme.swift in Sources */,
+				050 /* DesignTokens.swift in Sources */,
 				005 /* BonusProgram.swift in Sources */,
 				006 /* Campaign.swift in Sources */,
 				007 /* UserSession.swift in Sources */,

@@ -11,7 +11,7 @@ struct SettingsView: View {
         @Bindable var environment = environment
 
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.large) {
                 header
 
                 ProfileProgramSection(
@@ -27,26 +27,26 @@ struct SettingsView: View {
                 debugSection(dataSourceLabel: environment.dataSource?.label)
                 #endif
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 22)
-            .padding(.bottom, 28)
+            .padding(.horizontal, DesignTokens.Spacing.comfortable)
+            .padding(.top, DesignTokens.Spacing.largePlus)
+            .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Profil")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Profil")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Tilpass Poengjeger til programmene du faktisk bruker.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -62,7 +62,7 @@ struct SettingsView: View {
 
     #if DEBUG
     private func debugSection(dataSourceLabel: String?) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             ProfileSectionHeading(eyebrow: "INTERN", title: "Kontroll")
 
             if let dataSourceLabel {
@@ -104,32 +104,35 @@ private struct ProfileProgramSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Mine programmer")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.headlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
 
-                    Spacer(minLength: 12)
+                    Spacer(minLength: DesignTokens.Spacing.standard)
 
                     Text("\(selectedProgramCount) av \(programs.count)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                        .font(DesignTokens.Typography.captionSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                 }
 
                 Text("Prioriterer kampanjer, butikker og guider uten konto-tilkobling.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 Button {
                     selectedProgramIDs = Set(programs.map(\.id))
                 } label: {
                     Label("Alle", systemImage: "checkmark.circle")
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .minimumTouchTarget()
                 .disabled(programs.isEmpty)
 
                 Button {
@@ -137,14 +140,15 @@ private struct ProfileProgramSection: View {
                 } label: {
                     Label("Ingen", systemImage: "xmark.circle")
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .minimumTouchTarget()
                 .disabled(selectedProgramCount == 0)
             }
-            .font(.caption.weight(.semibold))
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .tint(PoengjegerTheme.primary)
+            .font(DesignTokens.Typography.captionSemibold)
+            .tint(DesignTokens.Colors.brandPrimary)
 
-            VStack(spacing: 0) {
+            VStack(spacing: DesignTokens.Spacing.none) {
                 ForEach(programs) { program in
                     ProfileProgramRow(
                         program: program,
@@ -158,19 +162,19 @@ private struct ProfileProgramSection: View {
 
                     if program.id != programs.last?.id {
                         Divider()
-                            .padding(.leading, 44)
+                            .padding(.leading, DesignTokens.Spacing.searchLeadingInset)
                     }
                 }
             }
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
     }
 
@@ -189,27 +193,27 @@ private struct ProfileProgramRow: View {
 
     var body: some View {
         Toggle(isOn: $isSelected) {
-            HStack(spacing: 11) {
+            HStack(spacing: DesignTokens.Spacing.controlGapPlus) {
                 Circle()
                     .fill(program.programColor)
                     .frame(width: 9, height: 9)
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                     Text(program.name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                     Text(program.issuerName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
             }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, DesignTokens.Spacing.standard)
         .frame(minHeight: 58)
         .contentShape(Rectangle())
-        .tint(PoengjegerTheme.primary)
+        .tint(DesignTokens.Colors.brandPrimary)
         .accessibilityValue(isSelected ? "Valgt" : "Ikke valgt")
     }
 }
@@ -218,40 +222,41 @@ private struct ProfileAppearanceSection: View {
     @Binding var prefersDarkMode: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: DesignTokens.Spacing.none) {
             Toggle(isOn: $prefersDarkMode) {
-                HStack(spacing: 12) {
+                HStack(spacing: DesignTokens.Spacing.standard) {
                     Image(systemName: "moon.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         .frame(width: 34, height: 34)
-                        .background(PoengjegerTheme.primarySoft)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(DesignTokens.Colors.brandPrimarySoft)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                         .accessibilityHidden(true)
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                         Text("Mørk modus")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
+                            .font(DesignTokens.Typography.subheadlineSemibold)
+                            .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                         Text(prefersDarkMode ? "Appen vises med mørk bakgrunn." : "Appen vises med lys bakgrunn.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(DesignTokens.Typography.caption)
+                            .foregroundStyle(DesignTokens.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
-            .padding(14)
-            .tint(PoengjegerTheme.primary)
+            .padding(DesignTokens.Spacing.card)
+            .minimumTouchTarget()
+            .tint(DesignTokens.Colors.brandPrimary)
             .accessibilityValue(prefersDarkMode ? "På" : "Av")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
     }
 }
@@ -262,34 +267,34 @@ private struct ProfileActionRow: View {
     let subtitle: String
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.standard) {
             Image(systemName: iconName)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.primary)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
                 .frame(width: 34, height: 34)
-                .background(PoengjegerTheme.primarySoft)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(DesignTokens.Colors.brandPrimarySoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .lineLimit(2)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             Image(systemName: "chevron.right")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .accessibilityHidden(true)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, DesignTokens.Spacing.card)
         .frame(minHeight: 66, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -302,34 +307,34 @@ private struct ProfileInfoCard: View {
     let subtitle: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
             Image(systemName: iconName)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.primary)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
                 .frame(width: 34, height: 34)
-                .background(PoengjegerTheme.primarySoft)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(DesignTokens.Colors.brandPrimarySoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                 Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .shadow(color: PoengjegerTheme.shadow, radius: 8, y: 3)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PoengjegerTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -340,15 +345,15 @@ private struct ProfileSectionHeading: View {
     let title: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
             Text(eyebrow)
-                .font(.caption2.weight(.bold))
+                .font(DesignTokens.Typography.caption2Bold)
                 .tracking(1.6)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             Text(title)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.headlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

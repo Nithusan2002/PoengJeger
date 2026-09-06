@@ -59,11 +59,11 @@ struct StoreDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: DesignTokens.Spacing.none) {
             topBar
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 22) {
+                LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.largePlus) {
                     header
                     bestOpportunitySection
                     referenceRateSection
@@ -72,9 +72,9 @@ struct StoreDetailView: View {
                     otherMethodsSection
                     sourceSection
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 10)
-                .padding(.bottom, 32)
+                .padding(.horizontal, DesignTokens.Spacing.comfortable)
+                .padding(.top, DesignTokens.Spacing.controlGap)
+                .padding(.bottom, DesignTokens.Spacing.xxLarge)
             }
         }
         .background(LovableStoreStyle.pageBackground)
@@ -91,17 +91,18 @@ struct StoreDetailView: View {
             Button {
                 dismiss()
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: DesignTokens.Spacing.medium) {
                     Image(systemName: "chevron.left")
-                        .font(.subheadline.weight(.semibold))
+                        .font(DesignTokens.Typography.subheadlineSemibold)
 
                     Text("Tilbake")
-                        .font(.subheadline.weight(.semibold))
+                        .font(DesignTokens.Typography.subheadlineSemibold)
                 }
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .minimumTouchTarget()
             .accessibilityLabel("Tilbake")
 
             Spacer()
@@ -113,30 +114,30 @@ struct StoreDetailView: View {
                 action: toggleFavorite
             )
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.horizontal, DesignTokens.Spacing.comfortable)
+        .padding(.top, DesignTokens.Spacing.medium)
+        .padding(.bottom, DesignTokens.Spacing.standard)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(LovableStoreStyle.pageBackground)
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.card) {
             StoreInitialMark(name: store.name)
                 .frame(width: 52, height: 52)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 Text(store.name)
-                    .font(.system(.title, design: .serif).weight(.bold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.editorialTitle)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(categoryLine)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: DesignTokens.Spacing.none)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -146,21 +147,21 @@ struct StoreDetailView: View {
         if let combination = preferredCombination {
             let includedRates = rates(in: combination)
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
                 Text(bestCombinationEyebrow(for: combination))
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(2.2)
-                    .foregroundStyle(PoengjegerTheme.primary)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
                 Text(combination.totalValueLabel)
-                    .font(.system(size: 34, weight: .bold, design: .serif))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.valueDisplay)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineSpacing(1)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(TextListNormalizer.firstSentence(from: combination.summary))
-                    .font(.callout)
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.callout)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -196,18 +197,19 @@ struct StoreDetailView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
 
                         Image(systemName: "chevron.down")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(PoengjegerTheme.primary)
+                            .font(DesignTokens.Typography.captionBold)
+                            .foregroundStyle(DesignTokens.Colors.brandPrimary)
                             .rotationEffect(.degrees(isRecommendationExpanded ? 180 : 0))
                     }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 2)
-                    .padding(.vertical, 4)
+                    .font(DesignTokens.Typography.subheadlineMedium)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
+                    .padding(.horizontal, DesignTokens.Spacing.xxSmall)
+                    .padding(.vertical, DesignTokens.Spacing.xSmall)
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(DisclosureToggleButtonStyle())
+                .minimumTouchTarget()
                 .animation(recommendationDisclosureAnimation, value: isRecommendationExpanded)
 
                 if isRecommendationExpanded {
@@ -220,13 +222,13 @@ struct StoreDetailView: View {
                     .transition(recommendationExplanationTransition)
                 }
             }
-            .padding(18)
+            .padding(DesignTokens.Spacing.comfortable)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(LovableStoreStyle.recommendationBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(LovableStoreStyle.primaryBorder, lineWidth: 1.2)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                    .stroke(LovableStoreStyle.primaryBorder, lineWidth: DesignTokens.Stroke.emphasized)
             }
             .accessibilityElement(children: .contain)
         } else {
@@ -236,15 +238,15 @@ struct StoreDetailView: View {
 
     private func bestOpportunityMeta(rates: [StoreEarningRate], verifiedAt: Date?) -> some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 14) {
+            HStack(spacing: DesignTokens.Spacing.card) {
                 metaItems(rates: rates, verifiedAt: verifiedAt)
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 metaItems(rates: rates, verifiedAt: verifiedAt)
             }
         }
-        .font(.caption.weight(.semibold))
+        .font(DesignTokens.Typography.captionSemibold)
         .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -257,14 +259,14 @@ struct StoreDetailView: View {
 
         if let verifiedAt {
             Label("Sist kontrollert \(shortDate(verifiedAt))", systemImage: "checkmark")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
     }
 
     @ViewBuilder
     private var referenceRateSection: some View {
         if !visibleReferenceRates.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 LovableSectionHeading(eyebrow: "REFERANSEPUNKT", title: "Vanlig opptjening")
 
                 ForEach(visibleReferenceRates) { rate in
@@ -277,7 +279,7 @@ struct StoreDetailView: View {
     @ViewBuilder
     private var currentCampaignSection: some View {
         if !activePromotions.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 LovableSectionHeading(eyebrow: "AKTUELL KAMPANJE", title: "Akkurat nå")
 
                 ForEach(activePromotions) { rate in
@@ -290,7 +292,7 @@ struct StoreDetailView: View {
     @ViewBuilder
     private var allMethodsSection: some View {
         if primaryRates.count > 1 {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 LovableSectionHeading(
                     eyebrow: "OVERSIKT",
                     title: selectedProgramIDs.isEmpty ? "Alle opptjeningsmuligheter" : "Dine programmer først",
@@ -307,7 +309,7 @@ struct StoreDetailView: View {
     @ViewBuilder
     private var otherMethodsSection: some View {
         if !secondaryRates.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 LovableSectionHeading(
                     eyebrow: "ANDRE MULIGHETER",
                     title: "Ikke valgt program",
@@ -322,22 +324,22 @@ struct StoreDetailView: View {
     }
 
     private var sourceSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
             Text("KILDE OG KONTROLL")
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(2.2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             Text("Opptjening og beste valg er bekreftet og vurdert. Kontroller alltid satsen i portalen før kjøp.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text(store.lastVerifiedAt.map { "Sist kontrollert \(DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none))." } ?? "Kontrolltidspunkt mangler.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
-        .padding(.top, 2)
+        .padding(.top, DesignTokens.Spacing.xxSmall)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -485,28 +487,28 @@ struct StoreDetailView: View {
 
 private struct EmptyBestOpportunityCard: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             Text("BESTE DOKUMENTERTE MULIGHET")
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(2.6)
-                .foregroundStyle(PoengjegerTheme.primary)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
             Text("Ingen trygg kombinasjon ennå")
-                .font(.system(.title2, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialTitle2)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
             Text("Ingen anbefalt kombinasjon er bekreftet for denne butikken ennå. Bruk vanlig opptjening og aktive kampanjer som separate valg.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.callout)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.large)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(LovableStoreStyle.recommendationBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.hero, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(LovableStoreStyle.primaryBorder, lineWidth: 1.2)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.hero, style: .continuous)
+                .stroke(LovableStoreStyle.primaryBorder, lineWidth: DesignTokens.Stroke.emphasized)
         }
     }
 }
@@ -515,17 +517,17 @@ private struct LovablePrimaryButtonLabel: View {
     let title: String
 
     var body: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: DesignTokens.Spacing.mediumPlus) {
             Text(title)
             Image(systemName: "arrow.right")
-                .font(.subheadline.weight(.bold))
+                .font(DesignTokens.Typography.subheadlineBold)
         }
-        .font(.headline.weight(.semibold))
-        .foregroundStyle(.white)
-        .padding(.vertical, 14)
+        .font(DesignTokens.Typography.headlineSemibold)
+        .foregroundStyle(DesignTokens.Colors.textOnStrongColor)
+        .padding(.vertical, DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity)
-        .background(PoengjegerTheme.primaryButtonBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(DesignTokens.Colors.brandPrimaryButton)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.card, style: .continuous))
     }
 }
 
@@ -544,21 +546,21 @@ private struct LovableSectionHeading: View {
     var subtitle: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             Text(eyebrow)
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(2.6)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             Text(title)
-                .font(.system(.title2, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialTitle2)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let subtitle {
                 Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -570,35 +572,35 @@ private struct ReferenceRateCard: View {
     let rate: StoreEarningRate
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 5) {
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.standard) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
                 Text(rate.method.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(2)
 
                 if let checkedAt = rate.checkedAt {
                     Label("Sist kontrollert \(checkedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: DesignTokens.Spacing.medium)
 
             Text(rate.rateLabel)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.subheadlineBold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(LovableStoreStyle.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(LovableStoreStyle.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                .stroke(LovableStoreStyle.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -608,54 +610,54 @@ private struct CurrentCampaignCard: View {
     let rate: StoreEarningRate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+            HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.standard) {
                 Text(rate.method.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineLimit(2)
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
 
                 Text(rate.rateLabel)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(PoengjegerTheme.warning)
+                    .font(DesignTokens.Typography.headlineBold)
+                    .foregroundStyle(DesignTokens.Colors.warning)
                     .multilineTextAlignment(.trailing)
             }
 
             if let normalRateLabel = rate.normalRateLabel {
                 Text("Normalt: \(normalRateLabel)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
 
             if let valueSummary = rate.valueSummary {
                 Text(valueSummary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Divider()
 
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 14) {
+                HStack(spacing: DesignTokens.Spacing.card) {
                     campaignMeta
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                     campaignMeta
                 }
             }
-            .font(.caption.weight(.semibold))
+            .font(DesignTokens.Typography.captionSemibold)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(LovableStoreStyle.campaignBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(LovableStoreStyle.campaignBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                .stroke(LovableStoreStyle.campaignBorder, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .contain)
     }
@@ -669,7 +671,7 @@ private struct CurrentCampaignCard: View {
 
         if let checkedAt = rate.checkedAt {
             Label("Sist kontrollert \(checkedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
     }
 }
@@ -678,66 +680,66 @@ private struct EarningMethodCard: View {
     let rate: StoreEarningRate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(alignment: .top, spacing: 10) {
-                VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.mediumPlus) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.controlGap) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.compact) {
                     Text(rate.method.name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.textPrimary)
                         .lineLimit(2)
 
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.compact) {
                         Text(rate.rateLabel)
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(.primary)
+                            .font(DesignTokens.Typography.title3Bold)
+                            .foregroundStyle(DesignTokens.Colors.textPrimary)
 
                         if let normalRateLabel = rate.normalRateLabel {
                             Text("(normalt \(normalRateLabel))")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .font(DesignTokens.Typography.subheadline)
+                                .foregroundStyle(DesignTokens.Colors.textSecondary)
                         }
                     }
                     .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Spacer(minLength: 8)
+                Spacer(minLength: DesignTokens.Spacing.medium)
 
                 Text(programBadge)
-                    .font(.caption2.weight(.bold))
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 5)
-                    .background(PoengjegerTheme.primarySoft)
-                    .foregroundStyle(PoengjegerTheme.primary)
+                    .font(DesignTokens.Typography.caption2Bold)
+                    .padding(.horizontal, DesignTokens.Spacing.mediumPlus)
+                    .padding(.vertical, DesignTokens.Spacing.compact)
+                    .background(DesignTokens.Colors.brandPrimarySoft)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
                     .clipShape(Capsule())
             }
 
             if let disclosurePreview {
                 Text(disclosurePreview)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if rate.warningText != nil {
                 Label("Vilkår gjelder", systemImage: "info.circle")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.primary)
+                    .font(DesignTokens.Typography.captionSemibold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
             }
 
             if let checkedAt = rate.checkedAt {
                 Label("Sist kontrollert \(checkedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(LovableStoreStyle.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(LovableStoreStyle.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                .stroke(LovableStoreStyle.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .contain)
     }
@@ -775,32 +777,32 @@ private struct RecommendationExplanation: View {
     let sourceFormatter: (URL) -> String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
             Text("Derfor anbefaler vi denne")
-                .font(.system(.title3, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialTitle3)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
                 ForEach(rates) { rate in
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.micro) {
+                        HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.controlGap) {
                             Text(rate.method.name)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
+                                .font(DesignTokens.Typography.subheadlineSemibold)
+                                .foregroundStyle(DesignTokens.Colors.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            Spacer(minLength: 8)
+                            Spacer(minLength: DesignTokens.Spacing.medium)
 
                             Text(rate.rateLabel)
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(PoengjegerTheme.primary)
+                                .font(DesignTokens.Typography.subheadlineBold)
+                                .foregroundStyle(DesignTokens.Colors.brandPrimary)
                                 .multilineTextAlignment(.trailing)
                         }
 
                         if let sourceTitle = rate.sourceTitle {
                             Text("Kilde: \(sourceTitle)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundStyle(DesignTokens.Colors.textSecondary)
                         }
                     }
                 }
@@ -810,13 +812,13 @@ private struct RecommendationExplanation: View {
 
                     HStack(alignment: .firstTextBaseline) {
                         Text("Totalt")
-                            .font(.subheadline.weight(.semibold))
+                            .font(DesignTokens.Typography.subheadlineSemibold)
 
                         Spacer()
 
                         Text(combination.totalValueLabel)
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(PoengjegerTheme.primary)
+                            .font(DesignTokens.Typography.subheadlineBold)
+                            .foregroundStyle(DesignTokens.Colors.brandPrimary)
                     }
                 }
             }
@@ -833,58 +835,60 @@ private struct RecommendationExplanation: View {
             }
 
             Text(recommendationReason)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let lastVerifiedAt {
                 Label("Sist kontrollert \(lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))", systemImage: "checkmark")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
 
             let links = sourceLinks
             if !terms.calculationItems.isEmpty || !links.isEmpty {
                 DisclosureGroup(isExpanded: $isDetailDisclosureExpanded) {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                         if !terms.calculationItems.isEmpty {
                             ExplanationList(title: "Beregning", items: terms.calculationItems, systemImage: "equal.circle")
                         }
 
                         if !links.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                                 Text("Kilder")
-                                    .font(.caption.weight(.bold))
+                                    .font(DesignTokens.Typography.captionBold)
                                     .tracking(2.2)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(DesignTokens.Colors.textSecondary)
 
                                 ForEach(links, id: \.self) { url in
                                     Link(destination: url) {
                                         Label(sourceFormatter(url), systemImage: "arrow.up.right.square")
-                                            .font(.subheadline.weight(.semibold))
-                                            .foregroundStyle(PoengjegerTheme.primary)
+                                            .font(DesignTokens.Typography.subheadlineSemibold)
+                                            .foregroundStyle(DesignTokens.Colors.brandPrimary)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
+                                    .minimumTouchTarget()
                                 }
                             }
                         }
                     }
-                    .padding(.top, 8)
+                    .padding(.top, DesignTokens.Spacing.medium)
                 } label: {
                     Text("Se beregning og kilder")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PoengjegerTheme.primary)
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
                 }
+                .minimumTouchTarget()
             }
         }
-        .padding(18)
+        .padding(DesignTokens.Spacing.comfortable)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(LovableStoreStyle.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.largeCard, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(LovableStoreStyle.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.largeCard, style: .continuous)
+                .stroke(LovableStoreStyle.border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .contain)
     }
@@ -921,22 +925,22 @@ private struct ExplanationList: View {
     let systemImage: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text(title.uppercased())
-                .font(.caption.weight(.bold))
+                .font(DesignTokens.Typography.captionBold)
                 .tracking(2.2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             ForEach(items, id: \.self) { item in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: DesignTokens.Spacing.medium) {
                     Text("•")
                         .accessibilityHidden(true)
 
                     Text(item)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .font(.subheadline)
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
             }
         }
     }
@@ -951,34 +955,34 @@ private struct StoreNoticeCard: View {
     let border: Color
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.controlGap) {
             Image(systemName: systemImage)
-                .font(.subheadline.weight(.semibold))
+                .font(DesignTokens.Typography.subheadlineSemibold)
                 .foregroundStyle(tint)
                 .frame(width: 20)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
                 Text(title)
-                    .font(.caption.weight(.bold))
+                    .font(DesignTokens.Typography.captionBold)
                     .tracking(1.4)
                     .textCase(.uppercase)
                     .foregroundStyle(tint)
 
                 Text(text)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(14)
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.card, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card, style: .continuous)
+                .stroke(border, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
     }
@@ -1054,74 +1058,33 @@ private struct EmptyStoreDetailCard: View {
 
     var body: some View {
         Text(text)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .padding(16)
+            .font(DesignTokens.Typography.subheadline)
+            .foregroundStyle(DesignTokens.Colors.textSecondary)
+            .padding(DesignTokens.Spacing.screen)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(LovableStoreStyle.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(LovableStoreStyle.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                    .stroke(LovableStoreStyle.border, lineWidth: DesignTokens.Stroke.standard)
             }
     }
 }
 
 private enum LovableStoreStyle {
-    static let primary = PoengjegerTheme.primary
-    static let primaryBorder = PoengjegerTheme.primaryBorder
-    static let border = PoengjegerTheme.border
-    static let expiryText = PoengjegerTheme.adaptive(light: (0.62, 0.31, 0.09), dark: (1.0, 0.76, 0.38))
-    static let campaignBorder = Color(red: 0.89, green: 0.72, blue: 0.58)
-
-    static let pageBackground = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.06, green: 0.07, blue: 0.06, alpha: 1)
-        }
-
-        return UIColor(red: 0.99, green: 0.98, blue: 0.95, alpha: 1)
-    })
-
-    static let cardBackground = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.11, green: 0.13, blue: 0.12, alpha: 1)
-        }
-
-        return UIColor.white
-    })
-
-    static let recommendationBackground = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.10, green: 0.13, blue: 0.11, alpha: 1)
-        }
-
-        return UIColor(red: 0.97, green: 0.98, blue: 0.96, alpha: 1)
-    })
-
-    static let campaignBackground = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.17, green: 0.11, blue: 0.07, alpha: 1)
-        }
-
-        return UIColor(red: 1.00, green: 0.97, blue: 0.93, alpha: 1)
-    })
-
-    static let warningBackground = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.23, green: 0.18, blue: 0.10, alpha: 1)
-        }
-
-        return UIColor(red: 0.96, green: 0.90, blue: 0.78, alpha: 1)
-    })
-    static let noticeTint = PoengjegerTheme.adaptive(light: (0.55, 0.34, 0.08), dark: (1.0, 0.76, 0.38))
-    static let noticeBorder = Color(red: 0.86, green: 0.75, blue: 0.53)
-    static let noticeBackground = Color(uiColor: UIColor { traits in
-        if traits.userInterfaceStyle == .dark {
-            return UIColor(red: 0.20, green: 0.16, blue: 0.09, alpha: 1)
-        }
-
-        return UIColor(red: 0.98, green: 0.93, blue: 0.80, alpha: 1)
-    })
+    static let primary = DesignTokens.Colors.brandPrimary
+    static let primaryBorder = DesignTokens.Colors.brandPrimaryBorder
+    static let border = DesignTokens.Colors.border
+    static let expiryText = DesignTokens.Colors.expiryText
+    static let campaignBorder = DesignTokens.Colors.campaignBorder
+    static let pageBackground = DesignTokens.Colors.storePageBackground
+    static let cardBackground = DesignTokens.Colors.storeCardBackground
+    static let recommendationBackground = DesignTokens.Colors.recommendationBackground
+    static let campaignBackground = DesignTokens.Colors.campaignBackground
+    static let warningBackground = DesignTokens.Colors.cautionBackground
+    static let noticeTint = DesignTokens.Colors.noticeText
+    static let noticeBorder = DesignTokens.Colors.noticeBorder
+    static let noticeBackground = DesignTokens.Colors.noticeBackground
 }
 
 private extension EarningMethod.MethodType {

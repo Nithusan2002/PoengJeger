@@ -21,7 +21,7 @@ struct FavoritesView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.comfortable) {
                 header
 
                 scopePicker
@@ -33,13 +33,13 @@ struct FavoritesView: View {
                     campaignFavorites
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 18)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.vertical, DesignTokens.Spacing.comfortable)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .navigationTitle("Lagret")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(PoengjegerTheme.background, for: .navigationBar)
+        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .navigationDestination(for: Store.self) { store in
             StoreDetailView(store: store)
         }
@@ -52,15 +52,15 @@ struct FavoritesView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             Text("Lagret")
-                .font(.system(.largeTitle, design: .serif).weight(.bold))
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.editorialLargeTitle)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Butikker og kampanjer du vil sjekke igjen.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -73,6 +73,7 @@ struct FavoritesView: View {
             }
         }
         .pickerStyle(.segmented)
+        .minimumTouchTarget()
         .accessibilityLabel("Velg lagret innhold")
     }
 
@@ -84,7 +85,7 @@ struct FavoritesView: View {
                 systemImage: "star",
                 description: Text("Trykk på stjernen på en butikkside du vil sjekke igjen.")
             )
-            .padding(.vertical, 40)
+            .padding(.vertical, DesignTokens.Spacing.spacious)
         } else {
             ForEach(favoriteStores) { store in
                 NavigationLink(value: store) {
@@ -103,7 +104,7 @@ struct FavoritesView: View {
                 systemImage: "star",
                 description: Text("Trykk på stjernen på en kampanje du vil sjekke senere.")
             )
-            .padding(.vertical, 40)
+            .padding(.vertical, DesignTokens.Spacing.spacious)
         } else {
             ForEach(favoriteCampaigns) { campaign in
                 NavigationLink(value: campaign) {

@@ -19,16 +19,16 @@ struct AdminQueueView: View {
             if let adminSourceLabel = environment.adminSourceLabel {
                 Section {
                     Label(adminSourceLabel, systemImage: environment.isAdminPreview ? "wrench.and.screwdriver" : "lock")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.footnote)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
             }
 
             if let message = environment.adminInfoMessage {
                 Section {
                     Text(message)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.footnote)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
             }
 
@@ -40,6 +40,7 @@ struct AdminQueueView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .minimumTouchTarget()
             }
 
             Section("Kandidater") {
@@ -118,30 +119,30 @@ private struct AdminCandidateRow: View {
     let onPromote: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                     Text(candidate.title)
-                        .font(.headline)
+                        .font(DesignTokens.Typography.headline)
 
                     Text(candidate.summary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
 
-                Spacer(minLength: 12)
+                Spacer(minLength: DesignTokens.Spacing.standard)
                 AdminStatusBadge(status: candidate.status)
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: DesignTokens.Spacing.medium) {
                 AdminTag(title: candidate.sourceName)
 
                 if let suggestedProgramName = candidate.suggestedProgramName {
-                    AdminTag(title: suggestedProgramName, tint: PoengjegerTheme.accent)
+                    AdminTag(title: suggestedProgramName, tint: DesignTokens.Colors.brandPrimary)
                 }
 
                 if let suggestedCategoryName = candidate.suggestedCategoryName {
-                    AdminTag(title: suggestedCategoryName, tint: .secondary)
+                    AdminTag(title: suggestedCategoryName, tint: DesignTokens.Colors.textSecondary)
                 }
             }
 
@@ -150,6 +151,7 @@ private struct AdminCandidateRow: View {
             if candidate.canReview || candidate.canPromote {
                 TextField("Kort notat til review", text: $note, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
+                    .minimumTouchTarget()
             }
 
             if showsActions {
@@ -160,7 +162,7 @@ private struct AdminCandidateRow: View {
                 )
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, DesignTokens.Spacing.medium)
     }
 }
 
@@ -168,7 +170,7 @@ private struct CandidateMetadata: View {
     let candidate: IngestionCandidate
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             MetadataLine(title: "Oppdaget", value: candidate.detectedAt.formatted(date: .abbreviated, time: .shortened))
             MetadataLine(title: "Ingest", value: candidate.ingestKind)
             MetadataLine(title: "Kilde", value: candidate.sourceURL.absoluteString)
@@ -192,11 +194,13 @@ private struct AdminCandidateActions: View {
                     onSetStatus(.approved)
                 }
                 .buttonStyle(.bordered)
+                .minimumTouchTarget()
 
                 Button("Avvis", role: .destructive) {
                     onSetStatus(.rejected)
                 }
                 .buttonStyle(.bordered)
+                .minimumTouchTarget()
             }
 
             Spacer()
@@ -206,7 +210,8 @@ private struct AdminCandidateActions: View {
                     onPromote()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(PoengjegerTheme.primaryButtonBackground)
+                .minimumTouchTarget()
+                .tint(DesignTokens.Colors.brandPrimaryButton)
             }
         }
     }
@@ -217,41 +222,41 @@ private struct AdminStatusBadge: View {
 
     var body: some View {
         Text(status.title)
-            .font(.caption)
+            .font(DesignTokens.Typography.caption)
             .foregroundStyle(tint)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(tint.opacity(0.12))
+            .padding(.horizontal, DesignTokens.Spacing.controlGap)
+            .padding(.vertical, DesignTokens.Spacing.small)
+            .background(tint.opacity(DesignTokens.Opacity.soft))
             .clipShape(Capsule())
     }
 
     private var tint: Color {
         switch status {
         case .new:
-            return .blue
+            return DesignTokens.Colors.statusNew
         case .needsReview:
-            return .orange
+            return DesignTokens.Colors.statusNeedsReview
         case .approved:
-            return .green
+            return DesignTokens.Colors.statusApproved
         case .rejected:
-            return .red
+            return DesignTokens.Colors.statusRejected
         case .promoted:
-            return PoengjegerTheme.accent
+            return DesignTokens.Colors.statusPromoted
         }
     }
 }
 
 private struct AdminTag: View {
     let title: String
-    var tint: Color = .secondary
+    var tint: Color = DesignTokens.Colors.textSecondary
 
     var body: some View {
         Text(title)
-            .font(.caption)
+            .font(DesignTokens.Typography.caption)
             .foregroundStyle(tint)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(tint.opacity(0.12))
+            .padding(.horizontal, DesignTokens.Spacing.medium)
+            .padding(.vertical, DesignTokens.Spacing.xSmall)
+            .background(tint.opacity(DesignTokens.Opacity.soft))
             .clipShape(Capsule())
     }
 }
@@ -261,13 +266,13 @@ private struct MetadataLine: View {
     let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxSmall) {
             Text(title)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.caption2)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
             Text(value)
-                .font(.caption)
-                .foregroundStyle(.primary)
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .textSelection(.enabled)
         }
     }

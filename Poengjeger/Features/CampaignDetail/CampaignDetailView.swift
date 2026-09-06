@@ -15,7 +15,7 @@ struct CampaignDetailView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 28) {
+            LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.sectionLarge) {
                 campaignHeader
                 recommendationSection
                 primaryAction
@@ -24,14 +24,14 @@ struct CampaignDetailView: View {
                 sourceSection
                 programGuideSection
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 18)
-            .padding(.bottom, 36)
+            .padding(.horizontal, DesignTokens.Spacing.screen)
+            .padding(.top, DesignTokens.Spacing.comfortable)
+            .padding(.bottom, DesignTokens.Spacing.detailBottom)
         }
-        .background(PoengjegerTheme.background)
+        .background(DesignTokens.Colors.background)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .safeAreaInset(edge: .top, spacing: DesignTokens.Spacing.none) {
             DetailTopBar(
                 isFavorite: isFavorite,
                 onBack: { dismiss() },
@@ -55,23 +55,23 @@ struct CampaignDetailView: View {
     }
 
     private var campaignHeader: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
             if let primaryProgram {
                 Text(primaryProgram.name)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(PoengjegerTheme.accent)
+                    .font(DesignTokens.Typography.captionSemibold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
             }
 
             Text(campaign.title)
-                .font(.system(.title2, design: .serif).weight(.bold))
+                .font(DesignTokens.Typography.editorialTitle2)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
 
             if !campaign.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                campaign.summary != campaign.decisionConclusion {
                 Text(campaign.summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -79,13 +79,13 @@ struct CampaignDetailView: View {
     }
 
     private var recommendationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             Text(hasEditorialAssessment ? "Vurdering" : "Kort om kampanjen")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(PoengjegerTheme.primary)
+                .font(DesignTokens.Typography.captionSemibold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
 
             Text(campaign.decisionConclusion)
-                .font(.headline)
+                .font(DesignTokens.Typography.headline)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let value = nonempty(campaign.editorialAssessment?.estimatedValueText) {
@@ -111,13 +111,13 @@ struct CampaignDetailView: View {
                 CampaignDecisionFact(title: "Passer ikke for", value: notFor)
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PoengjegerTheme.elevatedSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(PoengjegerTheme.primaryBorder, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium, style: .continuous)
+                .stroke(DesignTokens.Colors.brandPrimaryBorder, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .contain)
     }
@@ -132,7 +132,7 @@ struct CampaignDetailView: View {
     @ViewBuilder
     private var requirementsSection: some View {
         if !campaign.requirements.isEmpty {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
                 sectionHeading("Dette må du gjøre")
 
                 ForEach(primaryRequirements) { requirement in
@@ -141,14 +141,15 @@ struct CampaignDetailView: View {
 
                 if hasAdditionalRequirements {
                     DisclosureGroup("Vis flere krav (\(campaign.sortedRequirements.count - primaryRequirements.count))") {
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
                             ForEach(Array(campaign.sortedRequirements.dropFirst(primaryRequirements.count))) { requirement in
                                 DetailRequirementRow(text: requirement.text)
                             }
                         }
-                        .padding(.top, 12)
+                        .padding(.top, DesignTokens.Spacing.standard)
                     }
-                    .tint(PoengjegerTheme.accent)
+                    .tint(DesignTokens.Colors.brandPrimary)
+                    .minimumTouchTarget()
                 }
             }
         }
@@ -158,13 +159,13 @@ struct CampaignDetailView: View {
     private var importantInformationSection: some View {
         if nonempty(campaign.details) != nil || !campaign.geoRestrictions.isEmpty
             || nonempty(campaign.editorialAssessment?.bestFor) != nil {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
                 sectionHeading("Viktig å vite")
 
                 if let details = nonempty(campaign.details) {
                     Text(details)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(DesignTokens.Typography.subheadline)
+                        .foregroundStyle(DesignTokens.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -183,13 +184,13 @@ struct CampaignDetailView: View {
     }
 
     private var sourceSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             Divider()
             sectionHeading("Kilde og kontroll")
 
             Text("Sist kontrollert \(campaign.lastVerifiedAt.formatted(date: .abbreviated, time: .omitted))")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.footnote)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
 
             ForEach(campaign.sources) { source in
                 SourceLinkRow(source: source)
@@ -198,8 +199,8 @@ struct CampaignDetailView: View {
             Text(campaign.sources.isEmpty
                  ? "Kildelenke mangler. Sjekk vilkårene hos tilbyder før bruk."
                  : "Sjekk alltid gjeldende vilkår hos tilbyder før bruk.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.footnote)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -215,17 +216,17 @@ struct CampaignDetailView: View {
                 )
             } label: {
                 Label("Les om \(primaryProgram.name)", systemImage: "book")
-                    .font(.subheadline)
+                    .font(DesignTokens.Typography.subheadline)
                     .frame(minHeight: 44, alignment: .leading)
             }
-            .tint(PoengjegerTheme.accent)
+            .tint(DesignTokens.Colors.brandPrimary)
             .accessibilityLabel("Åpne programguide for \(primaryProgram.name)")
         }
     }
 
     private func sectionHeading(_ title: String) -> some View {
         Text(title)
-            .font(.headline)
+            .font(DesignTokens.Typography.headline)
             .accessibilityAddTraits(.isHeader)
     }
 
@@ -291,12 +292,12 @@ private struct CampaignDecisionFact: View {
     let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.micro) {
             Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.Typography.captionSemibold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
             Text(value)
-                .font(.subheadline)
+                .font(DesignTokens.Typography.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
