@@ -1,15 +1,14 @@
 begin;
 
-insert into public.campaign_categories (id, slug, name)
+insert into public.campaign_categories (slug, name)
 values
-  ('1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0101', 'credit-card', 'Kredittkort'),
-  ('1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102', 'shopping', 'Netthandel'),
-  ('1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0103', 'telecom', 'Telekom'),
-  ('1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0104', 'subscription', 'Abonnement'),
-  ('1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0105', 'hotel', 'Hotell')
-on conflict (id) do update
+  ('credit-card', 'Kredittkort'),
+  ('shopping', 'Netthandel'),
+  ('telecom', 'Telekom'),
+  ('subscription', 'Abonnement'),
+  ('hotel', 'Hotell')
+on conflict (slug) do update
 set
-  slug = excluded.slug,
   name = excluded.name;
 
 insert into public.campaign_sources (id, name, source_type, base_url)
@@ -167,7 +166,7 @@ from (
       null::timestamptz,
       null::timestamptz,
       (select id from public.bonus_programs where slug = 'sas-eurobonus'),
-      '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0101'::uuid,
+      (select id from public.campaign_categories where slug = 'credit-card'),
       88.0::numeric,
       'Stor bonus, men bare verdt det hvis du faktisk vil bruke kortet og 2 for 1-fordelen.',
       true
@@ -180,7 +179,7 @@ from (
       null::timestamptz,
       null::timestamptz,
       (select id from public.bonus_programs where slug = 'sas-eurobonus'),
-      '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102'::uuid,
+      (select id from public.campaign_categories where slug = 'shopping'),
       72.0::numeric,
       'Bra når du uansett skal handle på nett. Sjekk poengsatsen i butikken før du kjøper.',
       false
@@ -193,7 +192,7 @@ from (
       '2026-08-01T00:00:00Z'::timestamptz,
       '2026-08-11T21:59:59Z'::timestamptz,
       (select id from public.bonus_programs where slug = 'trumf'),
-      '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0103'::uuid,
+      (select id from public.campaign_categories where slug = 'telecom'),
       84.0::numeric,
       'Sterk bonus hvis du uansett kan bytte mobilabonnement. Trumf-bonus kan brukes som penger eller overføres videre.',
       true
@@ -206,7 +205,7 @@ from (
       null::timestamptz,
       null::timestamptz,
       (select id from public.bonus_programs where slug = 'norwegian-reward'),
-      '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0104'::uuid,
+      (select id from public.campaign_categories where slug = 'subscription'),
       66.0::numeric,
       'Enkel bonus hvis du uansett vil prøve lydbøker, men verdien er begrenset.',
       false
@@ -219,7 +218,7 @@ from (
       null::timestamptz,
       null::timestamptz,
       (select id from public.bonus_programs where slug = 'spenn'),
-      '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0105'::uuid,
+      (select id from public.campaign_categories where slug = 'hotel'),
       63.0::numeric,
       'Relevant hvis du faktisk skal booke hotell i Norden. Verdien er mindre tydelig enn i en vanlig velkomstbonus.',
       false

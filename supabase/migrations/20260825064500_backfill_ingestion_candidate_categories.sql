@@ -2,13 +2,13 @@ begin;
 
 with category_ids as (
   select
-    max(id) filter (where slug = 'dagligvare') as dagligvare_id,
-    max(id) filter (where slug = 'hotel') as hotel_id,
-    max(id) filter (where slug = 'reise') as reise_id,
-    max(id) filter (where slug = 'telecom') as telecom_id,
-    max(id) filter (where slug = 'credit-card') as credit_card_id,
-    max(id) filter (where slug = 'subscription') as subscription_id,
-    max(id) filter (where slug = 'shopping') as shopping_id
+    (min(id::text) filter (where slug = 'dagligvare'))::uuid as dagligvare_id,
+    (min(id::text) filter (where slug = 'hotel'))::uuid as hotel_id,
+    (min(id::text) filter (where slug = 'reise'))::uuid as reise_id,
+    (min(id::text) filter (where slug = 'telecom'))::uuid as telecom_id,
+    (min(id::text) filter (where slug = 'credit-card'))::uuid as credit_card_id,
+    (min(id::text) filter (where slug = 'subscription'))::uuid as subscription_id,
+    (min(id::text) filter (where slug = 'shopping'))::uuid as shopping_id
   from public.campaign_categories
 ),
 candidates as (

@@ -415,7 +415,7 @@ private struct EmptyStoreSearchView: View {
         ContentUnavailableView(
             isSearching ? "Ingen butikker matcher søket" : "Ingen butikker klare ennå",
             systemImage: "magnifyingglass",
-            description: Text(isSearching ? "Prøv en annen butikk eller kategori." : "Butikksøk vises her når opptjeningsdata er bekreftet.")
+            description: Text(isSearching ? "Prøv et annet butikknavn, produkt eller en kategori." : "Butikksøk vises her når opptjeningsdata er bekreftet.")
         )
         .padding(.vertical, DesignTokens.Spacing.section)
     }

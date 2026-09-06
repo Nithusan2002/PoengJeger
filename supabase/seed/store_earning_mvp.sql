@@ -1,20 +1,19 @@
 begin;
 
-insert into public.campaign_categories (id, slug, name)
+insert into public.campaign_categories (slug, name)
 values
-  ('51ec3b45-91d1-4fa1-95c4-16120e16c111', 'dagligvare', 'Dagligvare'),
-  ('1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102', 'shopping', 'Netthandel'),
-  ('3a850a1a-96f1-4ae1-8cd9-4eb49aa7a113', 'reise', 'Reise')
-on conflict (id) do update
-set slug = excluded.slug,
-    name = excluded.name;
+  ('dagligvare', 'Dagligvare'),
+  ('shopping', 'Netthandel'),
+  ('reise', 'Reise')
+on conflict (slug) do update
+set name = excluded.name;
 
 insert into public.stores (id, slug, name, category_id, status, website_url, search_keywords, last_verified_at)
 values
-  ('720b66db-0478-4a6e-8e18-2d07da1b0101', 'elkjop', 'Elkjøp', '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102', 'published', 'https://www.elkjop.no', array['elektronikk', 'tv', 'mobil', 'data'], '2026-08-24T13:00:00Z'),
-  ('720b66db-0478-4a6e-8e18-2d07da1b0102', 'komplett', 'Komplett', '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102', 'published', 'https://www.komplett.no', array['elektronikk', 'pc', 'gaming'], '2026-08-24T13:00:00Z'),
-  ('720b66db-0478-4a6e-8e18-2d07da1b0103', 'meny', 'MENY', '51ec3b45-91d1-4fa1-95c4-16120e16c111', 'published', 'https://meny.no', array['dagligvare', 'mat', 'trumf'], '2026-08-24T13:00:00Z'),
-  ('720b66db-0478-4a6e-8e18-2d07da1b0104', 'hotels-com', 'Hotels.com', '3a850a1a-96f1-4ae1-8cd9-4eb49aa7a113', 'published', 'https://no.hotels.com', array['hotell', 'reise', 'overnatting'], '2026-08-24T13:00:00Z')
+  ('720b66db-0478-4a6e-8e18-2d07da1b0101', 'elkjop', 'Elkjøp', (select id from public.campaign_categories where slug = 'shopping'), 'published', 'https://www.elkjop.no', array['elektronikk', 'tv', 'mobil', 'data'], '2026-08-24T13:00:00Z'),
+  ('720b66db-0478-4a6e-8e18-2d07da1b0102', 'komplett', 'Komplett', (select id from public.campaign_categories where slug = 'shopping'), 'published', 'https://www.komplett.no', array['elektronikk', 'pc', 'gaming'], '2026-08-24T13:00:00Z'),
+  ('720b66db-0478-4a6e-8e18-2d07da1b0103', 'meny', 'MENY', (select id from public.campaign_categories where slug = 'dagligvare'), 'published', 'https://meny.no', array['dagligvare', 'mat', 'trumf'], '2026-08-24T13:00:00Z'),
+  ('720b66db-0478-4a6e-8e18-2d07da1b0104', 'hotels-com', 'Hotels.com', (select id from public.campaign_categories where slug = 'reise'), 'published', 'https://no.hotels.com', array['hotell', 'reise', 'overnatting'], '2026-08-24T13:00:00Z')
 on conflict (id) do update
 set slug = excluded.slug,
     name = excluded.name,

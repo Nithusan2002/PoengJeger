@@ -29,7 +29,7 @@ values (
   'SAS-siden beskriver ekstra tilgjengelighet for bonusreiser i august 2026 for medlemmer med Fly Premium. Vilkår og faktisk målgruppe må kvalitetssikres redaksjonelt før eventuell publisering.',
   'seed-fly-premium-august-2026',
   (select id from public.bonus_programs where slug = 'sas-eurobonus'),
-  '1d66d16a-0d0a-4e78-9c1a-b7ab1a0c0102',
+  (select id from public.campaign_categories where slug = 'shopping'),
   'new',
   jsonb_build_object(
     'seed_kind', 'manual_test_candidate',

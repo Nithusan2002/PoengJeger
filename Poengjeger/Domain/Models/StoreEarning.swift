@@ -293,11 +293,16 @@ struct ShoppingIntentSearchUseCase {
         "android",
         "dagligvare",
         "dagligvarer",
+        "dagslinser",
         "iphone",
         "kolonial",
+        "kontaktlinser",
+        "linser",
         "macbook",
         "mat",
-        "middag"
+        "middag",
+        "maanedslinser",
+        "månedslinser"
     ]
 
     private static let intentRules: [ShoppingIntentRule] = [
@@ -330,6 +335,11 @@ struct ShoppingIntentSearchUseCase {
             label: "Matcher klær og sko",
             triggers: ["klær", "klaer", "sko", "jakke", "bukse", "mote"],
             searchTerms: ["klær", "klaer", "sko", "mote"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher kontaktlinser og optikk",
+            triggers: ["kontaktlinser", "linser", "dagslinser", "månedslinser", "maanedslinser"],
+            searchTerms: ["kontaktlinser", "linser", "optikk"]
         ),
         ShoppingIntentRule(
             label: "Matcher gaver og opplevelser",

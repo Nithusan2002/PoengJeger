@@ -79,11 +79,11 @@ docs/             Produkt-, design- og teknisk dokumentasjon
 
 ## Grunnprinsipper
 
-- Bygg den enkleste løsningen som dekker et validert behov.
-- Skill dokumenterte fakta fra redaksjonelle vurderinger og estimater.
-- Ikke gjett manglende kampanjevilkår eller publiser innhold med uklar kilde.
-- Hold EuroBonus og Trumf som første fase til opplevelsen er validert.
-- Behandle kildekvalitet, utløpsdatoer og redaksjonell kontroll som produktfunksjoner.
+- MVP-en er begrenset til EuroBonus og Trumf.
+- Kampanjeinformasjon skal ha en dokumenterbar kilde.
+- Dokumenterte fakta og redaksjonelle vurderinger skal skilles tydelig.
+- Automatisk innhentet innhold krever manuell godkjenning før publisering.
+- Hemmeligheter skal aldri lagres i repositoryet.
 
 ## Lisens
 

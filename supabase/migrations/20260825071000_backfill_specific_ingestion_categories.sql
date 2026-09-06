@@ -2,24 +2,24 @@ begin;
 
 with category_ids as (
   select
-    max(id) filter (where slug = 'dagligvare') as dagligvare_id,
-    max(id) filter (where slug = 'elektronikk') as elektronikk_id,
-    max(id) filter (where slug = 'klaer-sko') as klaer_sko_id,
-    max(id) filter (where slug = 'sport-fritid') as sport_fritid_id,
-    max(id) filter (where slug = 'helse-skjonnhet') as helse_skjonnhet_id,
-    max(id) filter (where slug = 'barn-familie') as barn_familie_id,
-    max(id) filter (where slug = 'hus-hjem') as hus_hjem_id,
-    max(id) filter (where slug = 'bil-motor') as bil_motor_id,
-    max(id) filter (where slug = 'boker-medier') as boker_medier_id,
-    max(id) filter (where slug = 'dyr-kjaeledyr') as dyr_kjaeledyr_id,
-    max(id) filter (where slug = 'programvare') as programvare_id,
-    max(id) filter (where slug = 'hotel') as hotel_id,
-    max(id) filter (where slug = 'reise') as reise_id,
-    max(id) filter (where slug = 'telecom') as telecom_id,
-    max(id) filter (where slug = 'credit-card') as credit_card_id,
-    max(id) filter (where slug = 'subscription') as subscription_id,
-    max(id) filter (where slug = 'annet') as annet_id,
-    max(id) filter (where slug = 'shopping') as shopping_id
+    (min(id::text) filter (where slug = 'dagligvare'))::uuid as dagligvare_id,
+    (min(id::text) filter (where slug = 'elektronikk'))::uuid as elektronikk_id,
+    (min(id::text) filter (where slug = 'klaer-sko'))::uuid as klaer_sko_id,
+    (min(id::text) filter (where slug = 'sport-fritid'))::uuid as sport_fritid_id,
+    (min(id::text) filter (where slug = 'helse-skjonnhet'))::uuid as helse_skjonnhet_id,
+    (min(id::text) filter (where slug = 'barn-familie'))::uuid as barn_familie_id,
+    (min(id::text) filter (where slug = 'hus-hjem'))::uuid as hus_hjem_id,
+    (min(id::text) filter (where slug = 'bil-motor'))::uuid as bil_motor_id,
+    (min(id::text) filter (where slug = 'boker-medier'))::uuid as boker_medier_id,
+    (min(id::text) filter (where slug = 'dyr-kjaeledyr'))::uuid as dyr_kjaeledyr_id,
+    (min(id::text) filter (where slug = 'programvare'))::uuid as programvare_id,
+    (min(id::text) filter (where slug = 'hotel'))::uuid as hotel_id,
+    (min(id::text) filter (where slug = 'reise'))::uuid as reise_id,
+    (min(id::text) filter (where slug = 'telecom'))::uuid as telecom_id,
+    (min(id::text) filter (where slug = 'credit-card'))::uuid as credit_card_id,
+    (min(id::text) filter (where slug = 'subscription'))::uuid as subscription_id,
+    (min(id::text) filter (where slug = 'annet'))::uuid as annet_id,
+    (min(id::text) filter (where slug = 'shopping'))::uuid as shopping_id
   from public.campaign_categories
 ),
 candidates as (

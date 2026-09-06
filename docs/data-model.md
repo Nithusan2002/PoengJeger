@@ -7,7 +7,7 @@ Dette dokumentet beskriver gjeldende databasegrunnlag. Migrasjonene i `supabase/
 - `bonus_programs`: støttede bonusprogrammer.
 - `program_guides`: redaksjonelle guideartikler knyttet til bonusprogrammer. Hvert program kan ha flere guider med egen tittel, publiseringsstatus, Markdown-body (`body_markdown`) og siste kontrolltidspunkt. Eldre strukturerte guidefelter finnes fortsatt som fallback for eksisterende innhold.
 - `campaign_categories`: kampanjekategorier.
-- `stores`: butikker og partnere brukeren kan søke opp før kjøp, med kategori, publiseringsstatus, URL og siste kontrolltidspunkt.
+- `stores`: butikker og partnere brukeren kan søke opp før kjøp, med kategori, redaksjonelt kontrollerte søkeord, publiseringsstatus, URL og siste kontrolltidspunkt.
 - `earning_methods`: opptjeningsmekanismer som EuroBonus Shopping, Trumf, betalingskort eller tidsbegrenset kampanje.
 - `store_earning_rates`: stabil grunnopptjening eller aktiv sats for en butikk og metode, med krav, kilde og handoff-URL.
 - `earning_combinations`: redaksjonelt definerte beste kombinasjoner for en butikk. MVP bruker dette fremfor automatisk optimalisering.

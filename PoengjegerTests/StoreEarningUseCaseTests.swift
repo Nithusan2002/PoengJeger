@@ -242,6 +242,35 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeSearchUsesShoppingIntentForContactLensQueries() {
+        let lensway = makeStore(
+            name: "Lensway",
+            searchKeywords: ["kontaktlinser", "optikk"]
+        )
+        let electronicsStore = makeStore(
+            name: "Elektronikkbutikken",
+            searchKeywords: ["elektronikk", "mobil"]
+        )
+
+        let results = StoreSearchUseCase().searchResults(
+            stores: [electronicsStore, lensway],
+            query: "linser",
+            selectedProgramIDs: []
+        )
+
+        #expect(results.map(\.store.name) == ["Lensway"])
+        #expect(results.first?.intentExplanation == "Matcher kontaktlinser og optikk")
+
+        let specificResults = StoreSearchUseCase().searchResults(
+            stores: [electronicsStore, lensway],
+            query: "dagslinser",
+            selectedProgramIDs: []
+        )
+
+        #expect(specificResults.map(\.store.name) == ["Lensway"])
+    }
+
+    @Test
     func storeDiscoveryParsesNorwegianDecimalValuesWhenRankingStores() {
         let lowerValue = makeStore(
             name: "Lavere verdi",
