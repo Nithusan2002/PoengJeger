@@ -11,7 +11,7 @@ set name = excluded.name;
 insert into public.stores (id, slug, name, category_id, status, website_url, search_keywords, last_verified_at)
 values
   ('720b66db-0478-4a6e-8e18-2d07da1b0101', 'elkjop', 'Elkjøp', (select id from public.campaign_categories where slug = 'shopping'), 'published', 'https://www.elkjop.no', array['elektronikk', 'tv', 'mobil', 'data'], '2026-08-24T13:00:00Z'),
-  ('720b66db-0478-4a6e-8e18-2d07da1b0102', 'komplett', 'Komplett', (select id from public.campaign_categories where slug = 'shopping'), 'published', 'https://www.komplett.no', array['elektronikk', 'pc', 'gaming'], '2026-08-24T13:00:00Z'),
+  ('720b66db-0478-4a6e-8e18-2d07da1b0102', 'komplett', 'Komplett', (select id from public.campaign_categories where slug = 'shopping'), 'published', 'https://www.komplett.no', array['elektronikk', 'pc', 'gaming', 'laptop', 'datamaskin'], '2026-08-24T13:00:00Z'),
   ('720b66db-0478-4a6e-8e18-2d07da1b0103', 'meny', 'MENY', (select id from public.campaign_categories where slug = 'dagligvare'), 'published', 'https://meny.no', array['dagligvare', 'mat', 'trumf'], '2026-08-24T13:00:00Z'),
   ('720b66db-0478-4a6e-8e18-2d07da1b0104', 'hotels-com', 'Hotels.com', (select id from public.campaign_categories where slug = 'reise'), 'published', 'https://no.hotels.com', array['hotell', 'reise', 'overnatting'], '2026-08-24T13:00:00Z')
 on conflict (id) do update

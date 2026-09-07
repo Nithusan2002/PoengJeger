@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-029: Produktsamsvar rangeres foran bonusverdi i butikksøk
+- Status: Vedtatt
+- Bakgrunn: Intentutvidelse gjorde at konkrete produktsøk som «laptop» og «vaskemaskin» fant riktig kategori, men alle butikker i kategorien fikk omtrent samme relevans. Da kunne en høy bonusverdi løfte en butikk uten det etterspurte produktet til toppen.
+- Beslutning: Direkte treff på butikkens navn og redaksjonelle produktsøkeord rangeres foran brede intent- og kategoritreff. Bonusverdi og valgte bonusprogrammer brukes først som sortering mellom butikker med lik søkerelevans. Når ingen dokumentert relevant partner finnes, skal søket vise tomtilstand fremfor generiske treff.
+- Konsekvens: Butikkenes `search_keywords` blir redaksjonelt innhold som må vedlikeholdes og kvalitetssikres. Søket blir mer presist uten ekstern AI-tjeneste, men nye produktområder krever eksplisitte søkeord eller senere evaluering av en kontrollert semantisk søkeløsning.
+
 ## ADR-028: Visuelle grunnverdier samles i navngitte design tokens
 - Status: Vedtatt
 - Bakgrunn: Farger, avstander, hjørneradier og typografi var definert både i et felles tema og som lokale SwiftUI-verdier. Det gjør visuell konsistens, mørk modus og tilgjengelighetskontroll vanskeligere over tid.

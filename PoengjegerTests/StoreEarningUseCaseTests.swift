@@ -306,6 +306,46 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeSearchRanksSpecificProductKeywordsAboveBroadCategoryAndReward() {
+        let electronicsCategory = makeCategory(slug: "elektronikk", name: "Elektronikk")
+        let broadHighValueStore = makeStore(
+            name: "Xplora",
+            category: electronicsCategory,
+            combinations: [makeCombination(totalValueLabel: "999 EB-poeng / 100 kr", sortOrder: 1)]
+        )
+        let relevantStore = makeStore(
+            name: "Lenovo",
+            category: electronicsCategory,
+            searchKeywords: ["laptop", "pc", "datamaskin"],
+            combinations: [makeCombination(totalValueLabel: "1 EB-poeng / 100 kr", sortOrder: 1)]
+        )
+
+        let results = StoreSearchUseCase().searchResults(
+            stores: [broadHighValueStore, relevantStore],
+            query: "ny laptop",
+            selectedProgramIDs: []
+        )
+
+        #expect(results.map(\.store.name) == ["Lenovo", "Xplora"])
+    }
+
+    @Test
+    func fuelIntentDoesNotReturnGenericCarPartStores() {
+        let carPartStore = makeStore(
+            name: "Bildeler",
+            category: makeCategory(slug: "bil-motor", name: "Bil og motor")
+        )
+
+        let results = StoreSearchUseCase().searchResults(
+            stores: [carPartStore],
+            query: "kjøpe bensin",
+            selectedProgramIDs: []
+        )
+
+        #expect(results.isEmpty)
+    }
+
+    @Test
     func storeDiscoveryParsesNorwegianDecimalValuesWhenRankingStores() {
         let lowerValue = makeStore(
             name: "Lavere verdi",

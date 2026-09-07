@@ -384,7 +384,7 @@ struct ShoppingIntentSearchUseCase {
         ShoppingIntentRule(
             label: "Matcher bil og drivstoff",
             triggers: ["drivstoff", "bensin", "diesel", "lading", "bil"],
-            searchTerms: ["bil", "drivstoff", "bensin", "lading"]
+            searchTerms: ["drivstoff", "bensin", "diesel", "lading"]
         )
     ]
 }
@@ -590,15 +590,19 @@ private struct StoreSearchMatch {
         }
 
         let fields = StoreSearchFields(store: store)
-        let expandedQueryTerms = Array(Set(
-            StoreSearchNormalizer.expandedTerms(from: normalizedQuery)
-                + additionalTerms.flatMap { StoreSearchNormalizer.expandedTerms(from: $0) }
-        ))
+        let directTerms = StoreSearchNormalizer.expandedTerms(from: normalizedQuery)
+        let directTermSet = Set(directTerms)
+        let fallbackTerms = Array(Set(
+            additionalTerms.flatMap { StoreSearchNormalizer.expandedTerms(from: $0) }
+        ).subtracting(directTermSet))
 
         score = max(
-            StoreSearchMatch.score(query: normalizedQuery, terms: expandedQueryTerms, in: fields.names, weight: 100),
-            StoreSearchMatch.score(query: normalizedQuery, terms: expandedQueryTerms, in: fields.categories, weight: 70),
-            StoreSearchMatch.score(query: normalizedQuery, terms: expandedQueryTerms, in: fields.keywords, weight: 55)
+            StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.names, weight: 100),
+            StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.categories, weight: 70),
+            StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.keywords, weight: 90),
+            StoreSearchMatch.score(query: "", terms: fallbackTerms, in: fields.names, weight: 40),
+            StoreSearchMatch.score(query: "", terms: fallbackTerms, in: fields.categories, weight: 30),
+            StoreSearchMatch.score(query: "", terms: fallbackTerms, in: fields.keywords, weight: 35)
         )
     }
 
@@ -606,15 +610,15 @@ private struct StoreSearchMatch {
         var bestScore = 0
 
         for value in values {
-            if value == query {
+            if !query.isEmpty, value == query {
                 bestScore = max(bestScore, weight + 40)
-            } else if value.hasPrefix(query) {
+            } else if !query.isEmpty, value.hasPrefix(query) {
                 bestScore = max(bestScore, weight + 25)
-            } else if value.contains(query) {
+            } else if !query.isEmpty, value.contains(query) {
                 bestScore = max(bestScore, weight + 15)
             }
 
-            for term in terms where term != query {
+            for term in terms where !term.isEmpty && term != query {
                 if value == term {
                     bestScore = max(bestScore, weight + 20)
                 } else if value.hasPrefix(term) {
