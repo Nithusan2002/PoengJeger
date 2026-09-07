@@ -15,7 +15,7 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 - Supabase-datamodell med redaksjonell kampanjeadministrasjon.
 - Supabase-datamodell utvides med butikker, opptjeningsmetoder, satser og redaksjonelle kombinasjoner.
 - Kandidatkø som kan promotere funn til utkast, aldri direkte til publisert kampanje.
-- Enkel Guide-fane med læringsstier som forklarer EuroBonus- og Trumf-økosystemene, strategi, vanlige feller og aktive kampanjer uten å innføre en blogg- eller nyhetsflate.
+- Enkel Guide-fane med selvstendige læringsstier som forklarer EuroBonus- og Trumf-økosystemene, strategi og vanlige feller uten referanser eller lenker til konkrete butikker og kampanjer.
 - Poengnytt-fane som redaksjonell, handlingsrettet aktualitetsflate for nye kampanjer, frister og poengmuligheter. Første versjon gjenbruker publiserte kampanjer før egen nyhetsmodell vurderes.
 - Lagret er flyttet ut av hovedfanene og åpnes fra Hjem, slik at hovednavigasjonen prioriterer returverdi og "sjekk før du handler".
 - Design- og brukerflytretningen er dokumentert i `docs/design-and-user-flow.md`.

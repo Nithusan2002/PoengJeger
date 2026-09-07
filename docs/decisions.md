@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-030: Guider er uavhengige av butikker og kampanjer
+- Status: Vedtatt
+- Bakgrunn: Dynamiske kampanjekort i guidedetaljer blandet varig læringsinnhold med tidsbegrensede muligheter og kunne oppfattes som konkrete anbefalinger.
+- Beslutning: Guideartikler skal være selvstendige og ikke vise eller lenke til konkrete butikker eller kampanjer. Generell forklaring av bonusprogrammer, opptjeningsmåter og vurderingsprinsipper kan fortsatt omtale butikker og kampanjer som begreper.
+- Konsekvens: Guidene blir mer varige og redaksjonelt tydelige. Aktuelle butikker og kampanjer oppdages i Hjem, Utforsk og Poengnytt, ikke fra guidedetaljen.
+
 ## ADR-029: Produktsamsvar rangeres foran bonusverdi i butikksøk
 - Status: Vedtatt
 - Bakgrunn: Intentutvidelse gjorde at konkrete produktsøk som «laptop» og «vaskemaskin» fant riktig kategori, men alle butikker i kategorien fikk omtrent samme relevans. Da kunne en høy bonusverdi løfte en butikk uten det etterspurte produktet til toppen.
