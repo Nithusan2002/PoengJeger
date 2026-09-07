@@ -271,6 +271,41 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeSearchCoversPilotProductIntentQueries() {
+        let stores = [
+            makeStore(name: "Reisebutikken", category: makeCategory(slug: "reise", name: "Reise")),
+            makeStore(name: "Klesbutikken", category: makeCategory(slug: "klaer-sko", name: "Klær og sko")),
+            makeStore(name: "Hjembutikken", category: makeCategory(slug: "hus-hjem", name: "Hus og hjem")),
+            makeStore(name: "Dyrebutikken", category: makeCategory(slug: "dyr-kjaeledyr", name: "Dyr og kjæledyr")),
+            makeStore(name: "Skjønnhetsbutikken", category: makeCategory(slug: "helse-skjonnhet", name: "Helse og skjønnhet")),
+            makeStore(name: "Barnebutikken", category: makeCategory(slug: "barn-familie", name: "Barn og familie")),
+            makeStore(name: "Lydbokbutikken", category: makeCategory(slug: "subscription", name: "Abonnement")),
+            makeStore(name: "Uvedkommende butikk", category: SampleData.groceryCategory)
+        ]
+        let expectedStoreByQuery = [
+            "flybilletter": "Reisebutikken",
+            "jakke": "Klesbutikken",
+            "vaskemaskin": "Hjembutikken",
+            "hundemat": "Dyrebutikken",
+            "sminke": "Skjønnhetsbutikken",
+            "barneklær": "Barnebutikken",
+            "lydbok": "Lydbokbutikken"
+        ]
+
+        for (query, expectedStore) in expectedStoreByQuery {
+            let results = StoreSearchUseCase().searchResults(
+                stores: stores,
+                query: query,
+                selectedProgramIDs: []
+            )
+
+            #expect(results.map(\.store.name).contains(expectedStore), "Forventet relevant treff for \(query)")
+            #expect(!results.map(\.store.name).contains("Uvedkommende butikk"), "Uventet dagligvaretreff for \(query)")
+            #expect(results.contains { $0.intentExplanation != nil }, "Forventet intentforklaring for \(query)")
+        }
+    }
+
+    @Test
     func storeDiscoveryParsesNorwegianDecimalValuesWhenRankingStores() {
         let lowerValue = makeStore(
             name: "Lavere verdi",
@@ -525,6 +560,10 @@ struct StoreEarningUseCaseTests {
             earningRates: earningRates ?? [makeEarningRate()],
             combinations: combinations ?? [makeCombination()]
         )
+    }
+
+    private func makeCategory(slug: String, name: String) -> CampaignCategory {
+        CampaignCategory(id: UUID(), slug: slug, name: name)
     }
 
     private func makeEarningRate(

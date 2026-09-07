@@ -261,7 +261,7 @@ struct ShoppingIntentSearchUseCase {
         let matchedIntents = Self.intentRules.filter { rule in
             rule.triggers.contains { trigger in
                 let normalizedTrigger = StoreSearchNormalizer.normalize(trigger)
-                guard normalizedQuery.contains(normalizedTrigger) else { return false }
+                guard queryTerms.contains(normalizedTrigger) else { return false }
                 return hasBuyingContext || Self.standaloneProductTriggers.contains(normalizedTrigger)
             }
         }
@@ -291,18 +291,28 @@ struct ShoppingIntentSearchUseCase {
 
     private static let standaloneProductTriggers: Set<String> = [
         "android",
+        "barneklær",
+        "barneklaer",
         "dagligvare",
         "dagligvarer",
         "dagslinser",
+        "flybilletter",
+        "hundemat",
         "iphone",
+        "jakke",
         "kolonial",
         "kontaktlinser",
         "linser",
+        "lydbok",
+        "lydbøker",
+        "lydboker",
         "macbook",
         "mat",
         "middag",
         "maanedslinser",
-        "månedslinser"
+        "månedslinser",
+        "sminke",
+        "vaskemaskin"
     ]
 
     private static let intentRules: [ShoppingIntentRule] = [
@@ -333,7 +343,7 @@ struct ShoppingIntentSearchUseCase {
         ),
         ShoppingIntentRule(
             label: "Matcher klær og sko",
-            triggers: ["klær", "klaer", "sko", "jakke", "bukse", "mote"],
+            triggers: ["klær", "klaer", "sko", "jakke", "bukse", "mote", "barneklær", "barneklaer"],
             searchTerms: ["klær", "klaer", "sko", "mote"]
         ),
         ShoppingIntentRule(
@@ -350,6 +360,26 @@ struct ShoppingIntentSearchUseCase {
             label: "Matcher hus, hjem og hvitevarer",
             triggers: ["hvitevarer", "kjøleskap", "vaskemaskin", "møbler", "interiør", "hjem"],
             searchTerms: ["hjem", "hvitevarer", "møbler", "interiør", "elektronikk"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher dyr og kjæledyr",
+            triggers: ["hundemat", "kattemat", "dyremat", "kjæledyr", "kjaeledyr"],
+            searchTerms: ["dyr", "kjæledyr", "kjaeledyr"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher helse og skjønnhet",
+            triggers: ["sminke", "makeup", "hudpleie", "parfyme", "skjønnhet", "skjonnhet"],
+            searchTerms: ["helse", "skjønnhet", "skjonnhet"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher barn og familie",
+            triggers: ["barneklær", "barneklaer", "babyutstyr", "barneutstyr", "leker"],
+            searchTerms: ["barn", "familie"]
+        ),
+        ShoppingIntentRule(
+            label: "Matcher bøker og abonnement",
+            triggers: ["lydbok", "lydbøker", "lydboker", "ebok", "ebøker", "eboker"],
+            searchTerms: ["abonnement", "bøker", "boker", "medier"]
         ),
         ShoppingIntentRule(
             label: "Matcher bil og drivstoff",
