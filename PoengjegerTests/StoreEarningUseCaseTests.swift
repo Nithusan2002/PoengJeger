@@ -326,7 +326,7 @@ struct StoreEarningUseCaseTests {
             selectedProgramIDs: []
         )
 
-        #expect(results.map(\.store.name) == ["Lenovo", "Xplora"])
+        #expect(results.map(\.store.name) == ["Lenovo"])
     }
 
     @Test

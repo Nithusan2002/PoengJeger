@@ -195,8 +195,7 @@ struct StoreSearchUseCase {
 
     func searchResults(stores: [Store], query: String, selectedProgramIDs: Set<UUID>) -> [StoreSearchResult] {
         let analysis = ShoppingIntentSearchUseCase().analyze(query: query)
-
-        return stores
+        let matches = stores
             .filter(\.isPublished)
             .map { store in
                 (
@@ -209,6 +208,11 @@ struct StoreSearchUseCase {
                 )
             }
             .filter { $0.match.score > 0 }
+
+        let hasDirectMatch = matches.contains { $0.match.isDirectMatch }
+
+        return matches
+            .filter { !hasDirectMatch || $0.match.isDirectMatch }
             .sorted { first, second in
                 if first.match.score != second.match.score {
                     return first.match.score > second.match.score
@@ -577,6 +581,7 @@ private extension Store {
 
 private struct StoreSearchMatch {
     let score: Int
+    let isDirectMatch: Bool
 
     init(store: Store, query: String) {
         self.init(store: store, query: query, additionalTerms: [])
@@ -586,6 +591,7 @@ private struct StoreSearchMatch {
         let normalizedQuery = StoreSearchNormalizer.normalize(query)
         guard !normalizedQuery.isEmpty else {
             score = 1
+            isDirectMatch = false
             return
         }
 
@@ -596,14 +602,18 @@ private struct StoreSearchMatch {
             additionalTerms.flatMap { StoreSearchNormalizer.expandedTerms(from: $0) }
         ).subtracting(directTermSet))
 
-        score = max(
+        let directScore = max(
             StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.names, weight: 100),
             StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.categories, weight: 70),
-            StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.keywords, weight: 90),
+            StoreSearchMatch.score(query: normalizedQuery, terms: directTerms, in: fields.keywords, weight: 90)
+        )
+        let fallbackScore = max(
             StoreSearchMatch.score(query: "", terms: fallbackTerms, in: fields.names, weight: 40),
             StoreSearchMatch.score(query: "", terms: fallbackTerms, in: fields.categories, weight: 30),
             StoreSearchMatch.score(query: "", terms: fallbackTerms, in: fields.keywords, weight: 35)
         )
+        score = max(directScore, fallbackScore)
+        isDirectMatch = directScore > 0
     }
 
     private static func score(query: String, terms: [String], in values: [String], weight: Int) -> Int {
