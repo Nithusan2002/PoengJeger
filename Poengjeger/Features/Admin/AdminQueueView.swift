@@ -60,6 +60,7 @@ struct AdminQueueView: View {
             }
         }
         .navigationTitle("Admin-kø")
+        .toolbar(.visible, for: .navigationBar)
         .task {
             await environment.loadAdminQueueIfNeeded()
         }

@@ -20,7 +20,24 @@ struct HomeView: View {
     }
 
     private var quickSuggestions: [Store] {
-        environment.featuredStores
+        Array(environment.featuredStores.prefix(4))
+    }
+
+    private var shoppingIntent: ShoppingIntentAnalysis {
+        ShoppingIntentSearchUseCase().analyze(query: searchText)
+    }
+
+    private var trimmedSearchText: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var searchResultTitle: String {
+        if let summary = shoppingIntent.summary {
+            return summary.replacingOccurrences(of: "Matcher ", with: "", options: [.anchored])
+                .capitalized
+        }
+
+        return "Treff for «\(trimmedSearchText)»"
     }
 
     var body: some View {
@@ -51,21 +68,7 @@ struct HomeView: View {
             .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
         .background(DesignTokens.Colors.background)
-        .navigationTitle("Hjem")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    FavoritesView()
-                } label: {
-                    Text("Mine favoritter")
-                        .font(DesignTokens.Typography.subheadlineSemibold)
-                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
-                }
-                .accessibilityLabel("Åpne mine favoritter")
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: $selectedStore) { store in
             StoreDetailView(store: store)
         }
@@ -78,30 +81,46 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
-            Text("Poengjeger")
-                .font(DesignTokens.Typography.editorialHeadline)
-                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Poengjeger")
+                    .font(DesignTokens.Typography.editorialHeadline)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
+
+                Spacer()
+
+                NavigationLink {
+                    FavoritesView()
+                } label: {
+                    Image(systemName: "star")
+                        .font(DesignTokens.Typography.headlineSemibold)
+                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                }
+                .minimumTouchTarget()
+                .accessibilityLabel("Åpne mine favoritter")
+            }
 
             Text("Sjekk før du handler")
                 .font(DesignTokens.Typography.editorialLargeTitle)
                 .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-
-            Text("Søk butikk, kategori eller produkt.")
-                .font(DesignTokens.Typography.subheadline)
-                .foregroundStyle(DesignTokens.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.bottom, DesignTokens.Spacing.negativeTight)
     }
 
     private var searchSection: some View {
-        searchField
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+            searchField
+
+            if !isSearching && !isSearchFocused {
+                Text("For eksempel Elkjøp, fly eller dagligvarer")
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .padding(.horizontal, DesignTokens.Spacing.medium)
+            }
+        }
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, DesignTokens.Spacing.controlGap)
-            .padding(.bottom, DesignTokens.Spacing.standard)
+            .padding(.top, DesignTokens.Spacing.medium)
     }
 
     private var searchField: some View {
@@ -110,7 +129,7 @@ struct HomeView: View {
                 .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .accessibilityHidden(true)
 
-            TextField("Søk butikk, kategori eller produkt", text: $searchText)
+            TextField("Hva skal du kjøpe?", text: $searchText)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
                 .submitLabel(.search)
@@ -140,28 +159,25 @@ struct HomeView: View {
         }
         .padding(.horizontal, DesignTokens.Spacing.screen)
         .padding(.vertical, DesignTokens.Spacing.compact)
-        .background(DesignTokens.Colors.surfaceElevated)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
-        .shadow(color: DesignTokens.Colors.shadow, radius: 12, y: 5)
+        .background(DesignTokens.Colors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
-                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium, style: .continuous)
+                .stroke(
+                    isSearchFocused ? DesignTokens.Colors.brandPrimary : DesignTokens.Colors.border,
+                    lineWidth: DesignTokens.Stroke.standard
+                )
         }
     }
 
     private var quickSuggestionsSection: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                Text("SNARVEIER")
-                    .font(DesignTokens.Typography.captionBold)
-                    .tracking(2.2)
-                    .foregroundStyle(DesignTokens.Colors.textSecondary)
-
-                Text("Butikker med opptjening")
+                Text("Forslag akkurat nå")
                     .font(DesignTokens.Typography.editorialTitle2)
                     .foregroundStyle(DesignTokens.Colors.textPrimary)
 
-                Text("Start med en verifisert butikk, eller søk etter det du skal kjøpe.")
+                Text("Butikker med verifisert opptjening.")
                     .font(DesignTokens.Typography.subheadline)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -194,9 +210,13 @@ struct HomeView: View {
                     .tracking(2.2)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
 
-                Text("\(matchingStoreResults.count) treff")
+                Text(searchResultTitle)
                     .font(DesignTokens.Typography.editorialTitle2)
                     .foregroundStyle(DesignTokens.Colors.textPrimary)
+
+                Text("\(matchingStoreResults.count) treff")
+                    .font(DesignTokens.Typography.subheadline)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
             }
 
             if matchingStoreResults.isEmpty {
@@ -415,7 +435,7 @@ private struct EmptyStoreSearchView: View {
         ContentUnavailableView(
             isSearching ? "Ingen butikker matcher søket" : "Ingen butikker klare ennå",
             systemImage: "magnifyingglass",
-            description: Text(isSearching ? "Prøv et annet butikknavn, produkt eller en kategori." : "Butikksøk vises her når opptjeningsdata er bekreftet.")
+            description: Text(isSearching ? "Prøv et annet butikknavn eller en bredere kategori, som elektronikk eller dagligvarer." : "Butikksøk vises her når opptjeningsdata er bekreftet.")
         )
         .padding(.vertical, DesignTokens.Spacing.section)
     }

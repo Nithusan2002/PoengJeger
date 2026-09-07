@@ -69,7 +69,7 @@ private struct OnboardingHeader: View {
                 .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Velg programmene dine. Vi bruker valget til å tilpasse kampanjer, guider og varsler.")
+            Text("Velg programmene dine. Vi bruker valget til å prioritere butikker, kampanjer og guider.")
                 .font(DesignTokens.Typography.title3)
                 .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .lineSpacing(3)
@@ -174,14 +174,14 @@ private struct OnboardingContinueButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label(isEnabled ? "Vis mine kampanjer" : "Velg minst ett program", systemImage: "arrow.right.circle.fill")
+            Label(isEnabled ? "Start å søke" : "Velg minst ett program", systemImage: "arrow.right.circle.fill")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .tint(DesignTokens.Colors.brandPrimaryButton)
         .disabled(!isEnabled)
-        .accessibilityHint(isEnabled ? "Åpner den personlige kampanjefeeden." : "Velg minst ett bonusprogram først.")
+        .accessibilityHint(isEnabled ? "Åpner Poengjeger med butikksøk." : "Velg minst ett bonusprogram først.")
     }
 }
 

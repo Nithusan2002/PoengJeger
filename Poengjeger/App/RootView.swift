@@ -24,9 +24,17 @@ struct RootView: View {
                 }
             }
         }
-        .preferredColorScheme(environment.userSession.prefersDarkMode ? .dark : .light)
+        .preferredColorScheme(preferredColorScheme)
         .task {
             await environment.loadIfNeeded()
+        }
+    }
+
+    private var preferredColorScheme: ColorScheme? {
+        switch environment.userSession.appearancePreference {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
         }
     }
 }

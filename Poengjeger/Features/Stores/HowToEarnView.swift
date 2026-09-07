@@ -34,6 +34,7 @@ struct HowToEarnView: View {
         .background(DesignTokens.Colors.background)
         .navigationTitle("Slik gjør du det")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .task(id: combination.id) {
             environment.track(.init(
@@ -109,22 +110,30 @@ struct HowToEarnView: View {
                     .foregroundStyle(DesignTokens.Colors.textPrimary)
             }
 
-            VStack(spacing: DesignTokens.Spacing.none) {
-                ForEach(Array(sortedSteps.enumerated()), id: \.element.id) { index, step in
-                    StepInstructionRow(index: index + 1, text: step.text)
+            if sortedSteps.isEmpty {
+                ContentUnavailableView(
+                    "Stegene mangler",
+                    systemImage: "list.number",
+                    description: Text("Handelssteg må bekreftes før denne kombinasjonen kan brukes.")
+                )
+            } else {
+                VStack(spacing: DesignTokens.Spacing.none) {
+                    ForEach(Array(sortedSteps.enumerated()), id: \.element.id) { index, step in
+                        StepInstructionRow(index: index + 1, text: step.text)
 
-                    if step.id != sortedSteps.last?.id {
-                        Divider()
-                            .padding(.leading, DesignTokens.Spacing.searchLeadingInset)
+                        if step.id != sortedSteps.last?.id {
+                            Divider()
+                                .padding(.leading, DesignTokens.Spacing.searchLeadingInset)
+                        }
                     }
                 }
-            }
-            .background(DesignTokens.Colors.surfaceElevated)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
-            .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
-            .overlay {
-                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
-                    .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
+                .background(DesignTokens.Colors.surfaceElevated)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+                .shadow(color: DesignTokens.Colors.shadow, radius: 8, y: 3)
+                .overlay {
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                        .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
+                }
             }
         }
     }
@@ -211,7 +220,9 @@ struct HowToEarnView: View {
 
     @ViewBuilder
     private var handoffButton: some View {
-        if let url = combination.primaryHandoffURL {
+        if sortedSteps.isEmpty {
+            EmptyView()
+        } else if let url = combination.primaryHandoffURL {
             Button {
                 var properties = [
                     "store_id": store.id.uuidString,
@@ -261,7 +272,6 @@ struct HowToEarnView: View {
             VStack(alignment: .center, spacing: DesignTokens.Spacing.small) {
                 Text("Du sendes videre til \(handoffDestinationNameForDisclosure).")
 
-                Text("Lenken kan gi Poengjeger provisjon. Den påvirker verken rangeringen eller hva vi anbefaler.")
             }
             .font(DesignTokens.Typography.caption)
             .foregroundStyle(DesignTokens.Colors.textSecondary)
@@ -273,7 +283,7 @@ struct HowToEarnView: View {
 
     @ViewBuilder
     private var compactHandoffDisclosure: some View {
-        if combination.primaryHandoffURL != nil {
+        if combination.primaryHandoffURL != nil && !sortedSteps.isEmpty {
             Text("Lenken kan gi Poengjeger provisjon.")
                 .font(DesignTokens.Typography.caption)
                 .foregroundStyle(DesignTokens.Colors.textSecondary)

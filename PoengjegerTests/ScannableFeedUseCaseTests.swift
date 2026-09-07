@@ -69,6 +69,21 @@ struct ScannableFeedUseCaseTests {
         #expect(decoded.favoriteStoreIDs.isEmpty)
         #expect(decoded.notificationsEnabled == false)
         #expect(decoded.prefersDarkMode == false)
+        #expect(decoded.appearancePreference == .system)
+    }
+
+    @Test
+    func userSessionPersistsSystemAppearancePreference() throws {
+        let session = UserSession(
+            selectedProgramIDs: [SampleData.trumf.id],
+            favoriteCampaignIDs: []
+        )
+
+        let data = try JSONEncoder().encode(session)
+        let decoded = try JSONDecoder().decode(UserSession.self, from: data)
+
+        #expect(decoded.appearancePreference == .system)
+        #expect(decoded == session)
     }
 
     @MainActor

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ExploreView: View {
     @Environment(AppEnvironment.self) private var environment
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedScope: ExploreScope = .campaigns
 
     private var activeCampaigns: [Campaign] {
@@ -15,10 +16,6 @@ struct ExploreView: View {
         )
     }
 
-    private var featuredCampaigns: [Campaign] {
-        activeCampaigns.prefix(3).map { $0 }
-    }
-
     private var rankedStores: [Store] {
         StoreDiscoveryUseCase()
             .rankedStores(from: environment.publishedStores, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
@@ -27,14 +24,6 @@ struct ExploreView: View {
 
     private var featuredStores: [Store] {
         rankedStores.prefix(4).map { $0 }
-    }
-
-    private var spotlightCampaigns: [Campaign] {
-        featuredCampaigns.prefix(2).map { $0 }
-    }
-
-    private var spotlightStore: Store? {
-        featuredStores.first
     }
 
     private var programsByID: [UUID: BonusProgram] {
@@ -68,8 +57,6 @@ struct ExploreView: View {
 
                 statusSection
 
-                spotlightSection
-
                 scopePicker
 
                 selectedScopeSection
@@ -79,9 +66,7 @@ struct ExploreView: View {
             .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
         .background(DesignTokens.Colors.background)
-        .navigationTitle("Utforsk")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(for: Store.self) { store in
             StoreDetailView(store: store)
         }
@@ -122,40 +107,6 @@ struct ExploreView: View {
                 .padding(.vertical, DesignTokens.Spacing.small)
                 .background(DesignTokens.Colors.brandPrimarySoft)
                 .clipShape(Capsule())
-        }
-    }
-
-    @ViewBuilder
-    private var spotlightSection: some View {
-        if environment.loadState == .loading && spotlightCampaigns.isEmpty && spotlightStore == nil {
-            ProgressView("Laster muligheter...")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.vertical, DesignTokens.Spacing.emptyState)
-        } else if !spotlightCampaigns.isEmpty || spotlightStore != nil {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
-                SectionHeader(
-                    eyebrow: "AKKURAT NÅ",
-                    title: "Verdt å sjekke først",
-                    subtitle: nil
-                )
-
-                ForEach(spotlightCampaigns) { campaign in
-                    NavigationLink(value: campaign) {
-                        ExploreCampaignTeaserRow(
-                            campaign: campaign,
-                            primaryProgramName: primaryProgramName(for: campaign)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                if let spotlightStore {
-                    NavigationLink(value: spotlightStore) {
-                        ExploreStoreMiniRow(store: spotlightStore, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
         }
     }
 
@@ -242,10 +193,7 @@ struct ExploreView: View {
                     }
             } else {
                 LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: DesignTokens.Spacing.standard),
-                        GridItem(.flexible(), spacing: DesignTokens.Spacing.standard)
-                    ],
+                    columns: categoryColumns,
                     spacing: DesignTokens.Spacing.standard
                 ) {
                     ForEach(categories) { category in
@@ -257,6 +205,14 @@ struct ExploreView: View {
                 }
             }
         }
+    }
+
+    private var categoryColumns: [GridItem] {
+        let columnCount = dynamicTypeSize.isAccessibilitySize ? 1 : 2
+        return Array(
+            repeating: GridItem(.flexible(), spacing: DesignTokens.Spacing.standard),
+            count: columnCount
+        )
     }
 
     private var featuredStoresSection: some View {
@@ -284,7 +240,7 @@ struct ExploreView: View {
                             .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
                     }
             } else {
-                ForEach(rankedStores) { store in
+                ForEach(featuredStores) { store in
                     NavigationLink(value: store) {
                         ExploreStoreMiniRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
                     }

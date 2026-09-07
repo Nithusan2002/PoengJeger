@@ -39,6 +39,7 @@ struct FavoritesView: View {
         .background(DesignTokens.Colors.background)
         .navigationTitle("Lagret")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .navigationDestination(for: Store.self) { store in
             StoreDetailView(store: store)
@@ -89,7 +90,10 @@ struct FavoritesView: View {
         } else {
             ForEach(favoriteStores) { store in
                 NavigationLink(value: store) {
-                    StoreResultRow(store: store)
+                    StoreResultRow(
+                        store: store,
+                        selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
+                    )
                 }
                 .buttonStyle(.plain)
             }

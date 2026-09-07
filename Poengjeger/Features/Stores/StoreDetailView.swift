@@ -5,6 +5,7 @@ struct StoreDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @State private var isRecommendationExpanded = false
+    @State private var isOtherMethodsExpanded = false
     @State private var isFavorite = false
 
     let store: Store
@@ -42,20 +43,31 @@ struct StoreDetailView: View {
             .sorted { $0.sortOrder < $1.sortOrder }
     }
 
-    private var bestOpportunityUsesPromotion: Bool {
-        activePromotions.contains { bestRateIDs.contains($0.id) }
-    }
-
-    private var visibleReferenceRates: [StoreEarningRate] {
-        let baseRates = primaryRates
+    private var baseContextRates: [StoreEarningRate] {
+        primaryRates
             .filter(\.isBaseRate)
             .sorted { $0.sortOrder < $1.sortOrder }
+    }
 
-        if bestOpportunityUsesPromotion {
-            return baseRates
-        }
+    private var displayedBaseContextRates: [StoreEarningRate] {
+        guard let preferredCombination else { return baseContextRates }
+        let includedRates = rates(in: preferredCombination)
+        let addsToBaseRate = preferredCombination.rateIDs.count > 1 || includedRates.contains { !$0.isBaseRate }
+        return addsToBaseRate ? baseContextRates : []
+    }
 
-        return baseRates.filter { !bestRateIDs.contains($0.id) }
+    private var otherAvailableRates: [StoreEarningRate] {
+        // Only hide base rates that are actually rendered in the summary card.
+        // With multiple selected programs, an undisplayed base rate is still a
+        // valid alternative and belongs in "Andre opptjeningsmuligheter".
+        let contextualRateIDs = bestRateIDs.union(Set(displayedBaseContextRates.map(\.id)))
+        return (primaryRates + secondaryRates)
+            .reduce(into: [StoreEarningRate]()) { result, rate in
+                guard !contextualRateIDs.contains(rate.id), !result.contains(where: { $0.id == rate.id }) else {
+                    return
+                }
+                result.append(rate)
+            }
     }
 
     var body: some View {
@@ -66,9 +78,6 @@ struct StoreDetailView: View {
                 LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.largePlus) {
                     header
                     bestOpportunitySection
-                    referenceRateSection
-                    currentCampaignSection
-                    allMethodsSection
                     otherMethodsSection
                     sourceSection
                 }
@@ -148,7 +157,21 @@ struct StoreDetailView: View {
             let includedRates = rates(in: combination)
 
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
-                Text(bestCombinationEyebrow(for: combination))
+                if !displayedBaseContextRates.isEmpty {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                        Text("Vanlig opptjening")
+                            .font(DesignTokens.Typography.captionSemibold)
+                            .foregroundStyle(DesignTokens.Colors.textSecondary)
+
+                        ForEach(displayedBaseContextRates) { rate in
+                            CompactRateSummary(rate: rate)
+                        }
+                    }
+
+                    Divider()
+                }
+
+                Text("DIN BESTE OPPTJENINGSVEI")
                     .font(DesignTokens.Typography.captionBold)
                     .tracking(2.2)
                     .foregroundStyle(DesignTokens.Colors.brandPrimary)
@@ -232,7 +255,11 @@ struct StoreDetailView: View {
             }
             .accessibilityElement(children: .contain)
         } else {
-            EmptyBestOpportunityCard()
+            if !baseContextRates.isEmpty {
+                BaseEarningSummaryCard(rates: baseContextRates)
+            } else {
+                EmptyBestOpportunityCard()
+            }
         }
     }
 
@@ -264,83 +291,77 @@ struct StoreDetailView: View {
     }
 
     @ViewBuilder
-    private var referenceRateSection: some View {
-        if !visibleReferenceRates.isEmpty {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
-                LovableSectionHeading(eyebrow: "REFERANSEPUNKT", title: "Vanlig opptjening")
-
-                ForEach(visibleReferenceRates) { rate in
-                    ReferenceRateCard(rate: rate)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var currentCampaignSection: some View {
-        if !activePromotions.isEmpty {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
-                LovableSectionHeading(eyebrow: "AKTUELL KAMPANJE", title: "Akkurat nå")
-
-                ForEach(activePromotions) { rate in
-                    CurrentCampaignCard(rate: rate)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var allMethodsSection: some View {
-        if primaryRates.count > 1 {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
-                LovableSectionHeading(
-                    eyebrow: "OVERSIKT",
-                    title: selectedProgramIDs.isEmpty ? "Alle opptjeningsmuligheter" : "Dine programmer først",
-                    subtitle: "EuroBonus og Trumf vises hver for seg - vi blander ikke bonusvalutaene."
-                )
-
-                ForEach(primaryRates) { rate in
-                    EarningMethodCard(rate: rate)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
     private var otherMethodsSection: some View {
-        if !secondaryRates.isEmpty {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
-                LovableSectionHeading(
-                    eyebrow: "ANDRE MULIGHETER",
-                    title: "Ikke valgt program",
-                    subtitle: "Disse er dokumentert, men ligger utenfor programmene du har valgt i Profil."
-                )
+        if !otherAvailableRates.isEmpty {
+            DisclosureGroup(isExpanded: $isOtherMethodsExpanded) {
+                VStack(spacing: DesignTokens.Spacing.none) {
+                    ForEach(otherAvailableRates) { rate in
+                        CompactEarningMethodRow(rate: rate, storeID: store.id)
 
-                ForEach(secondaryRates) { rate in
-                    EarningMethodCard(rate: rate)
+                        if rate.id != otherAvailableRates.last?.id {
+                            Divider()
+                                .padding(.leading, DesignTokens.Spacing.screen)
+                        }
+                    }
                 }
+                .padding(.top, DesignTokens.Spacing.medium)
+            } label: {
+                Text("Andre opptjeningsmuligheter (\(otherAvailableRates.count))")
+                    .font(DesignTokens.Typography.headlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
             }
+            .tint(DesignTokens.Colors.brandPrimary)
+            .padding(DesignTokens.Spacing.screen)
+            .background(LovableStoreStyle.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.largeCard, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.largeCard, style: .continuous)
+                    .stroke(LovableStoreStyle.border, lineWidth: DesignTokens.Stroke.standard)
+            }
+            .minimumTouchTarget()
+            .accessibilityHint(isOtherMethodsExpanded ? "Skjuler øvrige opptjeningsmuligheter." : "Viser øvrige opptjeningsmuligheter.")
         }
     }
 
     private var sourceSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
-            Text("KILDE OG KONTROLL")
-                .font(DesignTokens.Typography.captionBold)
-                .tracking(2.2)
-                .foregroundStyle(DesignTokens.Colors.textSecondary)
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: DesignTokens.Spacing.standard) {
+                    sourceItems
+                }
 
-            Text("Opptjening og beste valg er bekreftet og vurdert. Kontroller alltid satsen i portalen før kjøp.")
-                .font(DesignTokens.Typography.subheadline)
-                .foregroundStyle(DesignTokens.Colors.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                    sourceItems
+                }
+            }
 
-            Text(store.lastVerifiedAt.map { "Sist kontrollert \(DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none))." } ?? "Kontrolltidspunkt mangler.")
+            Text("Kontroller alltid gjeldende sats og vilkår hos tilbyderen før kjøp.")
                 .font(DesignTokens.Typography.caption)
                 .foregroundStyle(DesignTokens.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, DesignTokens.Spacing.xxSmall)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var sourceItems: some View {
+        if let lastVerifiedAt = store.lastVerifiedAt {
+            Label("Kontrollert \(shortDate(lastVerifiedAt))", systemImage: "checkmark.seal")
+                .font(DesignTokens.Typography.captionSemibold)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+        }
+
+        if let sourceRate = publishedRates.first(where: { $0.sourceURL != nil }),
+           let sourceURL = sourceRate.sourceURL {
+            Link(destination: sourceURL) {
+                Label(sourceRate.sourceTitle ?? "Åpne kilde", systemImage: "arrow.up.right.square")
+                    .font(DesignTokens.Typography.captionSemibold)
+            }
+            .tint(DesignTokens.Colors.brandPrimary)
+            .minimumTouchTarget()
+            .accessibilityHint("Åpner kilden eksternt.")
+        }
     }
 
     private var categoryLine: String {
@@ -355,14 +376,6 @@ struct StoreDetailView: View {
         combination.rateIDs.compactMap { rateID in
             store.earningRates.first { $0.id == rateID && $0.status == .published }
         }
-    }
-
-    private func bestCombinationEyebrow(for combination: EarningCombination) -> String {
-        if !selectedProgramIDs.isEmpty && !combinationUsesSelectedPrograms(combination) {
-            return "ANNEN DOKUMENTERT MULIGHET"
-        }
-
-        return combination.rateIDs.count > 1 ? "BESTE KOMBINASJON" : "BESTE DOKUMENTERTE MULIGHET"
     }
 
     private func combinationUsesSelectedPrograms(_ combination: EarningCombination) -> Bool {
@@ -482,6 +495,129 @@ struct StoreDetailView: View {
                 properties: ["favorite_type": "store"]
             ))
         }
+    }
+}
+
+private struct CompactRateSummary: View {
+    let rate: StoreEarningRate
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.standard) {
+            Text(rate.method.name)
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: DesignTokens.Spacing.medium)
+
+            Text(rate.rateLabel)
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct BaseEarningSummaryCard: View {
+    let rates: [StoreEarningRate]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
+            Text("DOKUMENTERT OPPTJENING")
+                .font(DesignTokens.Typography.captionBold)
+                .tracking(2.2)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+
+            Text("Vanlig opptjening")
+                .font(DesignTokens.Typography.editorialTitle2)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
+
+            ForEach(rates) { rate in
+                CompactRateSummary(rate: rate)
+            }
+
+            Text("Ingen trygg kombinasjon er bekreftet ennå.")
+                .font(DesignTokens.Typography.subheadline)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
+        }
+        .padding(DesignTokens.Spacing.comfortable)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(LovableStoreStyle.recommendationBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.prominentCard, style: .continuous)
+                .stroke(LovableStoreStyle.primaryBorder, lineWidth: DesignTokens.Stroke.emphasized)
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+private struct CompactEarningMethodRow: View {
+    @Environment(AppEnvironment.self) private var environment
+    @Environment(\.openURL) private var openURL
+
+    let rate: StoreEarningRate
+    let storeID: UUID
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+            HStack(alignment: .firstTextBaseline, spacing: DesignTokens.Spacing.standard) {
+                Text(rate.method.name)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: DesignTokens.Spacing.medium)
+
+                Text(rate.rateLabel)
+                    .font(DesignTokens.Typography.subheadlineBold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
+                    .multilineTextAlignment(.trailing)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let requirement = rate.requirementSummary, !requirement.isEmpty {
+                Text(TextListNormalizer.firstSentence(from: requirement))
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundStyle(DesignTokens.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let warningText = rate.warningText, !warningText.isEmpty {
+                Label(TextListNormalizer.firstSentence(from: warningText), systemImage: "info.circle")
+                    .font(DesignTokens.Typography.captionSemibold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let handoffURL = rate.handoffURL {
+                Button {
+                    environment.track(.init(
+                        name: "external_destination_opened",
+                        surface: "store_detail",
+                        entityType: "store_earning_rate",
+                        entityID: rate.id,
+                        properties: [
+                            "store_id": storeID.uuidString,
+                            "destination_type": rate.method.name
+                        ]
+                    ))
+                    openURL(handoffURL)
+                } label: {
+                    Label("Start via \(rate.method.name)", systemImage: "arrow.up.right.square")
+                        .font(DesignTokens.Typography.subheadlineSemibold)
+                        .frame(minHeight: 44, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                .minimumTouchTarget()
+                .accessibilityHint("Åpner \(rate.method.name) eksternt.")
+            }
+        }
+        .padding(.vertical, DesignTokens.Spacing.standard)
+        .accessibilityElement(children: .contain)
     }
 }
 

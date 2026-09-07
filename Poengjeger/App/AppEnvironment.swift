@@ -161,13 +161,17 @@ final class AppEnvironment {
     }
 
     func programGuide(for program: BonusProgram) -> ProgramGuide? {
-        programGuides.first { $0.programID == program.id && $0.status == .published }
+        programGuides.first {
+            $0.programID == program.id && $0.status == .published && $0.lastReviewedAt != nil
+        }
     }
 
     func publishedGuides(for programs: [BonusProgram]) -> [ProgramGuide] {
         let programIDs = Set(programs.map(\.id))
         return programGuides.filter { guide in
-            guide.status == .published && programIDs.contains(guide.programID)
+            guide.status == .published
+                && guide.lastReviewedAt != nil
+                && programIDs.contains(guide.programID)
         }
     }
 

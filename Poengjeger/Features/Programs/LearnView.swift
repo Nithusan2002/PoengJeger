@@ -77,9 +77,7 @@ struct LearnView: View {
             .padding(.bottom, DesignTokens.Spacing.section)
         }
         .background(DesignTokens.Colors.background)
-        .navigationTitle("Guider")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -167,10 +165,6 @@ private struct LearnGuideRow: View {
     let program: BonusProgram
     let guide: ProgramGuide
 
-    private var isReviewed: Bool {
-        guide.lastReviewedAt != nil
-    }
-
     private var previewText: String {
         guide.introText?.nonEmpty
             ?? guide.bodyMarkdownExcerpt
@@ -203,9 +197,9 @@ private struct LearnGuideRow: View {
 
                 HStack(spacing: DesignTokens.Spacing.medium) {
                     LearnCardPill(
-                        title: isReviewed ? "Kontrollert" : "Utkast",
-                        systemImage: isReviewed ? "checkmark.seal" : "exclamationmark.triangle",
-                        tint: isReviewed ? DesignTokens.Colors.success : DesignTokens.Colors.warning
+                        title: "Kontrollert",
+                        systemImage: "checkmark.seal",
+                        tint: DesignTokens.Colors.success
                     )
                 }
             }

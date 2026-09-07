@@ -88,18 +88,14 @@ struct CampaignDetailView: View {
                 .font(DesignTokens.Typography.headline)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let value = nonempty(campaign.editorialAssessment?.estimatedValueText) {
-                CampaignDecisionFact(title: "Mulig verdi", value: value)
-            }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: DesignTokens.Spacing.standard) {
+                    decisionFacts
+                }
 
-            CampaignDecisionFact(
-                title: "Frist",
-                value: campaign.endDate.map { $0.formatted(date: .long, time: .omitted) }
-                    ?? "Ikke oppgitt"
-            )
-
-            if let requirement = campaign.sortedRequirements.first {
-                CampaignDecisionFact(title: "Krav", value: requirement.text)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+                    decisionFacts
+                }
             }
 
             // Keep the complete editorial warning before the external action.
@@ -120,6 +116,24 @@ struct CampaignDetailView: View {
                 .stroke(DesignTokens.Colors.brandPrimaryBorder, lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var decisionFacts: some View {
+        if let value = nonempty(campaign.editorialAssessment?.estimatedValueText) {
+            CampaignDecisionFact(title: "Mulig verdi", value: value)
+        }
+
+        CampaignDecisionFact(
+            title: "Frist",
+            value: campaign.endDate.map { $0.formatted(date: .abbreviated, time: .omitted) }
+                ?? "Ikke oppgitt"
+        )
+
+        CampaignDecisionFact(
+            title: "Friksjon",
+            value: campaign.editorialAssessment?.difficultyLevel?.displayName ?? campaign.requirementSignal
+        )
     }
 
     @ViewBuilder
@@ -300,6 +314,7 @@ private struct CampaignDecisionFact: View {
                 .font(DesignTokens.Typography.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }

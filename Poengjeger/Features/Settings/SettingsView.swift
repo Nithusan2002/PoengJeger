@@ -19,9 +19,7 @@ struct SettingsView: View {
                     selectedProgramIDs: $environment.userSession.selectedProgramIDs
                 )
 
-                ProfileAppearanceSection(prefersDarkMode: $environment.userSession.prefersDarkMode)
-
-                notificationCard
+                ProfileAppearanceSection(selection: $environment.userSession.appearancePreference)
 
                 #if DEBUG
                 debugSection(dataSourceLabel: environment.dataSource?.label)
@@ -32,9 +30,7 @@ struct SettingsView: View {
             .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
         .background(DesignTokens.Colors.background)
-        .navigationTitle("Profil")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private var header: some View {
@@ -50,14 +46,6 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var notificationCard: some View {
-        ProfileInfoCard(
-            iconName: "bell.slash",
-            title: "Varsler",
-            subtitle: "Kommer senere når bekreftet innhold og tydelige preferanser er klare."
-        )
     }
 
     #if DEBUG
@@ -135,15 +123,6 @@ private struct ProfileProgramSection: View {
                 .minimumTouchTarget()
                 .disabled(programs.isEmpty)
 
-                Button {
-                    selectedProgramIDs.subtract(Set(programs.map(\.id)))
-                } label: {
-                    Label("Ingen", systemImage: "xmark.circle")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .minimumTouchTarget()
-                .disabled(selectedProgramCount == 0)
             }
             .font(DesignTokens.Typography.captionSemibold)
             .tint(DesignTokens.Colors.brandPrimary)
@@ -166,6 +145,10 @@ private struct ProfileProgramSection: View {
                     }
                 }
             }
+
+            Text("Minst ett program må være valgt.")
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
         .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,7 +164,7 @@ private struct ProfileProgramSection: View {
     private func setProgramSelection(_ programID: UUID, isSelected: Bool) {
         if isSelected {
             selectedProgramIDs.insert(programID)
-        } else {
+        } else if selectedProgramCount > 1 {
             selectedProgramIDs.remove(programID)
         }
     }
@@ -219,37 +202,27 @@ private struct ProfileProgramRow: View {
 }
 
 private struct ProfileAppearanceSection: View {
-    @Binding var prefersDarkMode: Bool
+    @Binding var selection: AppearancePreference
 
     var body: some View {
-        VStack(spacing: DesignTokens.Spacing.none) {
-            Toggle(isOn: $prefersDarkMode) {
-                HStack(spacing: DesignTokens.Spacing.standard) {
-                    Image(systemName: "moon.fill")
-                        .font(DesignTokens.Typography.subheadlineSemibold)
-                        .foregroundStyle(DesignTokens.Colors.brandPrimary)
-                        .frame(width: 34, height: 34)
-                        .background(DesignTokens.Colors.brandPrimarySoft)
-                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
-                        .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+            Text("Utseende")
+                .font(DesignTokens.Typography.subheadlineSemibold)
+                .foregroundStyle(DesignTokens.Colors.textPrimary)
 
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
-                        Text("Mørk modus")
-                            .font(DesignTokens.Typography.subheadlineSemibold)
-                            .foregroundStyle(DesignTokens.Colors.textPrimary)
-
-                        Text(prefersDarkMode ? "Appen vises med mørk bakgrunn." : "Appen vises med lys bakgrunn.")
-                            .font(DesignTokens.Typography.caption)
-                            .foregroundStyle(DesignTokens.Colors.textSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+            Picker("Utseende", selection: $selection) {
+                ForEach(AppearancePreference.allCases) { preference in
+                    Text(preference.title).tag(preference)
                 }
             }
-            .padding(DesignTokens.Spacing.card)
-            .minimumTouchTarget()
+            .pickerStyle(.segmented)
             .tint(DesignTokens.Colors.brandPrimary)
-            .accessibilityValue(prefersDarkMode ? "På" : "Av")
+
+            Text("System følger innstillingen på enheten.")
+                .font(DesignTokens.Typography.caption)
+                .foregroundStyle(DesignTokens.Colors.textSecondary)
         }
+        .padding(DesignTokens.Spacing.card)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Colors.surfaceElevated)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))

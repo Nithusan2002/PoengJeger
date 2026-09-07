@@ -61,9 +61,7 @@ struct NewsView: View {
             .padding(.bottom, DesignTokens.Spacing.sectionLarge)
         }
         .background(DesignTokens.Colors.background)
-        .navigationTitle("Poengnytt")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign, entryPoint: "news")
         }
@@ -79,7 +77,7 @@ struct NewsView: View {
                 .foregroundStyle(DesignTokens.Colors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Korte, vurderte oppdateringer om det som er nytt, haster eller er verdt å vite akkurat nå.")
+            Text("Nye muligheter og frister som er verdt å få med seg.")
                 .font(DesignTokens.Typography.subheadline)
                 .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -114,21 +112,18 @@ struct NewsView: View {
         NewsSection(
             eyebrow: "FRISTER",
             title: "Kan forsvinne snart",
-            emptyText: "Ingen kontrollerte frister haster akkurat nå.",
             items: deadlineItems
         )
 
         NewsSection(
             eyebrow: "DENNE UKEN",
             title: "Nytt siden sist",
-            emptyText: "Ingen nye publiserte muligheter denne uken.",
             items: thisWeekItems
         )
 
         NewsSection(
             eyebrow: "VURDERT",
             title: "Verdt å vite",
-            emptyText: "Ingen ekstra tips klare ennå.",
             items: worthKnowingItems
         )
     }
@@ -204,7 +199,7 @@ private struct NewsItem: Identifiable {
     var editorialAngle: String {
         switch type {
         case .campaign:
-            return "Ny kampanje"
+            return "Aktuell kampanje"
         case .deadline:
             return "Siste sjanse"
         case .opportunity:
@@ -246,7 +241,7 @@ private enum NewsItemType {
     var title: String {
         switch self {
         case .campaign:
-            return "Ny kampanje"
+            return "Aktuell"
         case .deadline:
             return "Frist"
         case .opportunity:
@@ -344,19 +339,14 @@ private struct NewsLeadStory: View {
 private struct NewsSection: View {
     let eyebrow: String
     let title: String
-    let emptyText: String
     let items: [NewsItem]
 
+    @ViewBuilder
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
-            NewsSectionHeader(eyebrow: eyebrow, title: title)
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
+                NewsSectionHeader(eyebrow: eyebrow, title: title)
 
-            if items.isEmpty {
-                Text(emptyText)
-                    .font(DesignTokens.Typography.subheadline)
-                    .foregroundStyle(DesignTokens.Colors.textSecondary)
-                    .padding(.vertical, DesignTokens.Spacing.medium)
-            } else {
                 LazyVStack(alignment: .leading, spacing: DesignTokens.Spacing.none) {
                     ForEach(items) { item in
                         NavigationLink(value: item.campaign) {

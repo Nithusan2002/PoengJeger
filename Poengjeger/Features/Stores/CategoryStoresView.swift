@@ -48,6 +48,7 @@ struct CategoryStoresView: View {
         .background(DesignTokens.Colors.background)
         .navigationTitle(categoryName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
         .navigationDestination(item: $selectedStore) { store in
             StoreDetailView(store: store)
