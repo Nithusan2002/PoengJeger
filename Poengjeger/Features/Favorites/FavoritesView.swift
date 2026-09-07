@@ -41,9 +41,6 @@ struct FavoritesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(DesignTokens.Colors.background, for: .navigationBar)
-        .navigationDestination(for: Store.self) { store in
-            StoreDetailView(store: store)
-        }
         .navigationDestination(for: Campaign.self) { campaign in
             CampaignDetailView(campaign: campaign, entryPoint: "favorites")
         }
@@ -89,7 +86,9 @@ struct FavoritesView: View {
             .padding(.vertical, DesignTokens.Spacing.spacious)
         } else {
             ForEach(favoriteStores) { store in
-                NavigationLink(value: store) {
+                NavigationLink {
+                    StoreDetailView(store: store)
+                } label: {
                     StoreResultRow(
                         store: store,
                         selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
