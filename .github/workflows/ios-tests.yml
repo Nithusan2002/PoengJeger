@@ -1,20 +1,7 @@
 name: iOS tests
 
 on:
-  pull_request:
-    paths:
-      - "Poengjeger/**"
-      - "PoengjegerTests/**"
-      - "Poengjeger.xcodeproj/**"
-      - ".github/workflows/ios-tests.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "Poengjeger/**"
-      - "PoengjegerTests/**"
-      - "Poengjeger.xcodeproj/**"
-      - ".github/workflows/ios-tests.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
