@@ -42,6 +42,8 @@ Dette er antakelser som bør bekreftes før implementasjon:
 
 ## 4. Anbefalt SwiftUI-arkitektur
 
+Den operative og gjeldende standarden er beskrevet i `docs/ios-architecture.md`. Denne seksjonen oppsummerer retningen.
+
 Anbefaling:
 - Bruk en enkel feature-orientert, lagdelt arkitektur.
 - Hold UI, domene og datatilgang adskilt.

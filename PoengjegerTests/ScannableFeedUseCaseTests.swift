@@ -871,6 +871,44 @@ struct ScannableFeedUseCaseTests {
         #expect(campaigns.map(\.title) == ["Hoyere score", "Lavere score", "Uten score"])
     }
 
+    @MainActor
+    @Test
+    func feedViewModelAppliesFeatureFiltersAndBuildsSections() {
+        let grocery = CampaignCategory(id: UUID(), slug: "dagligvare", name: "Dagligvare")
+        let travel = CampaignCategory(id: UUID(), slug: "reise", name: "Reise")
+        let matching = makeCampaign(title: "Trumf dagligvare", category: grocery)
+        let otherCategory = makeCampaign(title: "Trumf reise", category: travel)
+        let otherProgram = makeCampaign(
+            title: "EuroBonus dagligvare",
+            category: grocery,
+            linkedProgramIDs: [SampleData.euroBonus.id]
+        )
+        let viewModel = FeedViewModel()
+        viewModel.selectedCategoryID = grocery.id
+        viewModel.searchText = "Trumf"
+
+        let campaigns = viewModel.campaigns(
+            from: [otherCategory, otherProgram, matching],
+            selectedProgramIDs: [SampleData.trumf.id]
+        )
+
+        #expect(campaigns.map(\.id) == [matching.id])
+        #expect(viewModel.sections(from: campaigns, selectedProgramIDs: [SampleData.trumf.id]).count == 1)
+        #expect(viewModel.categories(from: [otherCategory, matching]).map(\.name) == ["Dagligvare", "Reise"])
+    }
+
+    @MainActor
+    @Test
+    func feedViewModelClosingSearchClearsQuery() {
+        let viewModel = FeedViewModel()
+        viewModel.searchText = "bonus"
+
+        #expect(viewModel.toggleSearch())
+        #expect(viewModel.searchText == "bonus")
+        #expect(!viewModel.toggleSearch())
+        #expect(viewModel.searchText.isEmpty)
+    }
+
     private func makeCampaign(
         title: String = "Testkampanje",
         summary: String = "Sammendrag",

@@ -76,7 +76,7 @@ struct AdminIngestionUseCaseTests {
 
     @MainActor
     @Test
-    func appEnvironmentLoadsPreviewAdminQueueAndSkipsDuplicateInitialLoad() async {
+    func adminQueueViewModelLoadsPreviewQueueAndSkipsDuplicateInitialLoad() async {
         let firstCandidate = makeCandidate(title: "Første")
         let repository = CountingAdminRepository(
             queue: AdminQueueData(
@@ -85,52 +85,37 @@ struct AdminIngestionUseCaseTests {
                 label: "Test-kø"
             )
         )
-        let environment = AppEnvironment(
-            campaignRepository: MockCampaignRepository(),
-            adminRepository: repository,
-            productAnalytics: NoopProductAnalytics(),
-            userSession: UserSession(selectedProgramIDs: [], favoriteCampaignIDs: []),
-            userSessionStore: InMemoryUserSessionStore()
-        )
+        let viewModel = AdminQueueViewModel(repository: repository)
 
-        await environment.loadAdminQueueIfNeeded()
-        await environment.loadAdminQueueIfNeeded()
+        await viewModel.loadIfNeeded()
+        await viewModel.loadIfNeeded()
 
         let fetchCount = await repository.fetchCount
-        let candidateIDs = environment.adminCandidates.map { $0.id }
+        let candidateIDs = viewModel.candidates.map { $0.id }
 
         #expect(fetchCount == 1)
-        #expect(environment.adminLoadState == AppEnvironment.LoadState.loaded)
+        #expect(viewModel.loadState == .loaded)
         #expect(candidateIDs == [firstCandidate.id])
-        #expect(environment.adminSourceLabel == "Test-kø")
-        #expect(environment.adminInfoMessage == "Viser lokal preview-data for admin-flyten. Live admin krever egen admin-session.")
-        #expect(environment.isAdminPreview)
+        #expect(viewModel.sourceLabel == "Test-kø")
+        #expect(viewModel.infoMessage == "Viser lokal preview-data for admin-flyten. Live admin krever egen admin-session.")
+        #expect(viewModel.isPreview)
     }
 
     @MainActor
     @Test
-    func appEnvironmentReplacesUpdatedCandidateAndKeepsQueueSorted() async {
+    func adminQueueViewModelReplacesUpdatedCandidateAndKeepsQueueSorted() async {
         let older = makeCandidate(detectedAt: Date(timeIntervalSince1970: 100), title: "Eldre")
         let newer = makeCandidate(detectedAt: Date(timeIntervalSince1970: 200), title: "Nyere")
         let repository = MockAdminRepository(candidates: [older, newer])
-        let environment = AppEnvironment(
-            campaignRepository: MockCampaignRepository(),
-            adminRepository: repository,
-            productAnalytics: NoopProductAnalytics(),
-            userSession: UserSession(selectedProgramIDs: [], favoriteCampaignIDs: []),
-            userSessionStore: InMemoryUserSessionStore()
-        )
+        let viewModel = AdminQueueViewModel(repository: repository)
 
-        await environment.refreshAdminQueue()
-        await environment.setAdminCandidateStatus(
-            candidateID: older.id,
-            status: IngestionCandidate.Status.approved,
-            note: "Relevant for MVP-program."
-        )
-        let titles = environment.adminCandidates.map { $0.title }
-        let updatedCandidate = environment.adminCandidates.first { $0.id == older.id }
+        await viewModel.refresh()
+        viewModel.setNote("Relevant for MVP-program.", for: older.id)
+        await viewModel.setStatus(.approved, for: older)
+        let titles = viewModel.candidates.map { $0.title }
+        let updatedCandidate = viewModel.candidates.first { $0.id == older.id }
 
-        #expect(environment.adminLoadState == AppEnvironment.LoadState.loaded)
+        #expect(viewModel.loadState == .loaded)
         #expect(titles == ["Nyere", "Eldre"])
         #expect(updatedCandidate?.status == IngestionCandidate.Status.approved)
         #expect(updatedCandidate?.reviewNote == "Relevant for MVP-program.")
@@ -138,26 +123,57 @@ struct AdminIngestionUseCaseTests {
 
     @MainActor
     @Test
-    func appEnvironmentClearsAdminPreviewStateWhenQueueFailsToLoad() async {
-        let environment = AppEnvironment(
-            campaignRepository: MockCampaignRepository(),
-            adminRepository: FailingAdminRepository(),
-            productAnalytics: NoopProductAnalytics(),
-            userSession: UserSession(selectedProgramIDs: [], favoriteCampaignIDs: []),
-            userSessionStore: InMemoryUserSessionStore()
+    func adminQueueViewModelClearsPreviewStateWhenQueueFailsToLoad() async {
+        let viewModel = AdminQueueViewModel(
+            repository: PreviewThenFailAdminRepository(candidate: makeCandidate())
         )
-        environment.adminCandidates = [makeCandidate()]
-        environment.adminSourceLabel = "Gammel kø"
-        environment.adminInfoMessage = "Gammel melding"
-        environment.isAdminPreview = true
+        await viewModel.refresh()
+        #expect(viewModel.isPreview)
 
-        await environment.refreshAdminQueue()
+        await viewModel.refresh()
 
-        #expect(environment.adminCandidates.isEmpty)
-        #expect(environment.adminSourceLabel == nil)
-        #expect(environment.adminInfoMessage == nil)
-        #expect(!environment.isAdminPreview)
-        #expect(environment.adminLoadState == AppEnvironment.LoadState.failed("Admin utilgjengelig"))
+        #expect(viewModel.candidates.isEmpty)
+        #expect(viewModel.sourceLabel == nil)
+        #expect(viewModel.infoMessage == nil)
+        #expect(!viewModel.isPreview)
+        #expect(viewModel.loadState == .failed("Admin utilgjengelig"))
+    }
+
+    @MainActor
+    @Test
+    func adminQueueViewModelFiltersCandidatesAndKeepsIndependentNotes() async {
+        let approved = makeCandidate(status: .approved, title: "Godkjent")
+        let rejected = makeCandidate(status: .rejected, title: "Avvist")
+        let viewModel = AdminQueueViewModel(repository: MockAdminRepository())
+
+        viewModel.selectedStatusFilter = .approved
+        viewModel.setNote("Kontrollert", for: approved.id)
+
+        let populatedViewModel = AdminQueueViewModel(
+            repository: MockAdminRepository(candidates: [approved, rejected])
+        )
+        populatedViewModel.selectedStatusFilter = .approved
+        await populatedViewModel.refresh()
+
+        #expect(populatedViewModel.filteredCandidates.map(\.id) == [approved.id])
+        #expect(viewModel.note(for: approved.id) == "Kontrollert")
+        #expect(viewModel.note(for: rejected.id).isEmpty)
+    }
+
+    @MainActor
+    @Test
+    func adminQueueViewModelPromotesCandidateAndClearsProcessingState() async {
+        let candidate = makeCandidate(status: .approved)
+        let repository = MockAdminRepository(candidates: [candidate])
+        let viewModel = AdminQueueViewModel(repository: repository)
+        viewModel.setNote("Klar for utkast", for: candidate.id)
+        await viewModel.refresh()
+
+        await viewModel.promote(candidate)
+
+        #expect(viewModel.candidates.first?.status == .promoted)
+        #expect(viewModel.candidates.first?.reviewNote == "Klar for utkast")
+        #expect(!viewModel.isProcessing(candidate.id))
     }
 
     private func makeCandidate(
@@ -207,12 +223,27 @@ private actor CountingAdminRepository: AdminRepository {
     }
 }
 
-private struct FailingAdminRepository: AdminRepository {
-    func fetchQueue() async throws -> AdminQueueData {
-        throw AdminRepositoryError.unavailable("Admin utilgjengelig")
+private actor PreviewThenFailAdminRepository: AdminRepository {
+    private let candidate: IngestionCandidate
+    private var hasFetched = false
+
+    init(candidate: IngestionCandidate) {
+        self.candidate = candidate
     }
 
-    func setStatus(candidateID: UUID, status: IngestionCandidate.Status, note: String?) async throws -> IngestionCandidate {
+    func fetchQueue() async throws -> AdminQueueData {
+        guard !hasFetched else {
+            throw AdminRepositoryError.unavailable("Admin utilgjengelig")
+        }
+        hasFetched = true
+        return AdminQueueData(candidates: [candidate], isPreview: true, label: "Preview-kø")
+    }
+
+    func setStatus(
+        candidateID: UUID,
+        status: IngestionCandidate.Status,
+        note: String?
+    ) async throws -> IngestionCandidate {
         throw AdminRepositoryError.unavailable("Admin utilgjengelig")
     }
 

@@ -3,42 +3,27 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var environment
     @FocusState private var isSearchFocused: Bool
-    @State private var searchText = ""
-    @State private var hasTrackedCurrentSearch = false
+    @State private var viewModel = HomeViewModel()
     @State private var selectedStore: Store?
 
-    private var isSearching: Bool {
-        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
     private var matchingStoreResults: [StoreSearchResult] {
-        StoreSearchUseCase().searchResults(
+        viewModel.matchingStoreResults(
             stores: environment.publishedStores,
-            query: searchText,
             selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
         )
     }
 
-    private var quickSuggestions: [Store] {
-        Array(environment.featuredStores.prefix(4))
-    }
+    private let quickSearchOptions = [
+        QuickSearchOption(title: "Dagligvarer", systemImage: "basket"),
+        QuickSearchOption(title: "Elektronikk", systemImage: "laptopcomputer"),
+        QuickSearchOption(title: "Klær", systemImage: "tshirt"),
+        QuickSearchOption(title: "Reise", systemImage: "airplane")
+    ]
 
-    private var shoppingIntent: ShoppingIntentAnalysis {
-        ShoppingIntentSearchUseCase().analyze(query: searchText)
-    }
-
-    private var trimmedSearchText: String {
-        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var searchResultTitle: String {
-        if let summary = shoppingIntent.summary {
-            return summary.replacingOccurrences(of: "Matcher ", with: "", options: [.anchored])
-                .capitalized
-        }
-
-        return "Treff for «\(trimmedSearchText)»"
-    }
+    private let quickSearchColumns = Array(
+        repeating: GridItem(.flexible(), spacing: DesignTokens.Spacing.standard),
+        count: 2
+    )
 
     var body: some View {
         ScrollView {
@@ -57,10 +42,10 @@ struct HomeView: View {
                         .clipShape(Capsule())
                 }
 
-                if isSearching {
+                if viewModel.isSearching {
                     searchResultsSection
                 } else {
-                    quickSuggestionsSection
+                    quickSearchSection
                 }
             }
             .padding(.horizontal, DesignTokens.Spacing.screen)
@@ -72,8 +57,8 @@ struct HomeView: View {
         .navigationDestination(item: $selectedStore) { store in
             StoreDetailView(store: store)
         }
-        .onChange(of: searchText) {
-            trackSearchStartedIfNeeded()
+        .onChange(of: viewModel.searchText) {
+            viewModel.trackSearchStartedIfNeeded(using: environment.track)
         }
         .refreshable {
             await environment.refresh()
@@ -111,7 +96,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             searchField
 
-            if !isSearching && !isSearchFocused {
+            if !viewModel.isSearching && !isSearchFocused {
                 Text("For eksempel Elkjøp, fly eller dagligvarer")
                     .font(DesignTokens.Typography.caption)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
@@ -124,12 +109,14 @@ struct HomeView: View {
     }
 
     private var searchField: some View {
-        HStack(spacing: DesignTokens.Spacing.controlGap) {
+        @Bindable var viewModel = viewModel
+
+        return HStack(spacing: DesignTokens.Spacing.controlGap) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .accessibilityHidden(true)
 
-            TextField("Hva skal du kjøpe?", text: $searchText)
+            TextField("Hva skal du kjøpe?", text: $viewModel.searchText)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
                 .submitLabel(.search)
@@ -146,9 +133,9 @@ struct HomeView: View {
                     }
                 }
 
-            if isSearching {
+            if viewModel.isSearching {
                 Button {
-                    searchText = ""
+                    viewModel.searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(DesignTokens.Colors.textSecondary)
@@ -170,33 +157,55 @@ struct HomeView: View {
         }
     }
 
-    private var quickSuggestionsSection: some View {
+    private var quickSearchSection: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                Text("Forslag akkurat nå")
+                Text("Hva skal du handle?")
                     .font(DesignTokens.Typography.editorialTitle2)
                     .foregroundStyle(DesignTokens.Colors.textPrimary)
 
-                Text("Butikker med verifisert opptjening.")
+                Text("Velg et hurtigsøk, eller skriv i søkefeltet.")
                     .font(DesignTokens.Typography.subheadline)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if environment.loadState == .loading && environment.publishedStores.isEmpty {
-                ProgressView("Laster butikker...")
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, DesignTokens.Spacing.emptyState)
-            } else if quickSuggestions.isEmpty {
-                EmptyStoreSearchView(isSearching: false)
-            } else {
-                ForEach(Array(quickSuggestions.enumerated()), id: \.element.id) { index, store in
+            LazyVGrid(columns: quickSearchColumns, spacing: DesignTokens.Spacing.standard) {
+                ForEach(quickSearchOptions) { option in
                     Button {
-                        openStore(store, entryPoint: "suggestion", rank: index + 1)
+                        selectQuickSearch(option)
                     } label: {
-                        StoreResultRow(store: store, selectedProgramIDs: environment.selectedFirstPhaseProgramIDs)
+                        HStack(spacing: DesignTokens.Spacing.controlGap) {
+                            Image(systemName: option.systemImage)
+                                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                                .accessibilityHidden(true)
+
+                            Text(option.title)
+                                .font(DesignTokens.Typography.bodySemibold)
+                                .foregroundStyle(DesignTokens.Colors.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Spacer(minLength: DesignTokens.Spacing.none)
+
+                            Image(systemName: "chevron.right")
+                                .font(DesignTokens.Typography.captionSemibold)
+                                .foregroundStyle(DesignTokens.Colors.textTertiary)
+                                .accessibilityHidden(true)
+                        }
+                        .padding(.horizontal, DesignTokens.Spacing.standard)
+                        .padding(.vertical, DesignTokens.Spacing.controlGap)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(DesignTokens.Colors.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium, style: .continuous)
+                                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
+                        }
                     }
                     .buttonStyle(.plain)
+                    .minimumTouchTarget()
+                    .accessibilityLabel("Søk etter \(option.title.lowercased())")
+                    .accessibilityHint("Viser butikker med verifisert opptjening")
                 }
             }
         }
@@ -210,7 +219,7 @@ struct HomeView: View {
                     .tracking(2.2)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
 
-                Text(searchResultTitle)
+                Text(viewModel.searchResultTitle)
                     .font(DesignTokens.Typography.editorialTitle2)
                     .foregroundStyle(DesignTokens.Colors.textPrimary)
 
@@ -238,49 +247,28 @@ struct HomeView: View {
         }
     }
 
-    private func trackSearchStartedIfNeeded() {
-        let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedSearch.isEmpty else {
-            hasTrackedCurrentSearch = false
-            return
-        }
-
-        guard !hasTrackedCurrentSearch else { return }
-        hasTrackedCurrentSearch = true
-        environment.track(.init(
-            name: "store_search_started",
-            surface: "store_search",
-            properties: ["entry_point": "home"]
-        ))
+    private func selectQuickSearch(_ option: QuickSearchOption) {
+        isSearchFocused = false
+        viewModel.selectQuickSearch(title: option.title, using: environment.track)
     }
 
     private func openStore(_ store: Store, entryPoint: String, rank: Int) {
-        trackStoreOpen(store, entryPoint: entryPoint, rank: rank)
+        viewModel.trackStoreOpen(
+            store,
+            entryPoint: entryPoint,
+            rank: rank,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
+            using: environment.track
+        )
         selectedStore = store
     }
+}
 
-    private func trackStoreOpen(_ store: Store, entryPoint: String, rank: Int) {
-        let bestCombination = store.bestCombination(for: environment.selectedFirstPhaseProgramIDs)
-        var properties = [
-            "entry_point": entryPoint,
-            "rank": "\(rank)",
-            "has_active_campaign": store.activePromotions.isEmpty ? "false" : "true",
-            "has_best_combination": bestCombination == nil ? "false" : "true"
-        ]
+private struct QuickSearchOption: Identifiable {
+    let title: String
+    let systemImage: String
 
-        if let categoryID = store.category?.id {
-            properties["category_id"] = categoryID.uuidString
-        }
-
-        environment.track(.init(
-            name: "store_search_result_opened",
-            surface: "store_search",
-            entityType: "store",
-            entityID: store.id,
-            properties: properties
-        ))
-    }
-
+    var id: String { title }
 }
 
 struct StoreCategoryRoute: Hashable {

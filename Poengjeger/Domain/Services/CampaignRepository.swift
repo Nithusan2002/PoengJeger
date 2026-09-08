@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 struct CampaignBootstrapData: Sendable {
     let programs: [BonusProgram]
@@ -60,4 +61,28 @@ struct ProductAnalyticsEvent: Sendable {
 
 protocol ProductAnalytics: Sendable {
     func track(_ event: ProductAnalyticsEvent) async
+}
+
+enum AppErrorEvent: String, Sendable {
+    case bootstrapLoadFailed = "bootstrap_load_failed"
+    case adminQueueLoadFailed = "admin_queue_load_failed"
+    case adminCandidateStatusUpdateFailed = "admin_candidate_status_update_failed"
+    case adminCandidatePromotionFailed = "admin_candidate_promotion_failed"
+}
+
+protocol AppErrorReporting: Sendable {
+    func capture(_ event: AppErrorEvent, error: any Error)
+}
+
+struct UnifiedLogErrorReporter: AppErrorReporting {
+    private let logger = Logger(subsystem: "no.poengjeger.app", category: "errors")
+
+    func capture(_ event: AppErrorEvent, error: any Error) {
+        let errorType = String(reflecting: type(of: error))
+        logger.error("Event: \(event.rawValue, privacy: .public); error_type: \(errorType, privacy: .public)")
+    }
+}
+
+struct NoopErrorReporter: AppErrorReporting {
+    func capture(_ event: AppErrorEvent, error: any Error) {}
 }

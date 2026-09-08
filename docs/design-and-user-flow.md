@@ -138,7 +138,8 @@ Hjem skal bygge vanen "sjekk før du handler".
 Prioritet:
 
 1. Ett tydelig søkefelt for butikk, kategori eller produkt.
-2. Noen få forslag med verifisert opptjening når søket er tomt.
+2. Fire faste hurtigsøk for brede kjøpsbehov når søket er tomt. Hurtigsøkene
+   bruker samme kvalitetssikrede søkeresultater som et manuelt søk.
 3. Direkte søkeresultater når brukeren skriver.
 
 Hjem skal ikke bli en artikkelfeed, abonnementsflate, generell kampanjekatalog

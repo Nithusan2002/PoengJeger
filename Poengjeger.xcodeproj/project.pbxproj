@@ -51,6 +51,11 @@
 		048 /* SaveToggleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148 /* SaveToggleButton.swift */; };
 		049 /* NewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 149 /* NewsView.swift */; };
 		050 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150 /* DesignTokens.swift */; };
+		051 /* StoreDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 151 /* StoreDetailViewModel.swift */; };
+		052 /* AdminQueueViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 152 /* AdminQueueViewModel.swift */; };
+		053 /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153 /* FeedViewModel.swift */; };
+		054 /* StoreDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154 /* StoreDetailComponents.swift */; };
+		055 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155 /* HomeViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +118,11 @@
 		148 /* SaveToggleButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveToggleButton.swift; sourceTree = "<group>"; };
 		149 /* NewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsView.swift; sourceTree = "<group>"; };
 		150 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		151 /* StoreDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreDetailViewModel.swift; sourceTree = "<group>"; };
+		155 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		152 /* AdminQueueViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminQueueViewModel.swift; sourceTree = "<group>"; };
+		153 /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModel.swift; sourceTree = "<group>"; };
+		154 /* StoreDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreDetailComponents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -259,6 +269,7 @@
 		612 /* Feed */ = {
 			isa = PBXGroup;
 			children = (
+				153 /* FeedViewModel.swift */,
 				113 /* FeedView.swift */,
 				142 /* FeedControls.swift */,
 				143 /* FeedComponents.swift */,
@@ -334,6 +345,7 @@
 		621 /* Admin */ = {
 			isa = PBXGroup;
 			children = (
+				152 /* AdminQueueViewModel.swift */,
 				126 /* AdminQueueView.swift */,
 			);
 			path = Admin;
@@ -369,6 +381,7 @@
 		625 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				155 /* HomeViewModel.swift */,
 				135 /* HomeView.swift */,
 			);
 			path = Home;
@@ -377,7 +390,9 @@
 		626 /* Stores */ = {
 			isa = PBXGroup;
 			children = (
+				151 /* StoreDetailViewModel.swift */,
 				136 /* StoreDetailView.swift */,
+				154 /* StoreDetailComponents.swift */,
 				137 /* HowToEarnView.swift */,
 				139 /* CategoryStoresView.swift */,
 			);
@@ -534,6 +549,7 @@
 				049 /* NewsView.swift in Sources */,
 				012 /* OnboardingView.swift in Sources */,
 				013 /* FeedView.swift in Sources */,
+				053 /* FeedViewModel.swift in Sources */,
 				042 /* FeedControls.swift in Sources */,
 				043 /* FeedComponents.swift in Sources */,
 				014 /* CampaignDetailView.swift in Sources */,
@@ -543,6 +559,7 @@
 				016 /* SettingsView.swift in Sources */,
 				018 /* SupabaseCampaignRepository.swift in Sources */,
 				022 /* AdminQueueView.swift in Sources */,
+				052 /* AdminQueueViewModel.swift in Sources */,
 				023 /* UserSessionStore.swift in Sources */,
 				025 /* CampaignCardView.swift in Sources */,
 				026 /* FeedPresentation.swift in Sources */,
@@ -553,7 +570,10 @@
 				029 /* LearnView.swift in Sources */,
 				030 /* StoreEarning.swift in Sources */,
 				031 /* HomeView.swift in Sources */,
+				055 /* HomeViewModel.swift in Sources */,
 				032 /* StoreDetailView.swift in Sources */,
+				054 /* StoreDetailComponents.swift in Sources */,
+				051 /* StoreDetailViewModel.swift in Sources */,
 				033 /* HowToEarnView.swift in Sources */,
 				034 /* ExploreView.swift in Sources */,
 				035 /* CategoryStoresView.swift in Sources */,

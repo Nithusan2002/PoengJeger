@@ -9,6 +9,7 @@ Poengjeger er en iOS-app som samler, kvalitetssikrer og prioriterer aktuelle kam
 Bruk `/Users/nithu/Developer/PoengJeger-working` som aktiv arbeidsmappe for kodeendringer, bygging og Xcode-feilsøking. Dette er kopien brukeren kjører i Xcode.
 
 Les `docs/product-brief.md` før produktrelaterte eller arkitektoniske endringer.
+Les `docs/ios-architecture.md` før nye eller vesentlig endrede SwiftUI-features og ved arkitekturrefaktorering.
 
 ## Grunnregler
 
@@ -36,6 +37,15 @@ Les `docs/product-brief.md` før produktrelaterte eller arkitektoniske endringer
 - Supabase og PostgreSQL.
 - Redaksjonell kvalitetssikring av kampanjer.
 - Ingen tilgang til brukernes bonuskontoer, saldi eller transaksjoner.
+
+## iOS-arkitektur
+
+- Følg den operative standarden i `docs/ios-architecture.md`.
+- Bruk feature-orientert MVVM uten å kreve ViewModel for trivielle views.
+- La views eie rendering, navigasjon og kortvarig visuell state.
+- Flytt sammensatt feature-state, avledet presentasjonslogikk, async-koordinering og feature-analytics til en testbar ViewModel.
+- Hold domeneregler i `Domain`, datatilgang i `Data` og `AppEnvironment` begrenset til delte avhengigheter og global app-/session-state.
+- Refaktorer trinnvis, bevar adferd og test reglene som flyttes.
 
 ## Skills
 

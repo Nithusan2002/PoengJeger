@@ -3,30 +3,27 @@ import SwiftUI
 struct FeedView: View {
     @Environment(AppEnvironment.self) private var environment
     @FocusState private var isSearchFocused: Bool
-    @State private var isSearchVisible = false
-    @State private var searchText = ""
-    @State private var selectedSort: FeedSort = .expiringFirst
-    @State private var selectedCategoryID: UUID?
-    @State private var showsAllPrograms = false
-    @State private var isProgramSheetPresented = false
+    @State private var viewModel = FeedViewModel()
 
     private var campaigns: [Campaign] {
-        ScannableFeedUseCase().makeFeed(
-            campaigns: environment.firstPhaseCampaigns,
-            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
-            showsAllPrograms: showsAllPrograms,
-            selectedCategoryID: selectedCategoryID,
-            searchText: searchText,
-            sort: selectedSort
+        viewModel.campaigns(
+            from: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
         )
     }
 
     private var feedSections: [FeedSectionModel] {
-        FeedSectionModel.makeSections(from: campaigns)
+        viewModel.sections(
+            from: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
+        )
     }
 
     private var priorityStats: FeedPriorityStats {
-        FeedPriorityStats(campaigns: activeCampaignsWithoutSearch)
+        viewModel.priorityStats(
+            from: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
+        )
     }
 
     private var activeCampaignCount: Int {
@@ -34,27 +31,14 @@ struct FeedView: View {
     }
 
     private var activeCampaignsWithoutSearch: [Campaign] {
-        ScannableFeedUseCase().makeFeed(
-            campaigns: environment.firstPhaseCampaigns,
-            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs,
-            showsAllPrograms: showsAllPrograms,
-            selectedCategoryID: nil,
-            searchText: "",
-            sort: selectedSort
+        viewModel.activeCampaigns(
+            from: environment.firstPhaseCampaigns,
+            selectedProgramIDs: environment.selectedFirstPhaseProgramIDs
         )
     }
 
     private var categories: [CampaignCategory] {
-        Dictionary(
-            grouping: environment.firstPhaseCampaigns.compactMap(\.category),
-            by: \.id
-        )
-        .compactMap(\.value.first)
-        .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-    }
-
-    private var programsByID: [UUID: BonusProgram] {
-        Dictionary(uniqueKeysWithValues: environment.firstPhasePrograms.map { ($0.id, $0) })
+        viewModel.categories(from: environment.firstPhaseCampaigns)
     }
 
     private var hasSelectedPrograms: Bool {
@@ -63,6 +47,7 @@ struct FeedView: View {
 
     var body: some View {
         @Bindable var environment = environment
+        @Bindable var viewModel = viewModel
 
         List {
             if let dataSource = environment.dataSource, dataSource.isFallback {
@@ -110,16 +95,16 @@ struct FeedView: View {
             FeedControlHeader(
                 campaignCount: activeCampaignCount,
                 priorityStats: priorityStats,
-                showsAllPrograms: showsAllPrograms || !hasSelectedPrograms,
-                isSearchVisible: isSearchVisible,
-                searchText: $searchText,
-                selectedSort: $selectedSort,
-                selectedCategoryID: $selectedCategoryID,
+                showsAllPrograms: viewModel.showsAllPrograms || !hasSelectedPrograms,
+                isSearchVisible: viewModel.isSearchVisible,
+                searchText: $viewModel.searchText,
+                selectedSort: $viewModel.selectedSort,
+                selectedCategoryID: $viewModel.selectedCategoryID,
                 categories: categories,
                 hasSelectedPrograms: hasSelectedPrograms,
                 onToggleSearch: toggleSearch,
-                onOpenProgramFilter: { isProgramSheetPresented = true },
-                onToggleShowsAllPrograms: { showsAllPrograms.toggle() },
+                onOpenProgramFilter: { viewModel.isProgramSheetPresented = true },
+                onToggleShowsAllPrograms: { viewModel.showsAllPrograms.toggle() },
                 isSearchFocused: $isSearchFocused
             )
         }
@@ -143,73 +128,40 @@ struct FeedView: View {
                 )
             }
         }
-        .sheet(isPresented: $isProgramSheetPresented) {
+        .sheet(isPresented: $viewModel.isProgramSheetPresented) {
             ProgramFilterSheet(
                 programs: environment.firstPhasePrograms,
                 selectedProgramIDs: $environment.userSession.selectedProgramIDs
             )
         }
-        .onChange(of: selectedSort) {
-            environment.track(.init(
-                name: "filter_applied",
-                surface: "feed",
-                properties: [
-                    "filter_type": "sort",
-                    "selected_count": "1"
-                ]
-            ))
+        .onChange(of: viewModel.selectedSort) {
+            viewModel.trackSortChanged(in: environment)
         }
-        .onChange(of: selectedCategoryID) {
-            environment.track(.init(
-                name: "filter_applied",
-                surface: "feed",
-                entityType: selectedCategoryID == nil ? nil : "category",
-                entityID: selectedCategoryID,
-                properties: [
-                    "filter_type": "category",
-                    "selected_count": selectedCategoryID == nil ? "0" : "1"
-                ]
-            ))
+        .onChange(of: viewModel.selectedCategoryID) {
+            viewModel.trackCategoryChanged(in: environment)
         }
-        .onChange(of: showsAllPrograms) {
-            environment.track(.init(
-                name: "filter_applied",
-                surface: "feed",
-                properties: [
-                    "filter_type": "program_scope",
-                    "selected_count": showsAllPrograms ? "all" : "\(environment.selectedFirstPhaseProgramIDs.count)"
-                ]
-            ))
+        .onChange(of: viewModel.showsAllPrograms) {
+            viewModel.trackProgramScopeChanged(
+                selectedProgramCount: environment.selectedFirstPhaseProgramIDs.count,
+                in: environment
+            )
         }
     }
 
     private var isLoadingInitialData: Bool {
-        if case .loading = environment.loadState {
-            return environment.campaigns.isEmpty
-        }
-
-        return false
+        viewModel.isLoadingInitialData(loadState: environment.loadState, campaigns: environment.campaigns)
     }
 
     private func toggleSearch() {
-        isSearchVisible.toggle()
-
-        if isSearchVisible {
-            isSearchFocused = true
-        } else {
-            searchText = ""
-            isSearchFocused = false
-        }
+        isSearchFocused = viewModel.toggleSearch()
     }
 
     private func programs(for campaign: Campaign) -> [BonusProgram] {
-        campaign.linkedProgramIDs.compactMap { programsByID[$0] }
+        viewModel.programs(for: campaign, from: environment.firstPhasePrograms)
     }
 
     private func accessibilityLabel(for campaign: Campaign) -> String {
-        let expiry = FeedDateHelper.expiryLabel(campaign.endDate).text
-        let programNames = programs(for: campaign).map(\.name).joined(separator: ", ")
-        return "\(campaign.feedHeadline). \(campaign.feedReason). \(expiry). \(programNames)."
+        viewModel.accessibilityLabel(for: campaign, programs: environment.firstPhasePrograms)
     }
 }
 

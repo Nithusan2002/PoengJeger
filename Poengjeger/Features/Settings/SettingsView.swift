@@ -69,7 +69,7 @@ struct SettingsView: View {
             )
 
             NavigationLink {
-                AdminQueueView()
+                AdminQueueView(viewModel: environment.makeAdminQueueViewModel())
             } label: {
                 ProfileActionRow(
                     iconName: "tray.full",

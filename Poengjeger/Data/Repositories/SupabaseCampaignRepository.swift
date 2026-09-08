@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 struct SupabaseConfiguration {
     let url: URL
@@ -52,6 +53,11 @@ struct FallbackCampaignRepository: CampaignRepository {
 }
 
 struct SupabaseCampaignRepository: CampaignRepository {
+    private static let performanceLogger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "no.poengjeger.app",
+        category: "Performance"
+    )
+
     private let configuration: SupabaseConfiguration
     private let session: URLSession
 
@@ -130,7 +136,7 @@ struct SupabaseCampaignRepository: CampaignRepository {
     }
 
     private func fetchStores() async throws -> [Store] {
-        let select = [
+        let storeSelect = [
             "id",
             "slug",
             "name",
@@ -138,21 +144,94 @@ struct SupabaseCampaignRepository: CampaignRepository {
             "website_url",
             "search_keywords",
             "last_verified_at",
-            "campaign_categories(id,slug,name)",
-            "store_earning_rates(id,status,rate_label,normal_rate_label,value_summary,requirement_summary,warning_text,handoff_url,source_url,source_title,checked_at,starts_at,ends_at,sort_order,is_base_rate,earning_methods(id,slug,name,method_type,program_id,description))",
-            "earning_combinations(id,status,title,total_value_label,summary,easier_alternative_label,warning_text,primary_handoff_url,last_verified_at,sort_order,earning_combination_rates(store_earning_rate_id,sort_order),earning_combination_steps(id,text,sort_order))"
+            "campaign_categories(id,slug,name)"
         ].joined(separator: ",")
 
-        let queryItems = [
-            URLQueryItem(name: "select", value: select),
+        let rateSelect = [
+            "id",
+            "store_id",
+            "status",
+            "rate_label",
+            "normal_rate_label",
+            "value_summary",
+            "requirement_summary",
+            "warning_text",
+            "handoff_url",
+            "source_url",
+            "source_title",
+            "checked_at",
+            "starts_at",
+            "ends_at",
+            "sort_order",
+            "is_base_rate",
+            "earning_methods(id,slug,name,method_type,program_id,description)"
+        ].joined(separator: ",")
+
+        let combinationSelect = [
+            "id",
+            "store_id",
+            "status",
+            "title",
+            "total_value_label",
+            "summary",
+            "easier_alternative_label",
+            "warning_text",
+            "primary_handoff_url",
+            "last_verified_at",
+            "sort_order",
+            "earning_combination_rates(store_earning_rate_id,sort_order)",
+            "earning_combination_steps(id,text,sort_order)"
+        ].joined(separator: ",")
+
+        let storeQueryItems = [
+            URLQueryItem(name: "select", value: storeSelect),
             URLQueryItem(name: "status", value: "eq.published"),
             URLQueryItem(name: "order", value: "name.asc")
         ]
+        let rateQueryItems = [
+            URLQueryItem(name: "select", value: rateSelect),
+            URLQueryItem(name: "status", value: "eq.published"),
+            URLQueryItem(name: "order", value: "sort_order.asc")
+        ]
+        let combinationQueryItems = [
+            URLQueryItem(name: "select", value: combinationSelect),
+            URLQueryItem(name: "status", value: "eq.published"),
+            URLQueryItem(name: "order", value: "sort_order.asc")
+        ]
 
         do {
-            let response: [StoreDTO] = try await request(path: "stores", queryItems: queryItems)
-            return response.compactMap(\.domainModel).filter(\.isPublished)
-        } catch let error as SupabaseRepositoryError where error.isMissingSchemaRelation(named: "stores") {
+            async let storesRequest: [StoreDTO] = request(path: "stores", queryItems: storeQueryItems)
+            async let ratesRequest: [StoreEarningRateDTO] = request(
+                path: "store_earning_rates",
+                queryItems: rateQueryItems
+            )
+            async let combinationsRequest: [EarningCombinationDTO] = request(
+                path: "earning_combinations",
+                queryItems: combinationQueryItems
+            )
+
+            let (stores, rates, combinations) = try await (
+                storesRequest,
+                ratesRequest,
+                combinationsRequest
+            )
+            let ratesByStoreID = Dictionary(grouping: rates.compactMap { rate in
+                rate.storeID.map { ($0, rate) }
+            }, by: \.0).mapValues { $0.map(\.1) }
+            let combinationsByStoreID = Dictionary(grouping: combinations.compactMap { combination in
+                combination.storeID.map { ($0, combination) }
+            }, by: \.0).mapValues { $0.map(\.1) }
+
+            return stores.compactMap { store in
+                store.domainModel(
+                    earningRates: ratesByStoreID[store.id] ?? store.earningRates,
+                    combinations: combinationsByStoreID[store.id] ?? store.combinations
+                )
+            }.filter(\.isPublished)
+        } catch let error as SupabaseRepositoryError where
+            error.isMissingSchemaRelation(named: "stores")
+                || error.isMissingSchemaRelation(named: "store_earning_rates")
+                || error.isMissingSchemaRelation(named: "earning_combinations") {
             return []
         }
     }
@@ -181,11 +260,33 @@ struct SupabaseCampaignRepository: CampaignRepository {
         request.setValue("Bearer \(configuration.publishableKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        let (data, response) = try await session.data(for: request)
+        let requestStartedAt = ContinuousClock.now
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            let durationMilliseconds = PerformanceBenchmarks.milliseconds(
+                from: requestStartedAt.duration(to: .now)
+            )
+            Self.performanceLogger.notice(
+                "benchmark=api_response endpoint=\(path, privacy: .public) duration_ms=\(durationMilliseconds, format: .fixed(precision: 1), privacy: .public) target_ms=300 target_met=false outcome=transport_error"
+            )
+            throw error
+        }
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw SupabaseRepositoryError.invalidResponse
         }
+
+        let durationMilliseconds = PerformanceBenchmarks.milliseconds(
+            from: requestStartedAt.duration(to: .now)
+        )
+        let targetMet = durationMilliseconds <= PerformanceBenchmarks.apiResponseMilliseconds
+        Self.performanceLogger.notice(
+            "benchmark=api_response endpoint=\(path, privacy: .public) duration_ms=\(durationMilliseconds, format: .fixed(precision: 1), privacy: .public) response_bytes=\(data.count, privacy: .public) target_ms=300 target_met=\(targetMet, privacy: .public) status=\(httpResponse.statusCode, privacy: .public)"
+        )
 
         guard 200 ..< 300 ~= httpResponse.statusCode else {
             let apiError = try? decoder.decode(SupabaseAPIError.self, from: data)
@@ -717,7 +818,24 @@ private struct StoreDTO: Decodable {
         case combinations = "earning_combinations"
     }
 
-    var domainModel: Store? {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        slug = try container.decode(String.self, forKey: .slug)
+        name = try container.decode(String.self, forKey: .name)
+        status = try container.decode(String.self, forKey: .status)
+        websiteURL = try container.decodeIfPresent(String.self, forKey: .websiteURL)
+        searchKeywords = try container.decodeIfPresent([String].self, forKey: .searchKeywords) ?? []
+        lastVerifiedAt = try container.decodeIfPresent(Date.self, forKey: .lastVerifiedAt)
+        category = try container.decodeIfPresent(CampaignCategoryDTO.self, forKey: .category)
+        earningRates = try container.decodeIfPresent([StoreEarningRateDTO].self, forKey: .earningRates) ?? []
+        combinations = try container.decodeIfPresent([EarningCombinationDTO].self, forKey: .combinations) ?? []
+    }
+
+    func domainModel(
+        earningRates: [StoreEarningRateDTO],
+        combinations: [EarningCombinationDTO]
+    ) -> Store? {
         guard let storeStatus = Store.Status(rawValue: status) else {
             return nil
         }
@@ -739,6 +857,7 @@ private struct StoreDTO: Decodable {
 
 private struct StoreEarningRateDTO: Decodable {
     let id: UUID
+    let storeID: UUID?
     let status: String
     let rateLabel: String
     let normalRateLabel: String?
@@ -757,6 +876,7 @@ private struct StoreEarningRateDTO: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case storeID = "store_id"
         case status
         case rateLabel = "rate_label"
         case normalRateLabel = "normal_rate_label"
@@ -838,6 +958,7 @@ private struct EarningMethodDTO: Decodable {
 
 private struct EarningCombinationDTO: Decodable {
     let id: UUID
+    let storeID: UUID?
     let status: String
     let title: String
     let totalValueLabel: String
@@ -852,6 +973,7 @@ private struct EarningCombinationDTO: Decodable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case storeID = "store_id"
         case status
         case title
         case totalValueLabel = "total_value_label"

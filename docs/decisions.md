@@ -1,5 +1,11 @@
 # Arkitekturbeslutninger
 
+## ADR-031: Praktisk feature-MVVM er standard for iOS-klienten
+- Status: Vedtatt
+- Bakgrunn: Flere SwiftUI-skjermer hadde etter hvert sammensatt state, filtrering, formattering, analytics og asynkron koordinering direkte i viewet. Samtidig vil en obligatorisk ViewModel for alle små komponenter øke kompleksiteten uten tilsvarende gevinst.
+- Beslutning: iOS-klienten følger praktisk, feature-orientert MVVM etter `docs/ios-architecture.md`. Store eller statefulle skjermer får testbare ViewModels; views beholder rendering, navigasjon og kortvarig visuell state; domeneregler og datatilgang forblir i Domain og Data. Refaktorering gjøres trinnvis og funksjonsnøytralt.
+- Konsekvens: Nye og vesentlig endrede features må vurderes mot samme laggrenser og review-sjekkliste. Enkle presentasjonskomponenter kan fortsatt bruke lokal `@State` uten egen ViewModel.
+
 ## ADR-030: Guider er uavhengige av butikker og kampanjer
 - Status: Vedtatt
 - Bakgrunn: Dynamiske kampanjekort i guidedetaljer blandet varig læringsinnhold med tidsbegrensede muligheter og kunne oppfattes som konkrete anbefalinger.

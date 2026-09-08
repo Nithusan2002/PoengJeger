@@ -1,9 +1,26 @@
 import Foundation
 import Observation
+import OSLog
+
+enum PerformanceBenchmarks {
+    static let firstUsableContentMilliseconds = 2_000.0
+    static let apiResponseMilliseconds = 300.0
+
+    static func milliseconds(from duration: Duration) -> Double {
+        let components = duration.components
+        return (Double(components.seconds) * 1_000)
+            + (Double(components.attoseconds) / 1_000_000_000_000_000)
+    }
+}
 
 @MainActor
 @Observable
 final class AppEnvironment {
+    private static let performanceLogger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "no.poengjeger.app",
+        category: "Performance"
+    )
+
     enum LoadState: Equatable {
         case idle
         case loading
@@ -11,11 +28,16 @@ final class AppEnvironment {
         case failed(String)
     }
 
-    let campaignRepository: CampaignRepository
-    let adminRepository: AdminRepository
-    let productAnalytics: ProductAnalytics
+    private let campaignRepository: CampaignRepository
+    private let adminRepository: AdminRepository
+    private let productAnalytics: ProductAnalytics
+    private let errorReporter: any AppErrorReporting
     @ObservationIgnored
     private let userSessionStore: UserSessionStore
+    @ObservationIgnored
+    private let startupStartedAt = ContinuousClock.now
+    @ObservationIgnored
+    private var hasReportedStartup = false
     var userSession: UserSession {
         didSet {
             userSessionStore.save(userSession)
@@ -27,23 +49,20 @@ final class AppEnvironment {
     var stores: [Store] = []
     var loadState: LoadState = .idle
     var dataSource: CampaignDataSource?
-    var adminCandidates: [IngestionCandidate] = []
-    var adminLoadState: LoadState = .idle
-    var adminSourceLabel: String?
-    var adminInfoMessage: String?
-    var isAdminPreview = false
 
     init(
         campaignRepository: CampaignRepository,
         adminRepository: AdminRepository,
         productAnalytics: ProductAnalytics,
         userSession: UserSession,
-        userSessionStore: UserSessionStore = UserDefaultsUserSessionStore()
+        userSessionStore: UserSessionStore = UserDefaultsUserSessionStore(),
+        errorReporter: any AppErrorReporting = NoopErrorReporter()
     ) {
         self.campaignRepository = campaignRepository
         self.adminRepository = adminRepository
         self.productAnalytics = productAnalytics
         self.userSessionStore = userSessionStore
+        self.errorReporter = errorReporter
         self.userSession = userSessionStore.load() ?? userSession
     }
 
@@ -72,7 +91,8 @@ final class AppEnvironment {
             campaignRepository: repository,
             adminRepository: adminRepository,
             productAnalytics: productAnalytics,
-            userSession: .empty
+            userSession: .empty,
+            errorReporter: UnifiedLogErrorReporter()
         )
     }
 
@@ -100,6 +120,7 @@ final class AppEnvironment {
     }
 
     func refresh() async {
+        let refreshStartedAt = ContinuousClock.now
         loadState = .loading
 
         do {
@@ -114,10 +135,37 @@ final class AppEnvironment {
             userSession.favoriteCampaignIDs.formIntersection(Set(campaigns.map(\.id)))
             userSession.favoriteStoreIDs.formIntersection(Set(stores.map(\.id)))
             loadState = .loaded
+            reportPerformance(refreshStartedAt: refreshStartedAt, outcome: "success")
         } catch {
+            errorReporter.capture(.bootstrapLoadFailed, error: error)
             let message = (error as? LocalizedError)?.errorDescription ?? "Kunne ikke hente kampanjedata akkurat nå."
             loadState = .failed(message)
+            reportPerformance(refreshStartedAt: refreshStartedAt, outcome: "failure")
         }
+    }
+
+    private func reportPerformance(
+        refreshStartedAt: ContinuousClock.Instant,
+        outcome: String
+    ) {
+        let now = ContinuousClock.now
+        let refreshMilliseconds = PerformanceBenchmarks.milliseconds(
+            from: refreshStartedAt.duration(to: now)
+        )
+        Self.performanceLogger.notice(
+            "benchmark=bootstrap duration_ms=\(refreshMilliseconds, format: .fixed(precision: 1), privacy: .public) outcome=\(outcome, privacy: .public)"
+        )
+
+        guard !hasReportedStartup else { return }
+        hasReportedStartup = true
+
+        let startupMilliseconds = PerformanceBenchmarks.milliseconds(
+            from: startupStartedAt.duration(to: now)
+        )
+        let targetMet = startupMilliseconds <= PerformanceBenchmarks.firstUsableContentMilliseconds
+        Self.performanceLogger.notice(
+            "benchmark=first_usable_content duration_ms=\(startupMilliseconds, format: .fixed(precision: 1), privacy: .public) target_ms=2000 target_met=\(targetMet, privacy: .public) outcome=\(outcome, privacy: .public)"
+        )
     }
 
     var favoriteCampaigns: [Campaign] {
@@ -153,13 +201,6 @@ final class AppEnvironment {
             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 
-    var featuredStores: [Store] {
-        StoreDiscoveryUseCase()
-            .homeShortcutStores(from: stores, selectedProgramIDs: selectedFirstPhaseProgramIDs)
-            .prefix(4)
-            .map { $0 }
-    }
-
     func programGuide(for program: BonusProgram) -> ProgramGuide? {
         programGuides.first {
             $0.programID == program.id && $0.status == .published && $0.lastReviewedAt != nil
@@ -175,62 +216,8 @@ final class AppEnvironment {
         }
     }
 
-    func loadAdminQueueIfNeeded() async {
-        guard adminLoadState == .idle else { return }
-        await refreshAdminQueue()
-    }
-
-    func refreshAdminQueue() async {
-        adminLoadState = .loading
-
-        do {
-            let queue = try await adminRepository.fetchQueue()
-            adminCandidates = queue.candidates
-            adminSourceLabel = queue.label
-            adminInfoMessage = queue.isPreview ? "Viser lokal preview-data for admin-flyten. Live admin krever egen admin-session." : nil
-            isAdminPreview = queue.isPreview
-            adminLoadState = .loaded
-        } catch {
-            let message = (error as? LocalizedError)?.errorDescription ?? "Kunne ikke laste admin-kø akkurat nå."
-            adminCandidates = []
-            adminSourceLabel = nil
-            adminInfoMessage = nil
-            isAdminPreview = false
-            adminLoadState = .failed(message)
-        }
-    }
-
-    func setAdminCandidateStatus(candidateID: UUID, status: IngestionCandidate.Status, note: String?) async {
-        do {
-            let updated = try await adminRepository.setStatus(
-                candidateID: candidateID,
-                status: status,
-                note: note
-            )
-            replaceAdminCandidate(updated)
-        } catch {
-            adminLoadState = .failed((error as? LocalizedError)?.errorDescription ?? "Kunne ikke oppdatere kandidatstatus.")
-        }
-    }
-
-    func promoteAdminCandidate(candidateID: UUID, note: String?) async {
-        do {
-            let updated = try await adminRepository.promote(candidateID: candidateID, note: note)
-            replaceAdminCandidate(updated)
-        } catch {
-            adminLoadState = .failed((error as? LocalizedError)?.errorDescription ?? "Kunne ikke promotere kandidat til draft.")
-        }
-    }
-
-    private func replaceAdminCandidate(_ candidate: IngestionCandidate) {
-        if let index = adminCandidates.firstIndex(where: { $0.id == candidate.id }) {
-            adminCandidates[index] = candidate
-        } else {
-            adminCandidates.insert(candidate, at: 0)
-        }
-
-        adminCandidates.sort { $0.detectedAt > $1.detectedAt }
-        adminLoadState = .loaded
+    func makeAdminQueueViewModel() -> AdminQueueViewModel {
+        AdminQueueViewModel(repository: adminRepository, errorReporter: errorReporter)
     }
 }
 

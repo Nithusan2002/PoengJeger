@@ -580,6 +580,185 @@ struct StoreEarningUseCaseTests {
         #expect(combination.primaryHandoffURL?.absoluteString == "https://www.trumf.no/partner/elkjop")
     }
 
+    @Test
+    func supabaseRepositoryAssemblesStoresFromParallelFlatResponses() async throws {
+        let storeID = UUID()
+        let rateID = UUID()
+        let combinationID = UUID()
+        let methodID = UUID()
+
+        StoreEarningURLProtocol.requestHandler = { request in
+            let path = request.url?.path ?? ""
+            let json: String
+
+            if path.hasSuffix("/stores") {
+                json = """
+                [{
+                  "id": "\(storeID.uuidString)", "slug": "testbutikk", "name": "Testbutikk",
+                  "status": "published", "website_url": null, "search_keywords": [],
+                  "last_verified_at": null, "campaign_categories": null
+                }]
+                """
+            } else if path.hasSuffix("/store_earning_rates") {
+                json = """
+                [{
+                  "id": "\(rateID.uuidString)", "store_id": "\(storeID.uuidString)",
+                  "status": "published", "rate_label": "2 % Trumf", "normal_rate_label": null,
+                  "value_summary": null, "requirement_summary": null, "warning_text": null,
+                  "handoff_url": null, "source_url": null, "source_title": null,
+                  "checked_at": null, "starts_at": null, "ends_at": null,
+                  "sort_order": 1, "is_base_rate": true,
+                  "earning_methods": {
+                    "id": "\(methodID.uuidString)", "slug": "trumf", "name": "Trumf",
+                    "method_type": "portal", "program_id": "\(SampleData.trumf.id.uuidString)",
+                    "description": null
+                  }
+                }]
+                """
+            } else if path.hasSuffix("/earning_combinations") {
+                json = """
+                [{
+                  "id": "\(combinationID.uuidString)", "store_id": "\(storeID.uuidString)",
+                  "status": "published", "title": "Beste valg", "total_value_label": "2 % Trumf",
+                  "summary": "Kort forklaring", "easier_alternative_label": null,
+                  "warning_text": null, "primary_handoff_url": null, "last_verified_at": null,
+                  "sort_order": 1,
+                  "earning_combination_rates": [{"store_earning_rate_id": "\(rateID.uuidString)", "sort_order": 1}],
+                  "earning_combination_steps": []
+                }]
+                """
+            } else {
+                json = "[]"
+            }
+
+            let response = HTTPURLResponse(
+                url: request.url!, statusCode: 200, httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(json.utf8))
+        }
+        defer { StoreEarningURLProtocol.requestHandler = nil }
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StoreEarningURLProtocol.self]
+        let repository = SupabaseCampaignRepository(
+            configuration: SupabaseConfiguration(
+                url: URL(string: "https://example.supabase.co")!, publishableKey: "test-key"
+            ),
+            session: URLSession(configuration: configuration)
+        )
+
+        let data = try await repository.fetchBootstrapData()
+
+        #expect(data.stores.first?.id == storeID)
+        #expect(data.stores.first?.earningRates.map(\.id) == [rateID])
+        #expect(data.stores.first?.combinations.map(\.id) == [combinationID])
+    }
+
+    @Test
+    func storeDetailViewModelSeparatesSelectedAndOtherProgramRates() {
+        let selectedRate = makeEarningRate(
+            rateLabel: "2 % Trumf",
+            programID: SampleData.trumf.id,
+            sortOrder: 1
+        )
+        let otherRate = makeEarningRate(
+            rateLabel: "20 EuroBonus-poeng per 100 kr",
+            programID: SampleData.euroBonus.id,
+            sortOrder: 2
+        )
+        let combination = makeCombination(rateIDs: [selectedRate.id])
+        let store = makeStore(
+            earningRates: [otherRate, selectedRate],
+            combinations: [combination]
+        )
+
+        let viewModel = StoreDetailViewModel(
+            store: store,
+            selectedProgramIDs: [SampleData.trumf.id]
+        )
+
+        #expect(viewModel.preferredCombination?.id == combination.id)
+        #expect(viewModel.primaryRates.map(\.id) == [selectedRate.id])
+        #expect(viewModel.otherAvailableRates.map(\.id) == [otherRate.id])
+        #expect(viewModel.combinationUsesSelectedPrograms(combination))
+    }
+
+    @Test
+    func storeDetailViewModelKeepsUnshownBaseRateAsAlternative() {
+        let baseRate = makeEarningRate(
+            rateLabel: "10 EuroBonus-poeng per 100 kr",
+            programID: SampleData.euroBonus.id,
+            sortOrder: 1,
+            isBaseRate: true
+        )
+        let promotion = makeEarningRate(
+            rateLabel: "5 % Trumf",
+            programID: SampleData.trumf.id,
+            sortOrder: 2
+        )
+        let combination = makeCombination(rateIDs: [promotion.id])
+        let store = makeStore(
+            earningRates: [baseRate, promotion],
+            combinations: [combination]
+        )
+
+        let viewModel = StoreDetailViewModel(
+            store: store,
+            selectedProgramIDs: [SampleData.trumf.id]
+        )
+
+        #expect(viewModel.displayedBaseContextRates.isEmpty)
+        #expect(viewModel.otherAvailableRates.map(\.id) == [baseRate.id])
+    }
+
+    @MainActor
+    @Test
+    func homeViewModelBuildsSearchPresentationFromQuery() {
+        let viewModel = HomeViewModel()
+        viewModel.searchText = "gaming"
+
+        let results = viewModel.matchingStoreResults(
+            stores: SampleData.stores,
+            selectedProgramIDs: [SampleData.trumf.id]
+        )
+
+        #expect(viewModel.isSearching)
+        #expect(results.map(\.store.name) == ["Komplett"])
+        #expect(!viewModel.searchResultTitle.isEmpty)
+    }
+
+    @MainActor
+    @Test
+    func homeViewModelTracksOneSearchEventUntilQueryIsCleared() {
+        let viewModel = HomeViewModel()
+        var events: [ProductAnalyticsEvent] = []
+
+        viewModel.searchText = "fly"
+        viewModel.trackSearchStartedIfNeeded { events.append($0) }
+        viewModel.trackSearchStartedIfNeeded { events.append($0) }
+        viewModel.searchText = " "
+        viewModel.trackSearchStartedIfNeeded { events.append($0) }
+        viewModel.searchText = "dagligvarer"
+        viewModel.trackSearchStartedIfNeeded { events.append($0) }
+
+        #expect(events.map(\.name) == ["store_search_started", "store_search_started"])
+        #expect(events.allSatisfy { $0.properties["entry_point"] == "home" })
+    }
+
+    @MainActor
+    @Test
+    func homeViewModelQuickSearchUpdatesQueryAndTracksSelection() {
+        let viewModel = HomeViewModel()
+        var event: ProductAnalyticsEvent?
+
+        viewModel.selectQuickSearch(title: "Elektronikk") { event = $0 }
+
+        #expect(viewModel.searchText == "Elektronikk")
+        #expect(event?.name == "store_quick_search_selected")
+        #expect(event?.properties["query"] == "elektronikk")
+    }
+
     private func makeStore(
         name: String = "Testbutikk",
         status: Store.Status = .published,

@@ -27,6 +27,7 @@ Analytics skal svare på tre spørsmål:
 | `app_opened` | Når appen åpnes aktivt | `source`, `days_since_last_open` | Måler returbruk og vane. |
 | `program_selected` | Når bruker velger eller fjerner bonusprogram | `program_id`, `selected`, `selected_program_count` | Viser om personalisering faktisk settes opp. |
 | `store_search_started` | Når bruker åpner eller starter butikksøk | `entry_point` | Måler bruk av "sjekk før du handler"-kjernen. |
+| `store_quick_search_selected` | Når bruker velger et hurtigsøk på Hjem | `query` | Viser hvilke brede kjøpsbehov som senker terskelen for søk. |
 | `store_search_result_opened` | Når bruker åpner butikk fra søk/kategori | `store_id`, `category_id`, `rank`, `entry_point` | Viser om søk leder til faktisk vurdering. |
 | `store_detail_opened` | Når butikkside åpnes | `store_id`, `program_ids`, `has_active_campaign`, `has_best_combination` | Måler hovedflaten for opptjeningsvalg. |
 | `best_combination_viewed` | Når beste kombinasjon vises på butikkside | `store_id`, `program_ids`, `mechanism_count` | Måler om premiumrelevant beslutningsverdi eksponeres. |

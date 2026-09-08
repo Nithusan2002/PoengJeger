@@ -1,0 +1,42 @@
+name: iOS tests
+
+on:
+  pull_request:
+    paths:
+      - "Poengjeger/**"
+      - "PoengjegerTests/**"
+      - "Poengjeger.xcodeproj/**"
+      - ".github/workflows/ios-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "Poengjeger/**"
+      - "PoengjegerTests/**"
+      - "Poengjeger.xcodeproj/**"
+      - ".github/workflows/ios-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          simulator_id="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/{print $2; exit}')"
+          test -n "$simulator_id"
+          xcodebuild test \
+            -project Poengjeger.xcodeproj \
+            -scheme Poengjeger \
+            -destination "platform=iOS Simulator,id=$simulator_id" \
+            CODE_SIGNING_ALLOWED=NO

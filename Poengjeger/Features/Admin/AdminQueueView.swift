@@ -1,30 +1,25 @@
 import SwiftUI
 
 struct AdminQueueView: View {
-    @Environment(AppEnvironment.self) private var environment
-    @State private var selectedStatusFilter: IngestionCandidate.Status?
-    @State private var noteDrafts: [UUID: String] = [:]
+    @State private var viewModel: AdminQueueViewModel
 
-    private var candidates: [IngestionCandidate] {
-        let source = environment.adminCandidates
-        guard let selectedStatusFilter else {
-            return source
-        }
-
-        return source.filter { $0.status == selectedStatusFilter }
+    init(viewModel: AdminQueueViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         List {
-            if let adminSourceLabel = environment.adminSourceLabel {
+            if let sourceLabel = viewModel.sourceLabel {
                 Section {
-                    Label(adminSourceLabel, systemImage: environment.isAdminPreview ? "wrench.and.screwdriver" : "lock")
+                    Label(sourceLabel, systemImage: viewModel.isPreview ? "wrench.and.screwdriver" : "lock")
                         .font(DesignTokens.Typography.footnote)
                         .foregroundStyle(DesignTokens.Colors.textSecondary)
                 }
             }
 
-            if let message = environment.adminInfoMessage {
+            if let message = viewModel.infoMessage {
                 Section {
                     Text(message)
                         .font(DesignTokens.Typography.footnote)
@@ -33,7 +28,7 @@ struct AdminQueueView: View {
             }
 
             Section("Filter") {
-                Picker("Status", selection: $selectedStatusFilter) {
+                Picker("Status", selection: $viewModel.selectedStatusFilter) {
                     Text("Alle").tag(IngestionCandidate.Status?.none)
                     ForEach(IngestionCandidate.Status.allCases, id: \.self) { status in
                         Text(status.title).tag(IngestionCandidate.Status?.some(status))
@@ -44,16 +39,17 @@ struct AdminQueueView: View {
             }
 
             Section("Kandidater") {
-                ForEach(candidates) { candidate in
+                ForEach(viewModel.filteredCandidates) { candidate in
                     AdminCandidateRow(
                         candidate: candidate,
                         note: noteBinding(for: candidate.id),
-                        showsActions: environment.isAdminPreview,
+                        showsActions: viewModel.isPreview,
+                        isProcessing: viewModel.isProcessing(candidate.id),
                         onSetStatus: { status in
-                            Task { await setStatus(status, for: candidate) }
+                            Task { await viewModel.setStatus(status, for: candidate) }
                         },
                         onPromote: {
-                            Task { await promote(candidate) }
+                            Task { await viewModel.promote(candidate) }
                         }
                     )
                 }
@@ -62,22 +58,22 @@ struct AdminQueueView: View {
         .navigationTitle("Admin-kø")
         .toolbar(.visible, for: .navigationBar)
         .task {
-            await environment.loadAdminQueueIfNeeded()
+            await viewModel.loadIfNeeded()
         }
         .refreshable {
-            await environment.refreshAdminQueue()
+            await viewModel.refresh()
         }
         .overlay {
-            switch environment.adminLoadState {
-            case .loading where environment.adminCandidates.isEmpty:
+            switch viewModel.loadState {
+            case .loading where viewModel.candidates.isEmpty:
                 ProgressView("Laster admin-kø")
-            case let .failed(message) where environment.adminCandidates.isEmpty:
+            case let .failed(message) where viewModel.candidates.isEmpty:
                 ContentUnavailableView(
                     "Kunne ikke laste admin-kø",
                     systemImage: "exclamationmark.triangle",
                     description: Text(message)
                 )
-            case _ where environment.adminCandidates.isEmpty:
+            case _ where viewModel.candidates.isEmpty:
                 ContentUnavailableView(
                     "Ingen kandidater ennå",
                     systemImage: "tray",
@@ -91,23 +87,8 @@ struct AdminQueueView: View {
 
     private func noteBinding(for candidateID: UUID) -> Binding<String> {
         Binding(
-            get: { noteDrafts[candidateID, default: ""] },
-            set: { noteDrafts[candidateID] = $0 }
-        )
-    }
-
-    private func setStatus(_ status: IngestionCandidate.Status, for candidate: IngestionCandidate) async {
-        await environment.setAdminCandidateStatus(
-            candidateID: candidate.id,
-            status: status,
-            note: noteDrafts[candidate.id]
-        )
-    }
-
-    private func promote(_ candidate: IngestionCandidate) async {
-        await environment.promoteAdminCandidate(
-            candidateID: candidate.id,
-            note: noteDrafts[candidate.id]
+            get: { viewModel.note(for: candidateID) },
+            set: { viewModel.setNote($0, for: candidateID) }
         )
     }
 }
@@ -116,6 +97,7 @@ private struct AdminCandidateRow: View {
     let candidate: IngestionCandidate
     @Binding var note: String
     let showsActions: Bool
+    let isProcessing: Bool
     let onSetStatus: (IngestionCandidate.Status) -> Void
     let onPromote: () -> Void
 
@@ -158,6 +140,7 @@ private struct AdminCandidateRow: View {
             if showsActions {
                 AdminCandidateActions(
                     candidate: candidate,
+                    isProcessing: isProcessing,
                     onSetStatus: onSetStatus,
                     onPromote: onPromote
                 )
@@ -185,23 +168,32 @@ private struct CandidateMetadata: View {
 
 private struct AdminCandidateActions: View {
     let candidate: IngestionCandidate
+    let isProcessing: Bool
     let onSetStatus: (IngestionCandidate.Status) -> Void
     let onPromote: () -> Void
 
     var body: some View {
         HStack {
+            if isProcessing {
+                ProgressView()
+                    .controlSize(.small)
+                    .accessibilityLabel("Oppdaterer kandidat")
+            }
+
             if candidate.canReview {
                 Button("Godkjenn") {
                     onSetStatus(.approved)
                 }
                 .buttonStyle(.bordered)
                 .minimumTouchTarget()
+                .disabled(isProcessing)
 
                 Button("Avvis", role: .destructive) {
                     onSetStatus(.rejected)
                 }
                 .buttonStyle(.bordered)
                 .minimumTouchTarget()
+                .disabled(isProcessing)
             }
 
             Spacer()
@@ -213,6 +205,7 @@ private struct AdminCandidateActions: View {
                 .buttonStyle(.borderedProminent)
                 .minimumTouchTarget()
                 .tint(DesignTokens.Colors.brandPrimaryButton)
+                .disabled(isProcessing)
             }
         }
     }
@@ -281,7 +274,8 @@ private struct MetadataLine: View {
 
 #Preview {
     NavigationStack {
-        AdminQueueView()
-            .environment(AppEnvironment.mock())
+        AdminQueueView(
+            viewModel: AdminQueueViewModel(repository: MockAdminRepository())
+        )
     }
 }
