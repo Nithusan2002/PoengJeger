@@ -78,7 +78,6 @@ struct HowToEarnView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(combination.summary)
-                    .lineLimit(2)
                     .font(DesignTokens.Typography.callout)
                     .foregroundStyle(DesignTokens.Colors.textPrimary)
                     .lineSpacing(2)

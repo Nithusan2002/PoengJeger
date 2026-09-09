@@ -70,11 +70,28 @@ struct Store: Identifiable, Hashable {
         } == true || earningRates.contains { $0.isActive && $0.matchesSelectedPrograms(selectedProgramIDs) }
     }
 
+    func displayEarningLabel(for selectedProgramIDs: Set<UUID>) -> String? {
+        if let combination = bestCombination(for: selectedProgramIDs) {
+            return combination.totalValueLabel
+        }
+
+        let activeRates = sortedEarningRates.filter(\.isActive)
+        if !selectedProgramIDs.isEmpty,
+           let selectedRate = activeRates.first(where: { $0.matchesSelectedPrograms(selectedProgramIDs) }) {
+            return selectedRate.rateLabel
+        }
+        return activeRates.first?.rateLabel
+    }
+
     func matches(_ query: String) -> Bool {
         StoreSearchMatch(store: self, query: query).score > 0
     }
 
     private func isUsableCombination(_ combination: EarningCombination) -> Bool {
+        guard combination.steps.contains(where: { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else {
+            return false
+        }
+
         guard !combination.rateIDs.isEmpty else { return true }
 
         let ratesByID = Dictionary(uniqueKeysWithValues: earningRates.map { ($0.id, $0) })

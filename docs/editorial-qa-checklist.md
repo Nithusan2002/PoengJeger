@@ -104,3 +104,86 @@ Begrensninger:
 - Lokal QA-data står igjen for videre visuell kontroll med mindre den ryddes manuelt.
 
 Se også `docs/local-admin-qa.md`.
+
+### 2026-09-09 delvis pilot mot konfigurert backend
+
+Omfang:
+
+- iOS-appen ble bygget og startet på iPhone 17 Pro-simulator med iOS 26.5.
+- `ScannableFeedUseCaseTests`, `StoreEarningUseCaseTests` og
+  `AdminIngestionUseCaseTests` passerte.
+- `scripts/smoke-ios-supabase.mjs` returnerte `200 OK` for programmer, guider,
+  kampanjer og butikker mot den konfigurerte Supabase-backenden.
+- Hjem, kategorisøk etter elektronikk, butikkside, «Slik gjør du det»,
+  Poengnytt og kampanjedetalj ble kontrollert manuelt.
+- Mørk modus og Dynamic Type på `accessibility-extra-large` ble kontrollert.
+- Adminverktøyets innloggingsflate lastet korrekt fra en separat lokal server.
+
+Funn:
+
+- Telia vises med «Din beste opptjeningsvei», men «Slik gjør du det» viser
+  «Stegene mangler». En opptjeningskombinasjon uten bekreftede handlingssteg bør
+  ikke presenteres som en komplett beste vei.
+- Ved `accessibility-extra-large` blir mye av første Poengnytt-kort skjult bak
+  tabbaren. Kampanjedetaljen krever også ny kontroll av scrolling og tilgang til
+  innholdet nederst på skjermen.
+
+Begrensninger:
+
+- Full kandidat → draft → publisering ble ikke kjørt. Lokal Supabase-stack og
+  CLI var ikke tilgjengelig, mens adminverktøyet var konfigurert mot et eksternt
+  prosjekt som ikke var eksplisitt klassifisert som staging.
+- Ingen eksterne data ble opprettet, endret eller slettet i denne kontrollen.
+- Visuell kontroll ble gjort på iOS 26.5, ikke prosjektets dokumenterte iOS
+  18.6-referansesimulator.
+
+Oppfølging samme dag:
+
+- Publiserte kombinasjoner uten bekreftede handlingssteg filtreres nå ut som
+  ufullstendige. Telia viser dokumentert opptjening og forklarer at ingen trygg
+  kombinasjon er bekreftet, uten å tilby en misvisende «Slik gjør du det»-flyt.
+- Poengnytt-kortet bryter metadata og informasjonsbrikker over flere linjer ved
+  behov, og sammendraget forkortes ikke ved tilgjengelighetsstørrelser.
+- Ny domenetest dekker kombinasjoner uten handlingssteg. De målrettede
+  `StoreEarningUseCaseTests`- og `ScannableFeedUseCaseTests`-suitene passerte.
+
+### 2026-09-09 lokal ende-til-ende-pilot
+
+Omfang:
+
+- Lokal Supabase-stack, lokalt adminverktøy og iPhone 17 Pro-simulator med iOS
+  26.5. Produksjonsprosjektet ble ikke endret.
+- Fem representative kandidater merket med
+  `metadata.qa_run = editorial-five-campaigns-2026-09-09` ble behandlet manuelt
+  i adminverktøyet.
+- Tre kampanjer ble publisert, én ble beholdt som draft og én ble avvist med
+  begrunnelse.
+- Lokal feed-smoke returnerte `200 OK` for programmer, guider, kampanjer og
+  butikker.
+
+Resultat:
+
+- Poengnytt viste de tre publiserte QA-kampanjene: «5 % Trumf-bonus»,
+  «3 000 EuroBonus-poeng» og «Løpende Trumf-fordel».
+- Kampanjen «Dobbel EuroBonus i 48 timer» ble korrekt skjult fordi den fortsatt
+  var draft. Den avviste kandidaten «Uklar målrettet bonus» var heller ikke
+  synlig i appen.
+- Kandidatkøen endte med fire promoterte kandidater og én avvist kandidat.
+- `git diff --check`, `ScannableFeedUseCaseTests` og
+  `StoreEarningUseCaseTests` passerte.
+
+Oppfølging og fullføring:
+
+- Adminskjemaet og den atomiske lagringsflyten fikk valgfrie felt for
+  `start_date` og `end_date`, med validering av at sluttdato ikke er før
+  startdato både i klienten og databasen.
+- 48-timerskampanjen ble publisert gjennom adminflaten med periode fra
+  9. september 2026 kl. 16:00 til 11. september 2026 kl. 16:00.
+- Poengnytt viste deretter alle fire publiserte QA-kampanjer. 48-timerskampanjen
+  ble prioritert som «Siste sjanse» med «2 dager igjen», mens den avviste
+  kandidaten fortsatt ikke var synlig.
+- Databasekontrollen avviste både omvendt datoperiode og en innlogget bruker
+  uten redaksjonell rolle. Den lokale feed-smoken passerte etter publisering.
+- App- og smoke-konfigurasjonen tillater nå ukryptert HTTP bare mot loopback
+  (`localhost`, `127.0.0.1` og `::1`). Eksterne endepunkter krever fortsatt
+  HTTPS.

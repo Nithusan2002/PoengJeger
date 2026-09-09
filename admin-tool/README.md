@@ -95,7 +95,7 @@ select public.grant_editorial_role(
 - viser review-status for butikkopptjening med blokkerende mangler og gule kontrollpunkter
 - publiserer kontrollerte butikker og satser uten SQL Editor, med egen `Publiser og neste draft`-flyt for rask review
 - viser kampanjer etter status
-- redigerer draft-felt, krav og primærkilde
+- redigerer draft-felt, gyldighetsperiode, krav og primærkilde
 - foreslår redaksjonell vurdering via Edge Function uten å lagre automatisk
 - lagrer eller publiserer kampanjer uten SQL Editor
 - vedlikeholder flere `program_guides` per bonusprogram med egen tittel, ett Markdown-felt for hele guiden, draft/published/archived-status og redaksjonelt kontrolltidspunkt

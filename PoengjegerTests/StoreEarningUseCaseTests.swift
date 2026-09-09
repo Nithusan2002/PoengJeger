@@ -111,6 +111,33 @@ struct StoreEarningUseCaseTests {
     }
 
     @Test
+    func storeBestCombinationIgnoresCombinationsWithoutConfirmedSteps() {
+        let incompleteCombination = makeCombination(
+            title: "Mangler handlingssteg",
+            steps: []
+        )
+        let store = makeStore(combinations: [incompleteCombination])
+
+        #expect(store.bestCombination == nil)
+    }
+
+    @Test
+    func storeDisplayEarningLabelFallsBackToPublishedRateWhenStepsAreMissing() {
+        let rate = makeEarningRate(
+            rateLabel: "2 000 EuroBonus-poeng",
+            programID: SampleData.euroBonus.id
+        )
+        let incompleteCombination = makeCombination(
+            totalValueLabel: "Skal ikke vises som kombinasjon",
+            rateIDs: [rate.id],
+            steps: []
+        )
+        let store = makeStore(earningRates: [rate], combinations: [incompleteCombination])
+
+        #expect(store.displayEarningLabel(for: [SampleData.euroBonus.id]) == "2 000 EuroBonus-poeng")
+    }
+
+    @Test
     func storeBestCombinationPrefersSelectedProgramBeforeGeneralSortOrder() {
         let trumfRateID = UUID()
         let euroBonusRateID = UUID()
@@ -827,7 +854,10 @@ struct StoreEarningUseCaseTests {
         title: String = "Beste kombinasjon",
         totalValueLabel: String = "5 % Trumf",
         sortOrder: Int = 1,
-        rateIDs: [UUID] = []
+        rateIDs: [UUID] = [],
+        steps: [EarningCombinationStep] = [
+            EarningCombinationStep(id: UUID(), text: "Åpne riktig portal før kjøpet.", sortOrder: 1)
+        ]
     ) -> EarningCombination {
         EarningCombination(
             id: UUID(),
@@ -841,7 +871,7 @@ struct StoreEarningUseCaseTests {
             lastVerifiedAt: nil,
             sortOrder: sortOrder,
             rateIDs: rateIDs,
-            steps: []
+            steps: steps
         )
     }
 }

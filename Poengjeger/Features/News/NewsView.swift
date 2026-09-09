@@ -273,26 +273,23 @@ private enum NewsItemType {
 }
 
 private struct NewsLeadStory: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let item: NewsItem
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.card) {
-            HStack(spacing: DesignTokens.Spacing.medium) {
-                Image(systemName: item.type.iconName)
-                    .font(DesignTokens.Typography.subheadlineBold)
-                    .accessibilityHidden(true)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: DesignTokens.Spacing.medium) {
+                    storyMetadata
+                    Spacer(minLength: DesignTokens.Spacing.medium)
+                    storyDate
+                }
 
-                Text(item.editorialAngle.uppercased())
-                    .font(DesignTokens.Typography.captionBold)
-                    .tracking(1.8)
-                    .lineLimit(1)
-
-                Spacer(minLength: DesignTokens.Spacing.medium)
-
-                Text(item.dateLabel)
-                    .font(DesignTokens.Typography.caption)
-                    .foregroundStyle(DesignTokens.Colors.textSecondary)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                    storyMetadata
+                    storyDate
+                }
             }
             .foregroundStyle(item.campaign.cardAccent)
 
@@ -305,11 +302,11 @@ private struct NewsLeadStory: View {
                 Text(item.summary)
                     .font(DesignTokens.Typography.subheadline)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
-                    .lineLimit(4)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.controlGap) {
+            ViewThatFits(in: .horizontal) {
                 HStack(spacing: DesignTokens.Spacing.controlGap) {
                     NewsPill(text: item.expiryLabel, tint: item.campaign.cardAccent)
 
@@ -318,11 +315,19 @@ private struct NewsLeadStory: View {
                     }
                 }
 
-                Label("Se detaljene", systemImage: "chevron.right")
-                    .font(DesignTokens.Typography.captionBold)
-                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
-                    .labelStyle(.titleAndIcon)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                    NewsPill(text: item.expiryLabel, tint: item.campaign.cardAccent)
+
+                    if let primaryProgramName = item.primaryProgramName {
+                        NewsPill(text: primaryProgramName, tint: DesignTokens.Colors.brandPrimary)
+                    }
+                }
             }
+
+            Label("Se detaljene", systemImage: "chevron.right")
+                .font(DesignTokens.Typography.captionBold)
+                .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                .labelStyle(.titleAndIcon)
         }
         .padding(DesignTokens.Spacing.screen)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -333,6 +338,20 @@ private struct NewsLeadStory: View {
                 .stroke(item.campaign.cardAccent.opacity(DesignTokens.Opacity.medium), lineWidth: DesignTokens.Stroke.standard)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private var storyMetadata: some View {
+        Label(item.editorialAngle.uppercased(), systemImage: item.type.iconName)
+            .font(DesignTokens.Typography.captionBold)
+            .tracking(1.8)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var storyDate: some View {
+        Text(item.dateLabel)
+            .font(DesignTokens.Typography.caption)
+            .foregroundStyle(DesignTokens.Colors.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -452,8 +471,7 @@ private struct NewsPill: View {
         Text(text)
             .font(DesignTokens.Typography.captionBold)
             .foregroundStyle(tint)
-            .lineLimit(1)
-            .minimumScaleFactor(0.78)
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, DesignTokens.Spacing.mediumPlus)
             .padding(.vertical, DesignTokens.Spacing.compact)
             .background(tint.opacity(DesignTokens.Opacity.soft))

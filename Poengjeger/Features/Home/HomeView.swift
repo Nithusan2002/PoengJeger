@@ -280,8 +280,8 @@ struct StoreResultRow: View {
     var selectedProgramIDs: Set<UUID> = []
     var intentExplanation: String?
 
-    private var bestCombination: EarningCombination? {
-        store.bestCombination(for: selectedProgramIDs)
+    private var earningLabel: String? {
+        store.displayEarningLabel(for: selectedProgramIDs)
     }
 
     var body: some View {
@@ -298,8 +298,8 @@ struct StoreResultRow: View {
                     .font(DesignTokens.Typography.subheadline)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
 
-                if let bestCombination {
-                    Text(bestCombination.totalValueLabel)
+                if let earningLabel {
+                    Text(earningLabel)
                         .font(DesignTokens.Typography.subheadlineSemibold)
                         .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         .lineLimit(1)

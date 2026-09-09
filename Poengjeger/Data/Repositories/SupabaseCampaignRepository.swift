@@ -23,12 +23,30 @@ struct SupabaseConfiguration {
             !apiKey.isEmpty,
             !host.contains("$("),
             !apiKey.contains("$("),
-            let url = URL(string: "https://\(host)")
+            let url = endpointURL(from: host)
         else {
             return nil
         }
 
         return SupabaseConfiguration(url: url, publishableKey: apiKey)
+    }
+
+    static func endpointURL(from host: String) -> URL? {
+        let trimmedHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        let candidate = trimmedHost.contains("://") ? trimmedHost : "https://\(trimmedHost)"
+        guard let url = URL(string: candidate), let scheme = url.scheme?.lowercased() else {
+            return nil
+        }
+
+        if scheme == "https" {
+            return url
+        }
+
+        let hostname = url.host()?.lowercased()
+        if scheme == "http", hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" {
+            return url
+        }
+        return nil
     }
 }
 

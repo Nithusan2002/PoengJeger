@@ -640,6 +640,8 @@
         "summary",
         "details",
         "status",
+        "start_date",
+        "end_date",
         "last_verified_at",
         "primary_program_id",
         "category_id",
@@ -795,6 +797,8 @@
       summary: campaign.summary || "",
       details: campaign.details || "",
       status: campaign.status,
+      startDate: campaign.start_date,
+      endDate: campaign.end_date,
       lastVerifiedAt: campaign.last_verified_at,
       primaryProgramId: campaign.primary_program_id,
       categoryId: campaign.category_id,
@@ -1602,6 +1606,28 @@
               <option value="">Ingen valgt</option>
               ${renderSelectOptions(state.categories, campaign.categoryId)}
             </select>
+          </label>
+        </div>
+
+        <div class="detail-grid">
+          <label class="field">
+            <span>Starter</span>
+            <input
+              name="startDate"
+              type="datetime-local"
+              value="${escapeAttribute(toDateTimeLocalValue(campaign.startDate))}"
+            />
+            <span class="hint">Valgfritt. La stå tomt hvis kampanjen allerede gjelder.</span>
+          </label>
+
+          <label class="field">
+            <span>Slutter</span>
+            <input
+              name="endDate"
+              type="datetime-local"
+              value="${escapeAttribute(toDateTimeLocalValue(campaign.endDate))}"
+            />
+            <span class="hint">Valgfritt for dokumenterte, løpende fordeler.</span>
           </label>
         </div>
 
@@ -2970,6 +2996,8 @@
     const sourceTitle = String(formData.get("sourceTitle") || "").trim();
     const sourceCheckedAt = String(formData.get("sourceCheckedAt") || "").trim();
     const lastVerifiedAt = String(formData.get("lastVerifiedAt") || "").trim();
+    const startDate = String(formData.get("startDate") || "").trim();
+    const endDate = String(formData.get("endDate") || "").trim();
 
     return {
       id: originalCampaign.id,
@@ -2989,6 +3017,8 @@
       difficultyLevel: emptyToNull(formData.get("difficultyLevel")),
       availabilityScope: emptyToNull(formData.get("availabilityScope")),
       riskNote: emptyToNull(formData.get("riskNote")),
+      startDate: startDate ? toISOString(startDate) : null,
+      endDate: endDate ? toISOString(endDate) : null,
       lastVerifiedAt: lastVerifiedAt ? toISOString(lastVerifiedAt) : null,
       requirements,
       sourceId: emptyToNull(formData.get("sourceId")),
@@ -3020,6 +3050,8 @@
       difficultyLevel: editorialAssessment.difficultyLevel || null,
       availabilityScope: editorialAssessment.availabilityScope || null,
       riskNote: editorialAssessment.riskNote || null,
+      startDate: campaign.startDate || null,
+      endDate: campaign.endDate || null,
       lastVerifiedAt: campaign.lastVerifiedAt || null,
       requirements: campaign.requirements.map((requirement) => requirement.text),
       sourceId: primarySource ? primarySource.source_id : null,
@@ -3161,6 +3193,10 @@
   function validateCampaignPayload(payload) {
     const errors = [];
 
+    if (payload.startDate && payload.endDate && new Date(payload.endDate) < new Date(payload.startDate)) {
+      errors.push("Sluttdato kan ikke være før startdato.");
+    }
+
     if (!payload.title) {
       errors.push("Tittel mangler.");
     }
@@ -3223,7 +3259,7 @@
   }
 
   async function saveEditorialCampaign(payload) {
-    await apiRequest("/rest/v1/rpc/save_editorial_campaign", {
+    await apiRequest("/rest/v1/rpc/save_editorial_campaign_with_period", {
       method: "POST",
       body: {
         p_campaign_id: payload.id,
@@ -3244,6 +3280,8 @@
           difficultyLevel: payload.difficultyLevel,
           availabilityScope: payload.availabilityScope,
           riskNote: payload.riskNote,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
           lastVerifiedAt: payload.lastVerifiedAt,
           requirements: payload.requirements,
           sourceId: payload.sourceId,

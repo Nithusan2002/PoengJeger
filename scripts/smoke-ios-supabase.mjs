@@ -132,10 +132,13 @@ function readXcconfigValue(contents, key) {
 }
 
 function normalizeConfiguration(host, key) {
-  const normalizedHost = host
-    .replace(/^https?:\/\//, "")
-    .replace(/\/$/, "")
-    .trim();
+  const rawHost = host.trim().replace(/\/$/, "");
+  const candidateUrl = new URL(rawHost.includes("://") ? rawHost : `https://${rawHost}`);
+  const isLoopback = ["localhost", "127.0.0.1", "::1"].includes(candidateUrl.hostname);
+  if (candidateUrl.protocol !== "https:" && !(candidateUrl.protocol === "http:" && isLoopback)) {
+    throw new Error("SUPABASE_HOST must use HTTPS except for localhost or loopback.");
+  }
+  const normalizedHost = candidateUrl.host;
   const normalizedKey = key.trim();
 
   if (!normalizedHost || normalizedHost.includes("$(")) {
@@ -145,11 +148,11 @@ function normalizeConfiguration(host, key) {
     throw new Error("SUPABASE_PUBLISHABLE_KEY is missing or unresolved.");
   }
 
-  return { host: normalizedHost, key: normalizedKey };
+  return { baseUrl: candidateUrl.origin, host: normalizedHost, key: normalizedKey };
 }
 
-async function runCheck({ host, key }, check) {
-  const url = new URL(`https://${host}/rest/v1/${check.path}`);
+async function runCheck({ baseUrl, key }, check) {
+  const url = new URL(`${baseUrl}/rest/v1/${check.path}`);
   for (const [name, value] of Object.entries(check.query)) {
     url.searchParams.set(name, value);
   }

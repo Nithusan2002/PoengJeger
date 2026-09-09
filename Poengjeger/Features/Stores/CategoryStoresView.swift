@@ -116,8 +116,8 @@ private struct CategoryStoreRow: View {
     let store: Store
     var selectedProgramIDs: Set<UUID> = []
 
-    private var bestCombination: EarningCombination? {
-        store.bestCombination(for: selectedProgramIDs)
+    private var earningLabel: String? {
+        store.displayEarningLabel(for: selectedProgramIDs)
     }
 
     var body: some View {
@@ -134,8 +134,8 @@ private struct CategoryStoreRow: View {
                     .font(DesignTokens.Typography.subheadline)
                     .foregroundStyle(DesignTokens.Colors.textSecondary)
 
-                if let bestCombination {
-                    Text(bestCombination.totalValueLabel)
+                if let earningLabel {
+                    Text(earningLabel)
                         .font(DesignTokens.Typography.subheadlineBold)
                         .foregroundStyle(DesignTokens.Colors.brandPrimary)
                         .lineLimit(1)

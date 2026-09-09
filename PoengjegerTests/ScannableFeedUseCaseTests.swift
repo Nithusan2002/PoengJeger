@@ -5,6 +5,14 @@ import Testing
 @Suite(.serialized)
 struct ScannableFeedUseCaseTests {
     @Test
+    func supabaseConfigurationAllowsHttpOnlyForLoopback() {
+        #expect(SupabaseConfiguration.endpointURL(from: "http://127.0.0.1:54321")?.absoluteString == "http://127.0.0.1:54321")
+        #expect(SupabaseConfiguration.endpointURL(from: "http://localhost:54321") != nil)
+        #expect(SupabaseConfiguration.endpointURL(from: "example.supabase.co")?.scheme == "https")
+        #expect(SupabaseConfiguration.endpointURL(from: "http://example.com") == nil)
+    }
+
+    @Test
     func displaySummaryPrefersEditorialSummaryWhenPresent() {
         let campaign = makeCampaign(
             summary: "Kildesammendrag",
