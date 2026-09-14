@@ -22,6 +22,12 @@ backendfri presentasjon av produktløftet og kan publiseres når Poengjeger tren
 testbrukere, app-presentasjon eller SEO. Appbilder er plassholdere frem til
 representative skjermbilder er klare.
 
+Produktsiden kan samle e-post til en avgrenset interesseliste via Edge Function.
+Skjemaet lagrer bare normalisert e-post, samtykkeversjon, kilde og tidspunkt.
+Den offentlige klienten har ingen direkte tabelltilgang. Personvern- og
+supportinformasjon ligger under `public-site/personvern/` og
+`public-site/support/`.
+
 ## URL-struktur
 
 - Offentlig side: `poengjeger.no` eller GitHub Pages i tidlig fase.

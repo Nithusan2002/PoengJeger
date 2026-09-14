@@ -196,3 +196,10 @@
 - Status: Vedtatt
 - Beslutning: `program_guides` skal ikke ha unik begrensning på `program_id`. Hver guide får egen `title`, mens `body_markdown` fortsatt er primærkilden for hele artikkelinnholdet. Adminflaten oppretter nye guider som drafts og lar redaksjonen velge bonusprogram, tittel og status.
 - Konsekvens: Appens Lær-fane viser alle publiserte guider på tvers av programmer. Kampanjeinnganger som trenger én guide bruker fortsatt den første publiserte guiden for programmet. Publiserte guider må ha både tittel og innhold.
+
+## ADR-019: Offentlig interesseliste går via en avgrenset Edge Function
+
+- Status: Vedtatt
+- Bakgrunn: Produktsiden trenger en enkel måte å måle interesse og rekruttere pilotbrukere uten å gi den offentlige nettklienten direkte tilgang til personopplysninger.
+- Beslutning: Interesselisten lagrer kun normalisert e-post, samtykkeversjon, kilde og tidspunkt i `launch_waitlist`. Tabellen har RLS uten klientpolicyer. En offentlig `join-waitlist` Edge Function validerer opprinnelsesdomene, e-post, samtykke og et skjult spamfelt før idempotent lagring med service-rollen.
+- Konsekvens: Persondataflaten holdes liten og kan slettes separat fra appdata. Den offentlige funksjonen kan fortsatt bli utsatt for automatisert spam og må overvåkes; CAPTCHA eller sterkere ratebegrensning vurderes dersom misbruk oppstår.

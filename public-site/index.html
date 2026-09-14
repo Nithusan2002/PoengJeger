@@ -1,12 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="no">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Poengjeger hjelper deg å finne den beste opptjeningsveien for EuroBonus og Trumf før du handler.">
   <meta name="theme-color" content="#f7f7f5">
+  <link rel="canonical" href="https://nithusan.no/poengjeger/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="nb_NO">
+  <meta property="og:site_name" content="Poengjeger">
+  <meta property="og:title" content="Poengjeger – kommer snart til iPhone">
+  <meta property="og:description" content="Finn den beste opptjeningsveien for EuroBonus og Trumf før du handler.">
+  <meta property="og:url" content="https://nithusan.no/poengjeger/">
+  <meta property="og:image" content="https://nithusan.no/poengjeger/assets/poengjeger-app-icon.png">
+  <meta property="og:image:alt" content="Poengjeger-applogo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Poengjeger – kommer snart til iPhone">
+  <meta name="twitter:description" content="Sjekk før du handler. Poengjeger samler relevante muligheter for EuroBonus og Trumf.">
+  <meta name="twitter:image" content="https://nithusan.no/poengjeger/assets/poengjeger-app-icon.png">
+  <link rel="icon" href="assets/poengjeger-app-icon.png" type="image/png">
   <title>Poengjeger – Kommer snart til iPhone</title>
   <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Poengjeger","applicationCategory":"LifestyleApplication","operatingSystem":"iOS","description":"Poengjeger hjelper norske bonusbrukere å finne relevante opptjeningsmuligheter før de handler.","url":"https://nithusan.no/poengjeger/","softwareVersion":"Under utvikling"}
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#innhold">Hopp til innhold</a>
@@ -25,6 +42,15 @@
       <a href="#om">Om appen</a>
     </nav>
     <a class="nav-cta" href="#lansering">Se lanseringsstatus</a>
+    <details class="mobile-menu">
+      <summary aria-label="Åpne meny"><span></span><span></span><span></span></summary>
+      <nav aria-label="Mobilmeny">
+        <a href="#funksjoner">Funksjoner</a>
+        <a href="#slik-virker-det">Slik virker det</a>
+        <a href="#om">Om appen</a>
+        <a href="#lansering">Interesseliste</a>
+      </nav>
+    </details>
   </header>
 
   <aside class="development-banner shell" aria-label="Utviklingsstatus">
@@ -42,14 +68,14 @@
           <a class="button button-primary" href="#funksjoner">Se funksjonene</a>
           <a class="button button-secondary" href="#slik-virker-det">Slik virker det</a>
         </div>
-        <ul class="trust-list" aria-label="Viktige fordeler">
+        <ul class="trust-list">
           <li>Redaksjonelt kvalitetssikret</li>
           <li>Tydelige vilkår</li>
           <li>EuroBonus og Trumf</li>
         </ul>
       </div>
 
-      <div class="hero-visual panel" aria-label="Plassholder for appskjermbilde">
+      <div class="hero-visual panel" role="img" aria-label="Plassholder for appskjermbilde">
         <span class="visual-label">Søk først</span>
         <div class="phone-placeholder">
           <div class="phone-top" aria-hidden="true"></div>
@@ -127,6 +153,20 @@
       </div>
     </section>
 
+    <section class="section shell example-section" aria-labelledby="eksempel-title">
+      <div class="example-copy">
+        <p class="eyebrow"><span></span> Et konkret eksempel</p>
+        <h2 id="eksempel-title">Du skal kjøpe nye hodetelefoner.</h2>
+        <p>I stedet for å sjekke flere portaler og kampanjesider søker du etter produktet eller butikken i Poengjeger.</p>
+        <p class="example-note">Eksemplet viser arbeidsflyten. Faktiske satser, kampanjer og vilkår vises først når de er kildebelagt og kontrollert.</p>
+      </div>
+      <ol class="example-flow">
+        <li><span>Søk</span><strong>«Hodetelefoner»</strong></li>
+        <li><span>Sammenlign</span><strong>Opptjening, kampanjer og krav</strong></li>
+        <li><span>Handle</span><strong>Start via riktig portal</strong></li>
+      </ol>
+    </section>
+
     <section class="section shell about" id="om">
       <div class="about-card panel">
         <div>
@@ -135,7 +175,7 @@
         </div>
         <div class="about-copy">
           <p>Informasjon om bonuskampanjer er spredt og blir raskt utdatert. Poengjeger samler det viktigste og skiller tydelig mellom dokumenterte fakta og redaksjonelle vurderinger.</p>
-          <div class="programs" aria-label="Bonusprogrammer i første versjon">
+          <div class="programs" role="group" aria-label="Bonusprogrammer i første versjon">
             <span class="program eurobonus">EuroBonus</span>
             <span class="program trumf">Trumf</span>
           </div>
@@ -146,10 +186,25 @@
     <section class="launch shell" id="lansering">
       <div>
         <p class="eyebrow light"><span></span> Under utvikling</p>
-        <h2>Poengjeger kommer til iPhone.</h2>
-        <p>En enkel måte å forstå den beste opptjeningsveien før du handler.</p>
+        <h2>Få beskjed når Poengjeger er klar.</h2>
+        <p>Registrer e-postadressen din for én beskjed om pilot eller lansering.</p>
       </div>
-      <a class="button button-light" href="#funksjoner">Utforsk appen</a>
+      <form class="waitlist-form" id="waitlist-form" novalidate>
+        <label for="waitlist-email">E-postadresse</label>
+        <div class="waitlist-row">
+          <input id="waitlist-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="navn@eksempel.no" required maxlength="254">
+          <button class="button button-light" type="submit">Hold meg oppdatert</button>
+        </div>
+        <div class="honeypot" aria-hidden="true">
+          <label for="waitlist-company">Firma</label>
+          <input id="waitlist-company" name="company" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <label class="consent-row">
+          <input id="waitlist-consent" name="consent" type="checkbox" required>
+          <span>Jeg samtykker til at e-postadressen lagres for denne beskjeden. <a href="personvern/">Les personvernerklæringen.</a></span>
+        </label>
+        <p class="form-status" id="waitlist-status" role="status" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 
@@ -160,11 +215,12 @@
     </div>
     <p>© <span id="year">2026</span> Poengjeger</p>
     <div class="footer-links">
-      <a href="#om">Om appen</a>
-      <a href="#slik-virker-det">Slik virker det</a>
+      <a href="support/">Support</a>
+      <a href="personvern/">Personvern</a>
     </div>
   </footer>
 
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
