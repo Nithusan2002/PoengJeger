@@ -17,8 +17,10 @@ akseptabelt for intern MVP fordi flaten er statisk, ikke bruker service-role key
 og all tilgang fortsatt håndheves av Supabase Auth, `editorial_user_roles`, RLS
 og RPC-er.
 
-En offentlig side kan vente til Poengjeger trenger testbrukere, app-presentasjon
-eller SEO. Den kan starte som en statisk GitHub Pages-side.
+En første offentlig produktside ligger i `public-site/`. Den er en statisk,
+backendfri presentasjon av produktløftet og kan publiseres når Poengjeger trenger
+testbrukere, app-presentasjon eller SEO. Appbilder er plassholdere frem til
+representative skjermbilder er klare.
 
 ## URL-struktur
 
