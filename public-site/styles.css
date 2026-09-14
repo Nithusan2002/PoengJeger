@@ -58,6 +58,22 @@ nav { display: flex; align-items: center; gap: 28px; }
 nav a, .footer-links a { color: var(--muted); font-size: 14px; }
 nav a:hover, .footer-links a:hover { color: var(--brand); }
 .nav-cta { padding: 11px 16px; color: white; background: var(--brand); border-radius: 12px; font-size: 14px; font-weight: 700; }
+.development-banner {
+  margin-top: 14px;
+  padding: 13px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--brand-dark);
+  background: var(--brand-soft);
+  border: 1px solid rgba(15, 118, 110, .15);
+  border-radius: 16px;
+  text-align: center;
+  font-size: 14px;
+}
+.development-banner p { margin: 0; }
+.status-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 4px rgba(15, 118, 110, .12); }
 
 .hero { display: grid; grid-template-columns: 1.02fr .98fr; gap: 28px; padding-top: 28px; }
 .panel { background: rgba(255,255,255,.82); border: 1px solid rgba(255,255,255,.96); box-shadow: var(--shadow); border-radius: var(--radius-hero); }
@@ -150,6 +166,8 @@ a:focus-visible { outline: 3px solid #e3a836; outline-offset: 4px; }
   .brand-mark { width: 38px; height: 38px; }
   .brand small { display: none; }
   .nav-cta { padding: 10px 12px; font-size: 12px; }
+  .development-banner { align-items: flex-start; padding: 12px 14px; text-align: left; font-size: 13px; }
+  .status-dot { margin-top: 5px; }
   .hero { gap: 14px; padding-top: 14px; }
   .hero-copy { padding: 34px 24px; border-radius: 24px; }
   h1 { font-size: clamp(43px, 14vw, 62px); }
