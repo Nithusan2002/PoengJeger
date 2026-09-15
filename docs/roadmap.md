@@ -23,12 +23,13 @@ Dette er en omfangsoversikt, ikke en leveringsforpliktelse. Endre den når en be
 
 ## Neste valideringer
 
-1. Verifiser den komplette redaksjonelle arbeidsflyten med representative kampanjer, inkludert draft-redigering og publisering. Bruk `docs/editorial-qa-checklist.md`.
-2. Verifiser den nye skannbare feeden visuelt med representative kampanjer, Dynamic Type, mørk modus og backenddata.
-3. Juster eksisterende SwiftUI-flyt mot `docs/design-and-user-flow.md`, spesielt Hjem, butikksøk, butikkside, Guide og kampanjedetalj.
-4. Velg og analyser eksplisitt godkjente kilder for EuroBonus og Trumf før automatisert overvåking utvides.
-5. Stram inn adminverktøyet videre med bedre session-håndtering og QA før bredere intern bruk. Første forenkling er gjort for én admin: kandidatkøen prioriterer lag draft/avvis fremfor flertrinns review.
-6. Implementer første produktanalytics for butikk-/kampanjedetaljer, favoritter, varsler, filtre og Guide-innhold i tråd med `docs/analytics-plan.md`.
+1. Kjør en avgrenset brukertest av «sjekk før du handler» etter `docs/pilot-test-plan.md`, og vurder søk, forståelse og handoff mot de definerte tersklene.
+2. Verifiser den komplette redaksjonelle arbeidsflyten med representative kampanjer, inkludert draft-redigering og publisering. Bruk `docs/editorial-qa-checklist.md`.
+3. Verifiser den nye skannbare feeden visuelt med representative kampanjer, Dynamic Type, mørk modus og backenddata.
+4. Juster eksisterende SwiftUI-flyt mot `docs/design-and-user-flow.md`, spesielt Hjem, butikksøk, butikkside, Guide og kampanjedetalj.
+5. Velg og analyser eksplisitt godkjente kilder for EuroBonus og Trumf før automatisert overvåking utvides.
+6. Stram inn adminverktøyet videre med bedre session-håndtering og QA før bredere intern bruk. Første forenkling er gjort for én admin: kandidatkøen prioriterer lag draft/avvis fremfor flertrinns review.
+7. Implementer første produktanalytics for butikk-/kampanjedetaljer, favoritter, varsler, filtre og Guide-innhold i tråd med `docs/analytics-plan.md`.
 
 ## Ikke i MVP uten ny beslutning
 

@@ -42,6 +42,7 @@ Analytics skal svare på tre spørsmål:
 | `notification_disabled` | Når bruker slår av varsler | `scope` | Risikoindikator for støy. |
 | `guide_opened` | Når bruker åpner Guide-innhold | `guide_id`, `program_id`, `entry_point` | Måler om dypere guider kan bli premium. |
 | `premium_candidate_used` | Når bruker bruker en funksjon som kan bli premium | `candidate_type`, `surface` | Samler signal for senere betalingsbeslutning. |
+| `content_feedback_submitted` | Når bruker svarer på hjelpsomhet i butikk- eller kampanjedetalj | `response`, `reason` | Fanger forståelse og mulig utdatert eller mangelfullt innhold uten fritekst. |
 
 ## Premiumkandidater og signaler
 

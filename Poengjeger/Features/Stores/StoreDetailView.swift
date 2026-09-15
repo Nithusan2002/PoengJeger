@@ -55,6 +55,7 @@ struct StoreDetailView: View {
                     bestOpportunitySection
                     otherMethodsSection
                     sourceSection
+                    feedbackSection
                 }
                 .padding(.horizontal, DesignTokens.Spacing.comfortable)
                 .padding(.top, DesignTokens.Spacing.controlGap)
@@ -317,6 +318,23 @@ struct StoreDetailView: View {
         }
         .padding(.top, DesignTokens.Spacing.xxSmall)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var feedbackSection: some View {
+        ContentFeedbackPrompt(
+            question: "Fant du en tydelig opptjeningsvei?"
+        ) { response, reason in
+            await environment.submit(.init(
+                name: "content_feedback_submitted",
+                surface: "store_detail",
+                entityType: "store",
+                entityID: store.id,
+                properties: [
+                    "response": response.rawValue,
+                    "reason": reason?.rawValue ?? "none"
+                ]
+            ))
+        }
     }
 
     @ViewBuilder

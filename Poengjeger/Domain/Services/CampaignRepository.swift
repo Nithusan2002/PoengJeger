@@ -61,6 +61,7 @@ struct ProductAnalyticsEvent: Sendable {
 
 protocol ProductAnalytics: Sendable {
     func track(_ event: ProductAnalyticsEvent) async
+    func submit(_ event: ProductAnalyticsEvent) async -> Bool
 }
 
 enum AppErrorEvent: String, Sendable {

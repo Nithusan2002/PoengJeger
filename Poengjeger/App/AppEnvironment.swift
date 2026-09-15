@@ -119,6 +119,10 @@ final class AppEnvironment {
         }
     }
 
+    func submit(_ event: ProductAnalyticsEvent) async -> Bool {
+        await productAnalytics.submit(event)
+    }
+
     func refresh() async {
         let refreshStartedAt = ContinuousClock.now
         loadState = .loading

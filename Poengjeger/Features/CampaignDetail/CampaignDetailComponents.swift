@@ -1,5 +1,150 @@
 import SwiftUI
 
+enum ContentFeedbackResponse: String {
+    case helpful
+    case notHelpful = "not_helpful"
+}
+
+enum ContentFeedbackReason: String, CaseIterable, Identifiable {
+    case outdated
+    case unclear
+    case incomplete
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .outdated: "Informasjonen virker utdatert"
+        case .unclear: "Det var vanskelig å forstå"
+        case .incomplete: "Jeg manglet viktig informasjon"
+        }
+    }
+}
+
+struct ContentFeedbackPrompt: View {
+    @State private var selectedResponse: ContentFeedbackResponse?
+    @State private var isChoosingReason = false
+    @State private var isSubmitting = false
+    @State private var submissionFailed = false
+    @State private var pendingResponse: ContentFeedbackResponse?
+    @State private var pendingReason: ContentFeedbackReason?
+    let question: String
+    let onSubmit: (ContentFeedbackResponse, ContentFeedbackReason?) async -> Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.standard) {
+            if selectedResponse != nil {
+                Label("Takk for tilbakemeldingen", systemImage: "checkmark.circle.fill")
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.brandPrimary)
+                    .accessibilityAddTraits(.isHeader)
+            } else {
+                Text(question)
+                    .font(DesignTokens.Typography.subheadlineSemibold)
+                    .foregroundStyle(DesignTokens.Colors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: DesignTokens.Spacing.standard) {
+                    feedbackButton("Ja", systemImage: "hand.thumbsup") {
+                        submit(.helpful)
+                    }
+
+                    feedbackButton("Nei", systemImage: "hand.thumbsdown") {
+                        isChoosingReason = true
+                    }
+                }
+
+                if isChoosingReason {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                        Text("Hva var problemet?")
+                            .font(DesignTokens.Typography.captionSemibold)
+                            .foregroundStyle(DesignTokens.Colors.textSecondary)
+
+                        ForEach(ContentFeedbackReason.allCases) { reason in
+                            Button(reason.title) {
+                                submit(.notHelpful, reason: reason)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(DesignTokens.Colors.brandPrimary)
+                            .minimumTouchTarget()
+                        }
+                    }
+                    .accessibilityElement(children: .contain)
+                }
+
+                if isSubmitting {
+                    ProgressView("Sender tilbakemelding …")
+                        .font(DesignTokens.Typography.caption)
+                } else if submissionFailed {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                        Text("Tilbakemeldingen ble ikke sendt.")
+                            .font(DesignTokens.Typography.captionSemibold)
+                            .foregroundStyle(DesignTokens.Colors.textSecondary)
+
+                        Button("Prøv igjen") {
+                            retrySubmission()
+                        }
+                        .buttonStyle(.bordered)
+                        .minimumTouchTarget()
+                    }
+                    .accessibilityElement(children: .contain)
+                }
+            }
+        }
+        .padding(DesignTokens.Spacing.card)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Colors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .stroke(DesignTokens.Colors.border, lineWidth: DesignTokens.Stroke.standard)
+        }
+    }
+
+    private func feedbackButton(
+        _ title: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(DesignTokens.Colors.brandPrimary)
+        .minimumTouchTarget()
+        .disabled(isSubmitting)
+    }
+
+    private func submit(
+        _ response: ContentFeedbackResponse,
+        reason: ContentFeedbackReason? = nil
+    ) {
+        guard !isSubmitting else { return }
+        pendingResponse = response
+        pendingReason = reason
+        submissionFailed = false
+        isSubmitting = true
+        isChoosingReason = false
+        Task {
+            let succeeded = await onSubmit(response, reason)
+            isSubmitting = false
+            if succeeded {
+                selectedResponse = response
+                pendingResponse = nil
+                pendingReason = nil
+            } else {
+                submissionFailed = true
+            }
+        }
+    }
+
+    private func retrySubmission() {
+        guard let pendingResponse else { return }
+        submit(pendingResponse, reason: pendingReason)
+    }
+}
+
 struct DetailDisclosure<Content: View>: View {
     @Binding var isExpanded: Bool
     let title: String

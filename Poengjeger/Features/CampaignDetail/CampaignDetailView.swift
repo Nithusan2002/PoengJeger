@@ -22,6 +22,7 @@ struct CampaignDetailView: View {
                 requirementsSection
                 importantInformationSection
                 sourceSection
+                feedbackSection
                 programGuideSection
             }
             .padding(.horizontal, DesignTokens.Spacing.screen)
@@ -216,6 +217,23 @@ struct CampaignDetailView: View {
                 .font(DesignTokens.Typography.footnote)
                 .foregroundStyle(DesignTokens.Colors.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var feedbackSection: some View {
+        ContentFeedbackPrompt(
+            question: "Hjalp dette deg å vurdere kampanjen?"
+        ) { response, reason in
+            await environment.submit(.init(
+                name: "content_feedback_submitted",
+                surface: "campaign_detail",
+                entityType: "campaign",
+                entityID: campaign.id,
+                properties: [
+                    "response": response.rawValue,
+                    "reason": reason?.rawValue ?? "none"
+                ]
+            ))
         }
     }
 

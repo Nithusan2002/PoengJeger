@@ -344,7 +344,11 @@ struct SupabaseProductAnalytics: ProductAnalytics {
     }
 
     func track(_ event: ProductAnalyticsEvent) async {
-        guard let url = endpointURL else { return }
+        _ = await submit(event)
+    }
+
+    func submit(_ event: ProductAnalyticsEvent) async -> Bool {
+        guard let url = endpointURL else { return false }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -368,15 +372,21 @@ struct SupabaseProductAnalytics: ProductAnalytics {
         do {
             request.httpBody = try JSONEncoder().encode(payload)
             let (_, response) = try await session.data(for: request)
-            #if DEBUG
-            if let httpResponse = response as? HTTPURLResponse, !(200..<300).contains(httpResponse.statusCode) {
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode) else {
+                #if DEBUG
+                if let httpResponse = response as? HTTPURLResponse {
                 print("Product analytics event failed: \(event.name) (\(httpResponse.statusCode))")
+                }
+                #endif
+                return false
             }
-            #endif
+            return true
         } catch {
             #if DEBUG
             print("Product analytics event failed: \(event.name)")
             #endif
+            return false
         }
     }
 
@@ -392,6 +402,7 @@ struct SupabaseProductAnalytics: ProductAnalytics {
 
 struct NoopProductAnalytics: ProductAnalytics {
     func track(_ event: ProductAnalyticsEvent) async {}
+    func submit(_ event: ProductAnalyticsEvent) async -> Bool { true }
 }
 
 protocol AnonymousUserIDStore: Sendable {

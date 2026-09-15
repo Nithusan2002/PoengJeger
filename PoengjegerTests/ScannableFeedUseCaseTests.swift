@@ -13,6 +13,56 @@ struct ScannableFeedUseCaseTests {
     }
 
     @Test
+    func productAnalyticsSubmitReportsSuccessfulDelivery() async {
+        SupabaseURLProtocol.requestHandler = { request in
+            #expect(request.url?.path == "/rest/v1/product_events")
+            #expect(request.httpMethod == "POST")
+
+            return (
+                HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 201,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!,
+                Data()
+            )
+        }
+        defer { SupabaseURLProtocol.requestHandler = nil }
+
+        let analytics = makeProductAnalytics()
+        let delivered = await analytics.submit(.init(
+            name: "content_feedback_submitted",
+            surface: "campaign_detail",
+            properties: ["response": "helpful", "reason": "none"]
+        ))
+
+        #expect(delivered)
+    }
+
+    @Test
+    func productAnalyticsSubmitReportsRejectedDelivery() async {
+        SupabaseURLProtocol.requestHandler = { request in
+            (
+                HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 400,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!,
+                Data()
+            )
+        }
+        defer { SupabaseURLProtocol.requestHandler = nil }
+
+        let delivered = await makeProductAnalytics().submit(.init(
+            name: "content_feedback_submitted"
+        ))
+
+        #expect(!delivered)
+    }
+
+    @Test
     func displaySummaryPrefersEditorialSummaryWhenPresent() {
         let campaign = makeCampaign(
             summary: "Kildesammendrag",
@@ -915,6 +965,18 @@ struct ScannableFeedUseCaseTests {
         #expect(viewModel.searchText == "bonus")
         #expect(!viewModel.toggleSearch())
         #expect(viewModel.searchText.isEmpty)
+    }
+
+    private func makeProductAnalytics() -> SupabaseProductAnalytics {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [SupabaseURLProtocol.self]
+        return SupabaseProductAnalytics(
+            configuration: SupabaseConfiguration(
+                url: URL(string: "https://example.supabase.co")!,
+                publishableKey: "test-key"
+            ),
+            session: URLSession(configuration: configuration)
+        )
     }
 
     private func makeCampaign(

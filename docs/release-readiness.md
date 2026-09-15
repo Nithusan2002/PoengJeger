@@ -69,6 +69,95 @@ Rapporter bare kontroller som faktisk er utført. Merk resten som ikke kjørt me
 
 ## QA-logg
 
+### 2026-09-15 – TestFlight-kandidat
+
+Omfanget var en ny verifikasjon av iOS-kandidaten og opplasting til TestFlight
+for den avgrensede interne piloten.
+
+Utført:
+
+- `xcodebuild test` besto på iPhone 17 Pro med iOS 26.5.
+- Produksjonens offentlige bootstrap-endepunkter returnerte `200 OK` for
+  programmer, guider, kampanjer og butikker.
+- Release-arkiv for versjon 1.0, build 1, bundle-ID `no.poengjeger.app` ble
+  opprettet og signert med team `K392629S8S`.
+- Bundle-ID-en og app-posten `Poengjeger` ble registrert hos Apple med norsk som
+  hovedspråk, SKU `poengjeger-ios-1` og full brukertilgang.
+- Build 1 ble lastet opp til App Store Connect og gikk videre til Apples
+  behandling.
+- Apple viser build 1 som validert og `Ready to Submit`. Eksportkryptering er
+  besvart med at appen ikke bruker ikke-unntatt kryptering, og samme verdi er
+  lagt permanent i appens `Info.plist` for senere builds.
+- Den interne TestFlight-gruppen `Internal testing 1` har build 1 og én invitert
+  tester (`nithusank.2002@gmail.com`).
+
+Blokkere og ikke-kjørte kontroller:
+
+- Visuell kontroll av feedback-komponenten kunne ikke fullføres fordi
+  Simulator-tilkoblingen tidsavbrøt gjentatte ganger.
+
+Anbefaling: **klar med forbehold** for TestFlight-distribusjon når Apple har
+ferdigbehandlet buildet og den visuelle kontrollen er gjennomført. Automatiske
+tester, produksjonssmoke, arkiv og opplasting er fullført.
+
+### 2026-09-14 – kontroll før intern pilot
+
+Omfanget var iOS-endringen for strukturert detaljtilbakemelding, den tilhørende
+analytics-migrasjonen og en lesekontroll av konfigurert produksjonsbackend.
+Ingen eksterne data, migrasjoner eller builds ble publisert.
+
+Utført:
+
+- Alle migrasjoner, inkludert `20260914120000_add_content_feedback_event.sql`,
+  ble kjørt fra blank lokal database.
+- Lokal RLS-kontroll bekreftet at anonym klient kan skrive gyldig feedback
+  (`201`), ikke kan lese rå events (`401`), og at ugyldig event avvises (`400`).
+- `analytics_sanity_7d` telte det nye feedback-eventet, og lokal database-lint
+  rapporterte ingen skjemafeil.
+- `xcodebuild test` besto på iPhone 17 Pro med iOS 26.5.
+- Produksjonens offentlige bootstrap-endepunkter returnerte `200 OK` for
+  programmer, guider, kampanjer og butikker.
+- Alle 6 publiserte guider hadde `body_markdown`, og
+  `store_earning_publication_quality_issues` hadde ingen åpne rader.
+
+Blokkere og ikke-kjørte kontroller:
+
+- Alle 7 publiserte kampanjer var kontrollert for mer enn 14 dager siden; den
+  eldste var 43 dager gammel.
+- 313 av 366 publiserte butikker var kontrollert for mer enn 14 dager siden;
+  den eldste var 20 dager gammel.
+- Fjern migrasjonsstatus kunne ikke leses fordi Supabase CLI fikk avvist
+  databaseinnlogging for `supabase_admin`. Den nye migrasjonen er derfor ikke
+  bekreftet eller anvendt eksternt.
+- TestFlight-arkiv, signering, visuell kontroll av feedback-komponenten og
+  faktisk brukertest ble ikke kjørt.
+
+Anbefaling: **ikke klar** for intern pilot. Oppdater og verifiser det avgrensede
+pilotinnholdet, gjenopprett gyldig databaseinnlogging, kjør migrasjonen i et
+avklart miljø og gjennomfør visuell iOS-kontroll før ny go/no-go.
+
+Oppfølging samme dag:
+
+- Produksjonsmigrasjonen `add_content_feedback_event` ble kjørt gjennom den
+  autoriserte Supabase-tilkoblingen og bekreftet i migrasjonshistorikken.
+- En anonym feedback-innsetting returnerte `201`; QA-raden ble deretter slettet.
+- EuroBonus Online Shopping, Vita, Smartphoto og Radisson ble kontrollert mot
+  offisielle sider og fikk oppdatert kontrolltidspunkt og kildekontroll.
+- Den utdaterte SAS Amex Elite-kampanjen med 50 000 poeng ble arkivert fordi
+  den ordinære offisielle siden nå oppgir 15 000 poeng. Nextory/Norwegian
+  Reward og Strawberry/Spenn ble arkivert fordi de ligger utenfor første fase.
+- Produksjonens klient-smoke besto etter endringene.
+- Supabase Security Advisor rapporterte eksisterende varsler om manglende fast
+  `search_path` på fire funksjoner, brede execute-rettigheter på fire
+  `security definer`-hjelpefunksjoner og deaktivert leaked-password protection.
+  Disse ble ikke endret som del av innholds- og feedbackutrullingen.
+
+Revidert anbefaling: **klar med forbehold** for en svært avgrenset intern pilot
+etter visuell kontroll av feedback-komponenten. Bruk bare de fire nykontrollerte
+kampanjene og eksplisitt kildekontrollerte butikker i oppgavene. Bred pilot og
+produksjonslansering er fortsatt ikke klare før sikkerhetsvarslene og resten av
+butikkferskheten er behandlet.
+
 ### 2026-09-05 – avgrenset intern pilot
 
 Omfanget er iOS-appen og dens publiserte Supabase-data. Vurderingen gjelder en
