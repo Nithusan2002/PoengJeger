@@ -203,3 +203,15 @@
 - Bakgrunn: Produktsiden trenger en enkel måte å måle interesse og rekruttere pilotbrukere uten å gi den offentlige nettklienten direkte tilgang til personopplysninger.
 - Beslutning: Interesselisten lagrer kun normalisert e-post, samtykkeversjon, kilde og tidspunkt i `launch_waitlist`. Tabellen har RLS uten klientpolicyer. En offentlig `join-waitlist` Edge Function validerer opprinnelsesdomene, e-post, samtykke og et skjult spamfelt før idempotent lagring med service-rollen.
 - Konsekvens: Persondataflaten holdes liten og kan slettes separat fra appdata. Den offentlige funksjonen kan fortsatt bli utsatt for automatisert spam og må overvåkes; CAPTCHA eller sterkere ratebegrensning vurderes dersom misbruk oppstår.
+
+# 2026-09-18 – Privilegert rolleoppslag skjules fra Data API
+
+Den privilegerte funksjonen som leser redaksjonelle roller flyttes til et
+`private`-skjema som ikke eksponeres av Data API. Eksisterende funksjoner i
+`public` beholdes som `security invoker`-wrappere, slik at adminverktøy,
+Edge Functions og RLS-policyer kan bruke samme grensesnitt uten at en
+`security definer`-funksjon ligger direkte tilgjengelig som RPC.
+
+Samtidig låses `search_path` for rolleadministrasjon og analyticsvalidering.
+Endringen reduserer angrepsflaten uten å endre rollemodell, publiseringsregler
+eller klientkontrakter.

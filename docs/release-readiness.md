@@ -69,6 +69,52 @@ Rapporter bare kontroller som faktisk er utført. Merk resten som ikke kjørt me
 
 ## QA-logg
 
+### 2026-09-20 – hardening av Supabase-roller og analytics
+
+Omfanget var produksjonsmigrasjonen
+`20260918203000_harden_editorial_role_helpers.sql`, RLS for analytics-events og
+kontroll av Supabase Security Advisor. Ingen kampanjeinnhold, Edge Functions
+eller iOS-kode ble endret.
+
+Utført:
+
+- En schema-snapshot ble tatt før endringen og lagret utenfor repositoryet som
+  `/tmp/poengjeger-production-schema-before-security-20260920.sql`.
+- Den privilegerte rolleoppslagningen ble flyttet til et ikke-eksponert
+  `private`-skjema. De eksisterende offentlige funksjonssignaturene ble beholdt
+  som `security invoker`-wrappere.
+- `search_path` ble låst for rolleadministrasjon og analyticsvalidering.
+- Analytics-policyen tillater nå bare events som består samme tids- og
+  egenskapsvalidering som databasetriggeren.
+- Migrasjonen ble først kjørt fra blank lokal database. Lokal database-lint og
+  Security Advisor rapporterte ingen funn.
+- Produksjonsmigrasjonen ble anvendt isolert med `db query --linked` og
+  registrert som anvendt versjon `20260918203000`, uten å kjøre historiske
+  migrasjoner på nytt.
+- Produksjonens database-lint rapporterte ingen skjemafeil. Alle tidligere
+  funksjons- og `search_path`-varsler er lukket.
+- Produksjons-RLS returnerte `401` for anonym rolle-RPC, `201` for et gyldig
+  analytics-event og `400` for et event eldre enn 30 dager. QA-eventet ble
+  slettet etter kontrollen.
+- Produksjonens offentlige bootstrap-endepunkter returnerte `200 OK` for
+  programmer, guider, kampanjer og butikker etter utrullingen.
+
+Åpne forbehold:
+
+- Leaked-password protection kunne ikke aktiveres. Supabase Management API
+  returnerte `402`; funksjonen krever Pro-abonnement eller høyere. Ingen
+  abonnementsendring ble forsøkt.
+- Historisk migrasjonsdrift finnes fortsatt fra tidligere manuelle
+  produksjonsendringer. Den nye migrasjonen er synkronisert, men ordinær
+  `db push` må ikke brukes før eldre lokale og eksterne versjoner er avstemt.
+- Full produksjonsadminflyt ble ikke kjørt fordi den ville opprette eller endre
+  redaksjonelt innhold. Rollegrensesnittet ble testet ende til ende lokalt.
+
+Anbefaling: **klar med forbehold** for avgrenset intern pilot. De konkrete
+databasevarslene er lukket; leaked-password protection krever en separat
+abonnementsbeslutning, og historisk migrasjonsdrift bør ryddes før neste
+ordinære databaseutrulling.
+
 ### 2026-09-15 – TestFlight-kandidat
 
 Omfanget var en ny verifikasjon av iOS-kandidaten og opplasting til TestFlight
